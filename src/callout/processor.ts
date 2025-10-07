@@ -195,7 +195,7 @@ export class CalloutProcessor {
 
                 // 清空命令内容
                 const text = titleDiv.textContent?.trim() || '';
-                if (text.startsWith('@') || this.calloutTypes.has(text)) {
+                if (text.startsWith('[!') || this.calloutTypes.has(text)) {
                     titleDiv.textContent = '';
                 }
 
@@ -339,8 +339,8 @@ export class CalloutProcessor {
         const calloutType = match[1]; // info
         const paramsString = match[2]; // |left|30%|2em
         
-        // 构造查找用的键（保持与现有配置兼容）
-        const searchKey = `@${calloutType}`;
+        // 构造查找用的键（现在配置中使用 [!type] 格式）
+        const searchKey = `[!${calloutType}]`;
         
         // 查找匹配的配置
         const config = this.calloutTypes.get(searchKey);

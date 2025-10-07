@@ -590,9 +590,9 @@ export class CalloutMenu {
             // 更新命令文本以保持持久化
             const currentText = titleDiv.textContent?.trim() || '';
             
-            // 从当前文本中提取类型
+            // 从当前文本中提取类型 - 支持 [!info] 或 [!info|params] 格式
             let baseType = '';
-            const match = currentText.match(/^\[!([^|\]]+)/);
+            const match = currentText.match(/^\[!([^|\]]+)(\|.*?)?\]?/);
             if (match) {
                 baseType = match[1];
             }
@@ -603,9 +603,9 @@ export class CalloutMenu {
             // 恢复普通模式，更新命令文本
             const currentText = titleDiv.textContent?.trim() || '';
             
-            // 从当前文本中提取类型
+            // 从当前文本中提取类型 - 支持 [!info] 或 [!info|params] 格式
             let baseType = '';
-            const match = currentText.match(/^\[!([^|\]]+)/);
+            const match = currentText.match(/^\[!([^|\]]+)(\|.*?)?\]?/);
             if (match) {
                 baseType = match[1];
             }
@@ -744,7 +744,7 @@ export class CalloutMenu {
         // 更新显示的过滤文本
         const textElement = (this.filterInput as any)._textElement;
         if (textElement) {
-            textElement.textContent = '@' + this.filterText;
+            textElement.textContent = '[!' + this.filterText;
         }
 
         // 根据过滤文本获取匹配的类型
@@ -822,8 +822,9 @@ export class CalloutMenu {
             gridContainer.appendChild(normalItem);
             
             // 2. 左侧边注
+            const leftCommand = config.command.replace(/\]$/, '|left]'); // [!info] -> [!info|left]
             const leftItem = this.createMenuItem({
-                command: `${config.command}|left`,
+                command: leftCommand,
                 displayName: `${config.displayName} (左侧)`,
                 icon: this.createMarginIcon(config.icon, 'left'),
                 color: config.color,
@@ -834,8 +835,9 @@ export class CalloutMenu {
             gridContainer.appendChild(leftItem);
             
             // 3. 右侧边注
+            const rightCommand = config.command.replace(/\]$/, '|right]'); // [!info] -> [!info|right]
             const rightItem = this.createMenuItem({
-                command: `${config.command}|right`,
+                command: rightCommand,
                 displayName: `${config.displayName} (右侧)`,
                 icon: this.createMarginIcon(config.icon, 'right'),
                 color: config.color,
