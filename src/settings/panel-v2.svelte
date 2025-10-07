@@ -42,6 +42,28 @@
         handleGridColumnsChange(gridColumns);
     }
 
+    // 获取当前选中的主题
+    $: currentTheme = THEME_STYLES.find(t => t.id === config?.themeId) || THEME_STYLES[0];
+
+    // 计算预览样式（主题 + 样式微调）
+    $: previewStyles = {
+        background: backgroundStyle === 'solid' 
+            ? 'rgba(68, 147, 248, 0.08)' 
+            : (backgroundStyle === 'gradient' 
+                ? 'linear-gradient(to bottom, #eff6ff, #ffffff)'
+                : (currentTheme.backgroundStyle === 'solid'
+                    ? 'rgba(68, 147, 248, 0.08)'
+                    : 'linear-gradient(to bottom, #eff6ff, #ffffff)')),
+        borderWidth: borderWidth !== 'default' ? borderWidth : currentTheme.borderWidth,
+        leftBorderWidth: leftBorderWidth !== 'default' ? leftBorderWidth : currentTheme.leftBorderWidth,
+        borderRadius: borderRadius !== 'default' ? borderRadius : currentTheme.borderRadius,
+        padding: currentTheme.padding,
+        boxShadow: currentTheme.boxShadow,
+        titleFontSize: titleFontSize !== 'default' ? titleFontSize : currentTheme.titleFontSize,
+        titleFontWeight: titleFontWeight !== 'default' ? titleFontWeight : currentTheme.titleFontWeight,
+        iconSize: iconSize !== 'default' ? iconSize : currentTheme.iconSize,
+    };
+
     onMount(async () => {
         await loadConfig();
         loading = false;
@@ -181,6 +203,26 @@
         }
     }
 
+    async function handleResetOverrides() {
+        if (confirm('确定要重置样式微调吗？\n\n这将恢复到当前主题的默认样式。')) {
+            // 重置所有微调选项
+            backgroundStyle = 'default';
+            borderRadius = 'default';
+            leftBorderWidth = 'default';
+            borderWidth = 'default';
+            titleFontSize = 'default';
+            titleFontWeight = 'default';
+            iconSize = 'default';
+            hideIcon = false;
+            hideTitle = false;
+            
+            // 清空配置中的微调设置
+            config = { ...config, themeOverrides: {} };
+            await saveConfig();
+            showMessage('样式微调已重置', 2000, 'info');
+        }
+    }
+
     // 拖拽相关函数
     function handleDragStart(event: DragEvent, index: number) {
         draggedIndex = index;
@@ -254,14 +296,8 @@
         <div class="loading">加载中...</div>
     {:else}
         <div class="settings-header">
-            <h2>Callout 类型管理</h2>
+            <h2>Callout 自定义设置</h2>
             <div class="header-actions">
-                <div class="column-selector">
-                    <span style="font-size: 13px; color: var(--b3-theme-on-surface);">列数：</span>
-                    <button class="col-btn" class:active={gridColumns === 2} on:click={() => gridColumns = 2}>2</button>
-                    <button class="col-btn" class:active={gridColumns === 3} on:click={() => gridColumns = 3}>3</button>
-                    <button class="col-btn" class:active={gridColumns === 4} on:click={() => gridColumns = 4}>4</button>
-                </div>
                 <button class="b3-button b3-button--text" on:click={handleResetAll} style="color: var(--b3-theme-error);">
                     <svg class="b3-button__icon"><use xlink:href="#iconUndo"></use></svg>
                     整体重置
@@ -269,16 +305,24 @@
             </div>
         </div>
 
-        <!-- 命令菜单模拟区域 -->
+        <!-- 1. 命令菜单调整 -->
         <div class="menu-section">
             <div class="section-header clickable" on:click={() => menuPreviewCollapsed = !menuPreviewCollapsed}>
                 <div class="header-left">
-                    <h3>📋 命令菜单预览</h3>
+                    <h3><span class="section-number">1.</span> 命令菜单调整</h3>
                     <p>拖拽卡片调整顺序，点击眼睛图标切换隐藏（输入 <code>&gt;</code> 时显示此菜单）</p>
                 </div>
-                <button class="collapse-btn" class:collapsed={menuPreviewCollapsed}>
-                    <svg width="16" height="16" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg>
-                </button>
+                <div class="section-header-right">
+                    <div class="column-selector">
+                        <span style="font-size: 12px; color: var(--b3-theme-on-surface); margin-right: 8px;">列数：</span>
+                        <button class="col-btn" class:active={gridColumns === 2} on:click|stopPropagation={() => gridColumns = 2}>2</button>
+                        <button class="col-btn" class:active={gridColumns === 3} on:click|stopPropagation={() => gridColumns = 3}>3</button>
+                        <button class="col-btn" class:active={gridColumns === 4} on:click|stopPropagation={() => gridColumns = 4}>4</button>
+                    </div>
+                    <button class="collapse-btn" class:collapsed={menuPreviewCollapsed}>
+                        <svg width="16" height="16" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg>
+                    </button>
+                </div>
             </div>
 
             {#if !menuPreviewCollapsed}
@@ -341,11 +385,11 @@
             {/if}
         </div>
 
-        <!-- 主题风格选择 -->
+        <!-- 2. 主题风格选择 -->
         <div class="theme-section">
             <div class="section-header clickable" on:click={() => themeCollapsed = !themeCollapsed}>
                 <div class="header-left">
-                    <h3>🎨 整体风格</h3>
+                    <h3><span class="section-number">2.</span> 整体风格</h3>
                     <p>点击任意风格即可切换</p>
                 </div>
                 <button class="collapse-btn" class:collapsed={themeCollapsed}>
@@ -419,100 +463,155 @@
                     </div>
                 {/each}
             </div>
+            {/if}
+        </div>
+        
+        <!-- 3. 样式微调 -->
+        <div class="override-section">
+            <div class="section-header">
+                <div class="header-left">
+                    <h3><span class="section-number">3.</span> 样式微调</h3>
+                    <p>覆盖当前主题的默认样式，精细控制每个细节</p>
+                </div>
+                <button class="reset-override-btn" on:click={handleResetOverrides} title="重置样式微调">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                        <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M21 3v5h-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M3 21v-5h5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    重置微调
+                </button>
+            </div>
             
-            <!-- 快捷配置 -->
-            <div class="theme-overrides">
-                <h4>快捷配置 <span class="hint">(覆盖当前主题的默认样式)</span></h4>
-                
+            <div class="override-content">
                 <div class="override-grid">
                     <!-- 背景样式 -->
                     <div class="override-item">
-                        <label>背景样式</label>
+                        <label>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="vertical-align: -2px; margin-right: 6px;">
+                                <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
+                                <path d="M3 12h18" stroke="currentColor" stroke-width="2"/>
+                            </svg>
+                            背景样式
+                        </label>
                         <select bind:value={backgroundStyle} on:change={handleOverrideChange}>
-                            <option value="default">默认</option>
-                            <option value="solid">纯色</option>
-                            <option value="gradient">渐变</option>
+                            <option value="default">⚙️ 默认</option>
+                            <option value="solid">⬜ 纯色</option>
+                            <option value="gradient">🌈 渐变</option>
                         </select>
                     </div>
                     
                     <!-- 圆角大小 -->
                     <div class="override-item">
-                        <label>圆角大小</label>
+                        <label>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="vertical-align: -2px; margin-right: 6px;">
+                                <rect x="4" y="4" width="16" height="16" rx="4" stroke="currentColor" stroke-width="2"/>
+                            </svg>
+                            圆角大小
+                        </label>
                         <select bind:value={borderRadius} on:change={handleOverrideChange}>
-                            <option value="default">默认</option>
-                            <option value="0px">无圆角 (0px)</option>
-                            <option value="4px">小圆角 (4px)</option>
-                            <option value="8px">中圆角 (8px)</option>
-                            <option value="12px">大圆角 (12px)</option>
-                            <option value="16px">超大圆角 (16px)</option>
+                            <option value="default">⚙️ 默认</option>
+                            <option value="0px">▢ 无圆角 (0px)</option>
+                            <option value="4px">◻️ 小圆角 (4px)</option>
+                            <option value="8px">▢ 中圆角 (8px)</option>
+                            <option value="12px">▢ 大圆角 (12px)</option>
+                            <option value="16px">◉ 超大圆角 (16px)</option>
                         </select>
                     </div>
                     
                     <!-- 左侧条纹粗细 -->
                     <div class="override-item">
-                        <label>左侧条纹</label>
+                        <label>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="vertical-align: -2px; margin-right: 6px;">
+                                <rect x="6" y="4" width="4" height="16" fill="currentColor"/>
+                                <rect x="14" y="4" width="6" height="16" stroke="currentColor" stroke-width="1"/>
+                            </svg>
+                            左侧条纹
+                        </label>
                         <select bind:value={leftBorderWidth} on:change={handleOverrideChange}>
-                            <option value="default">默认</option>
-                            <option value="0px">无条纹</option>
-                            <option value="2px">细 (2px)</option>
-                            <option value="4px">中 (4px)</option>
-                            <option value="6px">粗 (6px)</option>
-                            <option value="8px">超粗 (8px)</option>
+                            <option value="default">⚙️ 默认</option>
+                            <option value="0px">─ 无条纹</option>
+                            <option value="2px">│ 细 (2px)</option>
+                            <option value="4px">┃ 中 (4px)</option>
+                            <option value="6px">┃ 粗 (6px)</option>
+                            <option value="8px">█ 超粗 (8px)</option>
                         </select>
                     </div>
                     
                     <!-- 边框粗细 -->
                     <div class="override-item">
-                        <label>边框粗细</label>
+                        <label>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="vertical-align: -2px; margin-right: 6px;">
+                                <rect x="4" y="4" width="16" height="16" stroke="currentColor" stroke-width="2"/>
+                            </svg>
+                            边框粗细
+                        </label>
                         <select bind:value={borderWidth} on:change={handleOverrideChange}>
-                            <option value="default">默认</option>
-                            <option value="0px">无边框</option>
-                            <option value="1px">细 (1px)</option>
-                            <option value="2px">中 (2px)</option>
-                            <option value="3px">粗 (3px)</option>
+                            <option value="default">⚙️ 默认</option>
+                            <option value="0px">□ 无边框</option>
+                            <option value="1px">▢ 细 (1px)</option>
+                            <option value="2px">▢ 中 (2px)</option>
+                            <option value="3px">▣ 粗 (3px)</option>
                         </select>
                     </div>
                     
                     <!-- 标题字体大小 -->
                     <div class="override-item">
-                        <label>标题字体大小</label>
+                        <label>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="vertical-align: -2px; margin-right: 6px;">
+                                <text x="4" y="16" font-size="14" fill="currentColor" font-weight="bold">A</text>
+                            </svg>
+                            标题字体大小
+                        </label>
                         <select bind:value={titleFontSize} on:change={handleOverrideChange}>
-                            <option value="default">默认</option>
-                            <option value="0.8em">极小 (0.8em)</option>
-                            <option value="0.85em">小 (0.85em)</option>
-                            <option value="0.9em">偏小 (0.9em)</option>
-                            <option value="0.95em">中 (0.95em)</option>
-                            <option value="1em">标准 (1em)</option>
-                            <option value="1.05em">偏大 (1.05em)</option>
-                            <option value="1.1em">大 (1.1em)</option>
-                            <option value="1.2em">超大 (1.2em)</option>
+                            <option value="default">⚙️ 默认</option>
+                            <option value="0.8em">🔹 极小 (0.8em)</option>
+                            <option value="0.85em">🔸 小 (0.85em)</option>
+                            <option value="0.9em">🔸 偏小 (0.9em)</option>
+                            <option value="0.95em">🔷 中 (0.95em)</option>
+                            <option value="1em">🔶 标准 (1em)</option>
+                            <option value="1.05em">🔶 偏大 (1.05em)</option>
+                            <option value="1.1em">🔺 大 (1.1em)</option>
+                            <option value="1.2em">🔴 超大 (1.2em)</option>
                         </select>
                     </div>
                     
                     <!-- 标题字体粗细 -->
                     <div class="override-item">
-                        <label>标题字体粗细</label>
+                        <label>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="vertical-align: -2px; margin-right: 6px;">
+                                <text x="4" y="16" font-size="12" fill="currentColor" font-weight="800">B</text>
+                            </svg>
+                            标题字体粗细
+                        </label>
                         <select bind:value={titleFontWeight} on:change={handleOverrideChange}>
-                            <option value="default">默认</option>
-                            <option value="400">正常 (400)</option>
-                            <option value="500">稍粗 (500)</option>
-                            <option value="600">粗体 (600)</option>
-                            <option value="700">超粗 (700)</option>
-                            <option value="800">特粗 (800)</option>
+                            <option value="default">⚙️ 默认</option>
+                            <option value="400">▱ 正常 (400)</option>
+                            <option value="500">▰ 稍粗 (500)</option>
+                            <option value="600">▰ 粗体 (600)</option>
+                            <option value="700">▰ 超粗 (700)</option>
+                            <option value="800">▰ 特粗 (800)</option>
                         </select>
                     </div>
                     
                     <!-- 图标大小 -->
                     <div class="override-item">
-                        <label>图标大小</label>
+                        <label>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="vertical-align: -2px; margin-right: 6px;">
+                                <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="2"/>
+                                <circle cx="12" cy="12" r="3" fill="currentColor"/>
+                            </svg>
+                            图标大小
+                        </label>
                         <select bind:value={iconSize} on:change={handleOverrideChange}>
-                            <option value="default">默认</option>
-                            <option value="14px">小 (14px)</option>
-                            <option value="16px">中 (16px)</option>
-                            <option value="18px">偏大 (18px)</option>
-                            <option value="20px">大 (20px)</option>
-                            <option value="22px">超大 (22px)</option>
-                            <option value="24px">特大 (24px)</option>
+                            <option value="default">⚙️ 默认</option>
+                            <option value="14px">⚪ 小 (14px)</option>
+                            <option value="16px">⚪ 中 (16px)</option>
+                            <option value="18px">🔵 偏大 (18px)</option>
+                            <option value="20px">🔵 大 (20px)</option>
+                            <option value="22px">🟣 超大 (22px)</option>
+                            <option value="24px">🟣 特大 (24px)</option>
                         </select>
                     </div>
                     
@@ -540,24 +639,20 @@
                         <div 
                             class="preview-callout"
                             style="
-                                background: {backgroundStyle === 'solid' 
-                                    ? 'rgba(68, 147, 248, 0.08)' 
-                                    : (backgroundStyle === 'gradient' || backgroundStyle === 'default')
-                                        ? 'linear-gradient(to bottom, #eff6ff, #ffffff)'
-                                        : 'linear-gradient(to bottom, #eff6ff, #ffffff)'
-                                };
-                                border: {borderWidth !== 'default' ? borderWidth : '1px'} solid #e5e7eb;
-                                border-left: {leftBorderWidth !== 'default' ? leftBorderWidth : '4px'} solid #4493f8;
-                                border-radius: {borderRadius !== 'default' ? borderRadius : '8px'};
-                                padding: 16px;
-                                box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                                background: {previewStyles.background};
+                                border: {previewStyles.borderWidth} solid #e5e7eb;
+                                border-left: {previewStyles.leftBorderWidth} solid #4493f8;
+                                border-radius: {previewStyles.borderRadius};
+                                padding: {previewStyles.padding};
+                                box-shadow: {previewStyles.boxShadow};
+                                transition: all 0.3s ease;
                             "
                         >
                             <div 
                                 class="preview-title"
                                 style="
-                                    font-size: {titleFontSize !== 'default' ? titleFontSize : '0.95em'};
-                                    font-weight: {titleFontWeight !== 'default' ? titleFontWeight : '600'};
+                                    font-size: {previewStyles.titleFontSize};
+                                    font-weight: {previewStyles.titleFontWeight};
                                     color: #4493f8;
                                     display: flex;
                                     align-items: center;
@@ -567,8 +662,8 @@
                             >
                                 {#if !hideIcon}
                                 <svg 
-                                    width="{iconSize !== 'default' ? iconSize : '20px'}" 
-                                    height="{iconSize !== 'default' ? iconSize : '20px'}" 
+                                    width="{previewStyles.iconSize}" 
+                                    height="{previewStyles.iconSize}" 
                                     viewBox="0 0 24 24"
                                     style="flex-shrink: 0;"
                                 >
@@ -595,7 +690,6 @@
                     </div>
                 </div>
             </div>
-            {/if}
         </div>
     {/if}
 </div>
@@ -805,10 +899,33 @@
         min-width: 0;
     }
 
+    .section-header-right {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
     .section-header h3 {
         margin: 0 0 8px 0;
         font-size: 16px;
         font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .section-number {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        background: linear-gradient(135deg, var(--b3-theme-primary), var(--b3-theme-primary-light));
+        color: white;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 700;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
 
     .section-header p {
@@ -1048,30 +1165,47 @@
         color: var(--b3-theme-primary);
     }
 
-    /* 快捷配置 */
-    .theme-overrides {
-        margin-top: 24px;
-        padding: 20px;
-        background: var(--b3-theme-surface);
-        border-radius: 8px;
-        border: 1px solid var(--b3-border-color);
+    /* 样式微调区域 */
+    .override-section {
+        margin-bottom: 32px;
     }
 
-    .theme-overrides h4 {
-        margin: 0 0 16px 0;
-        font-size: 14px;
-        font-weight: 600;
-        color: var(--b3-theme-on-background);
+    .reset-override-btn {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 6px;
+        padding: 8px 16px;
+        background: transparent;
+        border: 1.5px solid var(--b3-border-color);
+        border-radius: 8px;
+        color: var(--b3-theme-on-background);
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
     }
 
-    .theme-overrides .hint {
-        font-size: 12px;
-        font-weight: 400;
-        color: var(--b3-theme-on-surface);
-        opacity: 0.7;
+    .reset-override-btn:hover {
+        background: var(--b3-theme-error-lighter);
+        border-color: var(--b3-theme-error);
+        color: var(--b3-theme-error);
+        transform: translateY(-1px);
+    }
+
+    .reset-override-btn svg {
+        transition: transform 0.3s ease;
+    }
+
+    .reset-override-btn:hover svg {
+        transform: rotate(-180deg);
+    }
+
+    .override-content {
+        background: var(--b3-theme-surface);
+        border: 1px solid var(--b3-border-color);
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
 
     .override-grid {

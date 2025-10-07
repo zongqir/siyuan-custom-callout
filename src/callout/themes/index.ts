@@ -28,6 +28,7 @@ import { notionTheme } from './notion';
 import { materialTheme } from './material';
 import { githubTheme } from './github';
 import { paperTheme } from './paper';
+import { auroraTheme } from './aurora';
 
 // 工具函数
 export {
@@ -71,7 +72,8 @@ export const THEME_STYLES: ThemeStyle[] = [
     glassmorphismTheme,
     neumorphismTheme,
     neonTheme,
-    paperTheme
+    paperTheme,
+    auroraTheme
 ];
 
 /**
