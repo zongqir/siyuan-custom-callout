@@ -66,11 +66,11 @@ export class CalloutMenu {
             border: 1px solid #d1d5db;
             border-radius: 8px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-            max-height: 500px;
+            max-height: 600px;
             overflow-y: auto;
             z-index: 10000;
             font-size: 14px;
-            min-width: 520px;
+            min-width: 620px;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             opacity: 0;
             transform: translateY(-10px);
@@ -408,29 +408,6 @@ export class CalloutMenu {
     }
 
 
-    /**
-     * 创建边注图标（在原图标基础上添加方向指示）
-     */
-    private createMarginIcon(originalIcon: string, position: 'left' | 'right'): string {
-        // 创建一个包含原图标和方向箭头的组合图标
-        const arrow = position === 'left' ? '←' : '→';
-        const arrowColor = position === 'left' ? '#10b981' : '#f59e0b';
-        
-        return `
-        <div style="position: relative; display: inline-flex; align-items: center; justify-content: center;">
-            ${originalIcon}
-            <span style="
-                position: absolute; 
-                bottom: -2px; 
-                right: -2px; 
-                font-size: 10px; 
-                color: ${arrowColor}; 
-                font-weight: bold;
-                text-shadow: 0 1px 2px rgba(0,0,0,0.2);
-            ">${arrow}</span>
-        </div>
-        `;
-    }
 
     /**
      * 创建菜单项
@@ -599,7 +576,6 @@ export class CalloutMenu {
         if (position !== 'normal') {
             // 生成边注命令
             const newCommand = `[!${baseType}|${position}]`;
-            console.log('[Callout Menu] 🔄 工具栏切换到边注模式:', newCommand);
             // 使用统一的文本更新函数
             this.updateEditableText(titleDiv, newCommand);
         } else {
@@ -778,7 +754,7 @@ export class CalloutMenu {
     }
 
     /**
-     * 应用过滤
+     * 应用过滤 - 使用优化的三列布局
      */
     private applyFilter(filteredTypes: CalloutTypeConfig[]) {
         // 使用保存的编辑状态，而不是重新判断
@@ -786,7 +762,7 @@ export class CalloutMenu {
         // console.log('[Callout Menu] 🔍 applyFilter - isEdit:', isEdit);
         
         // 清空现有菜单项
-        const gridContainer = this.commandMenu?.querySelector('div[style*="grid-template-columns"]');
+        const gridContainer = this.commandMenu?.querySelector('div[style*="grid-template-columns"]') as HTMLElement;
         if (!gridContainer) return;
 
         gridContainer.innerHTML = '';
@@ -795,61 +771,196 @@ export class CalloutMenu {
 
         const typesToShow = filteredTypes.length > 0 ? filteredTypes : this.allCalloutTypes;
 
-        // 如果不在过滤模式，添加"原生样式"选项
-        if (!this.filterMode || filteredTypes.length === 0) {
-            const noneItem = this.createMenuItem({
-                command: 'none',
-                displayName: '原生样式',
-                icon: `<svg width="20" height="20" viewBox="0 0 24 24"><path d="M18.364 5.636L5.636 18.364M5.636 5.636l12.728 12.728" stroke="#9ca3af" stroke-width="2" stroke-linecap="round"/></svg>`,
-                isNone: true
-            }, 0, isEdit);
-            gridContainer.appendChild(noneItem);
-        }
-
-        // 添加过滤后的类型及其边注变体
-        typesToShow.forEach((config) => {
-            let itemIndex = this.menuItems.length;
-            
-            // 1. 普通类型
-            const normalItem = this.createMenuItem({
-                command: config.command,
-                displayName: config.displayName,
-                icon: config.icon,
-                color: config.color,
-                isNone: false,
-                isMarginNote: false
-            }, itemIndex++, isEdit);
-            gridContainer.appendChild(normalItem);
-            
-            // 2. 左侧边注
-            const leftCommand = config.command.replace(/\]$/, '|left]'); // [!info] -> [!info|left]
-            const leftItem = this.createMenuItem({
-                command: leftCommand,
-                displayName: `${config.displayName} (左侧)`,
-                icon: this.createMarginIcon(config.icon, 'left'),
-                color: config.color,
-                isNone: false,
-                isMarginNote: true,
-                marginPosition: 'left'
-            }, itemIndex++, isEdit);
-            gridContainer.appendChild(leftItem);
-            
-            // 3. 右侧边注
-            const rightCommand = config.command.replace(/\]$/, '|right]'); // [!info] -> [!info|right]
-            const rightItem = this.createMenuItem({
-                command: rightCommand,
-                displayName: `${config.displayName} (右侧)`,
-                icon: this.createMarginIcon(config.icon, 'right'),
-                color: config.color,
-                isNone: false,
-                isMarginNote: true,
-                marginPosition: 'right'
-            }, itemIndex++, isEdit);
-            gridContainer.appendChild(rightItem);
-        });
+        // 创建优化的三列布局
+        this.createOptimizedFilterLayout(gridContainer, typesToShow, isEdit);
 
         // 更新选中状态
         this.updateMenuSelection();
+    }
+
+    /**
+     * 创建优化的筛选布局 - 简单表格式
+     */
+    private createOptimizedFilterLayout(container: HTMLElement, types: CalloutTypeConfig[], isEdit: boolean) {
+        // 重新设置容器为简单表格布局
+        container.style.cssText = `
+            display: block;
+            overflow: visible;
+        `;
+
+        // 如果不在过滤模式，添加"原生样式"行
+        if (!this.filterMode || types.length === 0) {
+            const noneRow = this.createFilterRow(
+                {
+                    command: 'none',
+                    displayName: '原生样式',
+                    icon: `<svg width="20" height="20" viewBox="0 0 24 24"><path d="M18.364 5.636L5.636 18.364M5.636 5.636l12.728 12.728" stroke="#9ca3af" stroke-width="2" stroke-linecap="round"/></svg>`,
+                    isNone: true
+                }, 
+                null, // 无边注选项
+                this.menuItems.length,
+                isEdit
+            );
+            container.appendChild(noneRow);
+        }
+
+        // 为每个类型创建一行（原始类型 + 边注选项）
+        let currentIndex = this.menuItems.length;
+        types.forEach((config) => {
+            const typeRow = this.createFilterRow(config, config, currentIndex, isEdit);
+            container.appendChild(typeRow);
+            
+            // 更新索引：每行包含4个菜单项（原始+左中右）
+            currentIndex += 4;
+        });
+    }
+
+    /**
+     * 创建筛选行（一个原始类型 + 对应的边注选项）
+     */
+    private createFilterRow(originalConfig: any, marginConfig: CalloutTypeConfig | null, startIndex: number, isEdit: boolean): HTMLElement {
+        const row = document.createElement('div');
+        row.style.cssText = `
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 6px;
+            margin-bottom: 6px;
+            align-items: stretch;
+            min-height: 50px;
+            padding: 4px;
+        `;
+
+        // 第1列：原始类型
+        let originalIndex = startIndex;
+        if (originalConfig.isNone) {
+            const noneItem = this.createMenuItem(originalConfig, originalIndex++, isEdit);
+            row.appendChild(noneItem);
+            
+            // 原生样式的其他3列显示占位符
+            for (let i = 0; i < 3; i++) {
+                const placeholder = document.createElement('div');
+                placeholder.style.cssText = `
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: #9ca3af;
+                    font-size: 11px;
+                    background: #f9fafb;
+                    border-radius: 4px;
+                    border: 1px solid #e5e7eb;
+                `;
+                placeholder.textContent = '-';
+                row.appendChild(placeholder);
+            }
+        } else if (marginConfig) {
+            // 普通类型：原始 + 左 + 中 + 右
+            const originalItem = this.createMenuItem({
+                command: marginConfig.command,
+                displayName: marginConfig.displayName,
+                icon: marginConfig.icon,
+                color: marginConfig.color,
+                isNone: false,
+                isMarginNote: false
+            }, originalIndex++, isEdit);
+            row.appendChild(originalItem);
+
+            // 左侧边注
+            const leftCommand = marginConfig.command.replace(/\]$/, '|left]');
+            const leftItem = this.createCompactMenuItem({
+                command: leftCommand,
+                displayName: '左',
+                icon: '⬅️',
+                color: marginConfig.color,
+                isMarginNote: true,
+                marginPosition: 'left',
+                baseType: marginConfig.displayName
+            }, originalIndex++, isEdit);
+            row.appendChild(leftItem);
+
+            // 中间（重复原始）
+            const centerItem = this.createCompactMenuItem({
+                command: marginConfig.command,
+                displayName: '中',
+                icon: marginConfig.icon,
+                color: marginConfig.color,
+                isMarginNote: false,
+                marginPosition: 'normal',
+                baseType: marginConfig.displayName
+            }, originalIndex++, isEdit);
+            row.appendChild(centerItem);
+
+            // 右侧边注
+            const rightCommand = marginConfig.command.replace(/\]$/, '|right]');
+            const rightItem = this.createCompactMenuItem({
+                command: rightCommand,
+                displayName: '右',
+                icon: '➡️',
+                color: marginConfig.color,
+                isMarginNote: true,
+                marginPosition: 'right',
+                baseType: marginConfig.displayName
+            }, originalIndex++, isEdit);
+            row.appendChild(rightItem);
+        }
+
+        return row;
+    }
+
+
+    /**
+     * 创建紧凑的菜单项（用于第二列的边注选项）
+     */
+    private createCompactMenuItem(options: any, index: number, isEdit: boolean): HTMLElement {
+        const item = document.createElement('div');
+        
+        // 紧凑样式
+        item.style.cssText = `
+            padding: 6px 8px;
+            cursor: pointer;
+            border: 1px solid #f3f4f6;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            transition: all 0.1s ease;
+            font-size: 12px;
+            min-height: 32px;
+            background: ${options.marginPosition === 'left' ? '#f0fdf4' : 
+                        options.marginPosition === 'right' ? '#fffbeb' : '#ffffff'};
+        `;
+
+        item.innerHTML = `
+            <span style="font-size: 14px;">${options.icon}</span>
+            <span style="font-weight: 500; color: #374151;">${options.displayName}</span>
+        `;
+
+        // 添加 tooltip
+        item.title = `${options.baseType || ''} ${
+            options.marginPosition === 'left' ? '(左侧边注)' :
+            options.marginPosition === 'right' ? '(右侧边注)' : '(普通)'
+        }`;
+
+        item.addEventListener('mouseenter', () => {
+            this.selectedMenuIndex = index;
+            this.updateMenuSelection();
+        });
+
+        item.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            item.style.backgroundColor = '#dbeafe';
+            item.style.borderColor = '#60a5fa';
+
+            if (options.isNone) {
+                this.handleClearCallout();
+            } else {
+                this.handleSelectCallout(options.command, isEdit);
+            }
+        });
+
+        this.menuItems.push(item);
+        return item;
     }
 
     /**
