@@ -5,7 +5,7 @@
     import type { CalloutTypeConfig } from '../callout/types';
     import { DEFAULT_CALLOUT_TYPES } from '../callout/types';
     import { ConfigManager, type CalloutConfig } from '../callout/config';
-    import { THEME_STYLES } from '../callout/themes';
+    import { THEME_STYLES } from '../callout/themes/index';
     import EditDialog from './edit-dialog.svelte';
     import { showMessage } from 'siyuan';
 

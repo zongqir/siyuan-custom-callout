@@ -1,5 +1,5 @@
 import { DEFAULT_CALLOUT_TYPES, CalloutTypeConfig } from './types';
-import { getThemeById, getDefaultTheme, generateThemeCSS, type ThemeStyle } from './themes';
+import { getThemeById, getDefaultTheme, generateThemeCSS, type ThemeStyle } from './themes/index';
 
 /**
  * 生成Callout样式
