@@ -1,4 +1,4 @@
-import { DEFAULT_CALLOUT_TYPES, CalloutTypeConfig } from './types';
+import { DEFAULT_CALLOUT_TYPES, CalloutTypeConfig, ParsedCalloutCommand } from './types';
 
 /**
  * Callout处理器 - 负责检测和转换引用块为Callout样式
@@ -64,7 +64,33 @@ export class CalloutProcessor {
 
         const text = titleDiv.textContent?.trim() || '';
 
-        // 检查是否匹配任何 callout 类型
+        // 尝试解析参数化命令
+        const parsedCommand = this.parseCalloutCommand(text);
+        if (parsedCommand) {
+            // 设置基础 callout 类型
+            blockquote.setAttribute('custom-callout', parsedCommand.config.type);
+
+            // 设置边注相关属性
+            if (parsedCommand.position !== 'normal') {
+                blockquote.setAttribute('data-margin-position', parsedCommand.position);
+                blockquote.setAttribute('data-margin-width', parsedCommand.width || '30%');
+                blockquote.setAttribute('data-margin-spacing', parsedCommand.spacing || '1em');
+                
+                // 直接设置CSS变量，避免浏览器兼容性问题
+                this.applyMarginNoteStyles(blockquote, parsedCommand);
+            }
+
+            // 标记标题并设置显示名称
+            titleDiv.setAttribute('data-callout-title', 'true');
+            titleDiv.setAttribute('data-callout-display-name', parsedCommand.config.displayName);
+
+            // 添加折叠功能
+            this.addCollapseToggle(blockquote, titleDiv);
+
+            return true;
+        }
+
+        // 回退到旧的匹配方式（向后兼容）
         for (const [trigger, config] of this.calloutTypes.entries()) {
             if (text.startsWith(trigger)) {
                 // 设置 callout 类型
@@ -134,6 +160,13 @@ export class CalloutProcessor {
     private clearCalloutAttributes(blockquote: HTMLElement, titleDiv: HTMLElement) {
         blockquote.removeAttribute('custom-callout');
         blockquote.removeAttribute('data-collapsed');
+        // 清除边注相关属性
+        blockquote.removeAttribute('data-margin-position');
+        blockquote.removeAttribute('data-margin-width');
+        blockquote.removeAttribute('data-margin-spacing');
+        // 清除边注样式
+        this.clearMarginNoteStyles(blockquote);
+        
         titleDiv.removeAttribute('data-callout-title');
         titleDiv.removeAttribute('data-callout-display-name');
         this.removeCollapseToggle(titleDiv);
@@ -148,6 +181,12 @@ export class CalloutProcessor {
         try {
             blockquoteElement.removeAttribute('custom-callout');
             blockquoteElement.removeAttribute('data-collapsed');
+            // 清除边注相关属性
+            blockquoteElement.removeAttribute('data-margin-position');
+            blockquoteElement.removeAttribute('data-margin-width');
+            blockquoteElement.removeAttribute('data-margin-spacing');
+            // 清除边注样式
+            this.clearMarginNoteStyles(blockquoteElement);
 
             const titleDiv = blockquoteElement.querySelector('[data-callout-title="true"]') as HTMLElement;
             if (titleDiv) {
@@ -285,6 +324,133 @@ export class CalloutProcessor {
     getTypeByCommand(command: string): CalloutTypeConfig | undefined {
         return this.calloutTypes.get(command);
     }
+
+    /**
+     * 解析参数化命令语法
+     * 支持格式: @info|left|30%|2em
+     */
+    parseCalloutCommand(text: string): ParsedCalloutCommand | null {
+        if (!text.startsWith('@')) {
+            return null;
+        }
+
+        // 解析参数化语法: @info|left|30%|2em
+        const parts = text.split('|');
+        const baseCommand = parts[0]; // @info
+        const params = parts.slice(1); // [left, 30%, 2em]
+
+        // 查找匹配的配置
+        const config = this.calloutTypes.get(baseCommand);
+        if (!config) {
+            return null;
+        }
+
+        // 解析参数
+        const position = this.parsePosition(params[0]);
+        const width = this.parseWidth(params[1]);
+        const spacing = this.parseSpacing(params[2]);
+
+        return {
+            type: config.type,
+            config: config,
+            position: position,
+            width: width,
+            spacing: spacing,
+            originalCommand: text
+        };
+    }
+
+    /**
+     * 解析位置参数
+     */
+    private parsePosition(param?: string): 'normal' | 'left' | 'right' {
+        if (!param) return 'normal';
+        
+        const normalized = param.toLowerCase().trim();
+        if (normalized === 'left' || normalized === '左' || normalized === 'l') {
+            return 'left';
+        }
+        if (normalized === 'right' || normalized === '右' || normalized === 'r') {
+            return 'right';
+        }
+        
+        return 'normal';
+    }
+
+    /**
+     * 解析宽度参数
+     */
+    private parseWidth(param?: string): string {
+        if (!param) return '30%'; // 默认宽度
+        
+        const normalized = param.trim();
+        
+        // 验证宽度格式 (支持 % 和 px, em, rem 等)
+        if (/^\d+(%|px|em|rem|vw)$/.test(normalized)) {
+            return normalized;
+        }
+        
+        // 如果只是数字，默认当作百分比
+        if (/^\d+$/.test(normalized)) {
+            const num = parseInt(normalized);
+            if (num > 0 && num <= 100) {
+                return `${num}%`;
+            }
+        }
+        
+        return '30%'; // 回退到默认值
+    }
+
+    /**
+     * 解析间距参数
+     */
+    private parseSpacing(param?: string): string {
+        if (!param) return '1em'; // 默认间距
+        
+        const normalized = param.trim();
+        
+        // 验证间距格式
+        if (/^[\d.]+(%|px|em|rem|vw)$/.test(normalized)) {
+            return normalized;
+        }
+        
+        // 如果只是数字，默认当作em
+        if (/^[\d.]+$/.test(normalized)) {
+            const num = parseFloat(normalized);
+            if (num >= 0) {
+                return `${num}em`;
+            }
+        }
+        
+        return '1em'; // 回退到默认值
+    }
+
+    /**
+     * 应用边注样式
+     */
+    private applyMarginNoteStyles(blockquote: HTMLElement, parsedCommand: ParsedCalloutCommand) {
+        const existingStyle = blockquote.style.cssText;
+        const width = parsedCommand.width || '30%';
+        const spacing = parsedCommand.spacing || '1em';
+        
+        // 设置CSS变量
+        blockquote.style.setProperty('--margin-width', width);
+        blockquote.style.setProperty('--margin-spacing', spacing);
+        
+        // 保留原有的样式
+        if (existingStyle && !existingStyle.includes('--margin-')) {
+            blockquote.style.cssText = existingStyle + '; --margin-width: ' + width + '; --margin-spacing: ' + spacing + ';';
+        }
+    }
+
+    /**
+     * 清除边注样式
+     */
+    private clearMarginNoteStyles(blockquote: HTMLElement) {
+        blockquote.style.removeProperty('--margin-width');
+        blockquote.style.removeProperty('--margin-spacing');
+    }
+
 
     /**
      * 检查是否处于初始加载状态

@@ -91,12 +91,19 @@ export class CalloutMenu {
         const gridContainer = this.createMenuGrid(isEdit);
         menu.appendChild(gridContainer);
 
+        // 编辑模式下的边注设置已集成到网格中
+
         // 底部提示
         const footer = this.createFooter();
         menu.appendChild(footer);
 
         // 添加键盘事件
         this.setupMenuKeyboardEvents(menu);
+
+        // 设置边注事件（如果是编辑模式）
+        if (isEdit) {
+            this.setupMarginNoteEvents(menu, targetBlockQuote);
+        }
 
         document.body.appendChild(menu);
         this.commandMenu = menu;
@@ -241,37 +248,183 @@ export class CalloutMenu {
      * 创建菜单网格
      */
     private createMenuGrid(isEdit: boolean): HTMLElement {
-        const gridContainer = document.createElement('div');
-        gridContainer.style.cssText = `
-            display: grid;
-            grid-template-columns: repeat(${this.gridColumns}, 1fr);
-            gap: 4px;
-            padding: 8px;
+        const container = document.createElement('div');
+        container.style.cssText = `padding: 8px;`;
+
+        // 如果是编辑模式，显示正常网格 + 底部边注工具栏
+        if (isEdit) {
+            const gridContainer = document.createElement('div');
+            gridContainer.style.cssText = `
+                display: grid;
+                grid-template-columns: repeat(${this.gridColumns}, 1fr);
+                gap: 4px;
+                margin-bottom: 8px;
+            `;
+
+            // 添加"原生样式"选项
+            const noneItem = this.createMenuItem({
+                command: 'none',
+                displayName: '原生样式',
+                icon: `<svg width="20" height="20" viewBox="0 0 24 24"><path d="M18.364 5.636L5.636 18.364M5.636 5.636l12.728 12.728" stroke="#9ca3af" stroke-width="2" stroke-linecap="round"/></svg>`,
+                isNone: true
+            }, 0, isEdit);
+            gridContainer.appendChild(noneItem);
+
+            // 添加所有类型
+            this.calloutTypes.forEach((config, index) => {
+                const typeItem = this.createMenuItem({
+                    command: config.command,
+                    displayName: config.displayName,
+                    icon: config.icon,
+                    color: config.color,
+                    isNone: false,
+                    isMarginNote: false
+                }, index + 1, isEdit);
+                gridContainer.appendChild(typeItem);
+            });
+
+            container.appendChild(gridContainer);
+
+            // 添加底部边注工具栏
+            const marginToolbar = this.createMarginToolbar();
+            container.appendChild(marginToolbar);
+
+        } else {
+            // 新建模式，使用原来的布局
+            const gridContainer = document.createElement('div');
+            gridContainer.style.cssText = `
+                display: grid;
+                grid-template-columns: repeat(${this.gridColumns}, 1fr);
+                gap: 4px;
+            `;
+
+            // 添加"原生样式"选项
+            const noneItem = this.createMenuItem({
+                command: 'none',
+                displayName: '原生样式',
+                icon: `<svg width="20" height="20" viewBox="0 0 24 24"><path d="M18.364 5.636L5.636 18.364M5.636 5.636l12.728 12.728" stroke="#9ca3af" stroke-width="2" stroke-linecap="round"/></svg>`,
+                isNone: true
+            }, 0, isEdit);
+            gridContainer.appendChild(noneItem);
+
+            // 添加所有Callout类型
+            this.calloutTypes.forEach((config, index) => {
+                const item = this.createMenuItem({
+                    command: config.command,
+                    displayName: config.displayName,
+                    icon: config.icon,
+                    color: config.color,
+                    isNone: false,
+                    isMarginNote: false
+                }, index + 1, isEdit);
+                gridContainer.appendChild(item);
+            });
+
+            container.appendChild(gridContainer);
+        }
+
+        return container;
+    }
+
+    /**
+     * 创建扁平化边注工具栏
+     */
+    private createMarginToolbar(): HTMLElement {
+        const toolbar = document.createElement('div');
+        toolbar.style.cssText = `
+            border-top: 1px solid #e5e7eb;
+            padding: 6px 8px 4px;
+            background: #fafbfc;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         `;
 
-        // 添加"原生样式"选项
-        const noneItem = this.createMenuItem({
-            command: 'none',
-            displayName: '原生样式',
-            icon: `<svg width="20" height="20" viewBox="0 0 24 24"><path d="M18.364 5.636L5.636 18.364M5.636 5.636l12.728 12.728" stroke="#9ca3af" stroke-width="2" stroke-linecap="round"/></svg>`,
-            isNone: true
-        }, 0, isEdit);
-        gridContainer.appendChild(noneItem);
+        // 标签
+        const label = document.createElement('span');
+        label.style.cssText = `
+            font-size: 11px;
+            color: #6b7280;
+            font-weight: 500;
+            margin-right: 4px;
+        `;
+        label.textContent = '边注:';
 
-        // 添加所有Callout类型
-        this.calloutTypes.forEach((config, index) => {
-            const adjustedIndex = index + 1; // 因为 none 占了第 0 位
-            const item = this.createMenuItem({
-                command: config.command,
-                displayName: config.displayName,
-                icon: config.icon,
-                color: config.color,
-                isNone: false
-            }, adjustedIndex, isEdit);
-            gridContainer.appendChild(item);
+        toolbar.appendChild(label);
+
+        // 三个按钮
+        const buttons = [
+            { position: 'normal', icon: '📄', text: '普通', color: '#f3f4f6' },
+            { position: 'left', icon: '⬅️', text: '左侧', color: '#dcfce7' },
+            { position: 'right', icon: '➡️', text: '右侧', color: '#fef3c7' }
+        ];
+
+        buttons.forEach(btn => {
+            const button = document.createElement('button');
+            button.className = 'margin-toolbar-btn';
+            button.setAttribute('data-position', btn.position);
+            button.style.cssText = `
+                flex: 1;
+                display: flex;
+                align-items: center;
+                gap: 3px;
+                padding: 3px 4px;
+                border: 1px solid #d1d5db;
+                border-radius: 4px;
+                background: ${btn.color};
+                cursor: pointer;
+                font-size: 11px;
+                font-weight: 500;
+                color: #374151;
+                transition: all 0.15s ease;
+                justify-content: center;
+            `;
+
+            button.innerHTML = `
+                <span>${btn.icon}</span>
+                <span>${btn.text}</span>
+            `;
+
+            // 悬停效果
+            button.addEventListener('mouseenter', () => {
+                button.style.borderColor = '#9ca3af';
+                button.style.transform = 'scale(1.02)';
+            });
+
+            button.addEventListener('mouseleave', () => {
+                button.style.borderColor = '#d1d5db';
+                button.style.transform = 'scale(1)';
+            });
+
+            toolbar.appendChild(button);
         });
 
-        return gridContainer;
+        return toolbar;
+    }
+
+
+    /**
+     * 创建边注图标（在原图标基础上添加方向指示）
+     */
+    private createMarginIcon(originalIcon: string, position: 'left' | 'right'): string {
+        // 创建一个包含原图标和方向箭头的组合图标
+        const arrow = position === 'left' ? '←' : '→';
+        const arrowColor = position === 'left' ? '#10b981' : '#f59e0b';
+        
+        return `
+        <div style="position: relative; display: inline-flex; align-items: center; justify-content: center;">
+            ${originalIcon}
+            <span style="
+                position: absolute; 
+                bottom: -2px; 
+                right: -2px; 
+                font-size: 10px; 
+                color: ${arrowColor}; 
+                font-weight: bold;
+                text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+            ">${arrow}</span>
+        </div>
+        `;
     }
 
     /**
@@ -279,6 +432,16 @@ export class CalloutMenu {
      */
     private createMenuItem(options: any, index: number, isEdit: boolean): HTMLElement {
         const item = document.createElement('div');
+        
+        // 边注菜单项的特殊样式
+        const marginNoteStyle = options.isMarginNote ? `
+            border-left: 3px solid ${options.marginPosition === 'left' ? '#10b981' : '#f59e0b'};
+            background: linear-gradient(135deg, 
+                ${options.marginPosition === 'left' ? '#f0fdf4' : '#fffbeb'} 0%, 
+                #ffffff 100%);
+            font-size: 12px;
+        ` : '';
+        
         item.style.cssText = `
             padding: 10px 12px;
             cursor: pointer;
@@ -288,6 +451,7 @@ export class CalloutMenu {
             align-items: center;
             gap: 10px;
             transition: background-color 0.1s ease, transform 0.1s ease, border-color 0.1s ease;
+            ${marginNoteStyle}
         `;
 
         item.innerHTML = `
@@ -320,6 +484,7 @@ export class CalloutMenu {
         return item;
     }
 
+
     /**
      * 创建底部提示
      */
@@ -335,6 +500,109 @@ export class CalloutMenu {
         `;
         footer.innerHTML = '↑↓←→ 导航 • Enter 确认 • 字母键 过滤 • ESC 关闭';
         return footer;
+    }
+
+    /**
+     * 设置边注事件
+     */
+    private setupMarginNoteEvents(menu: HTMLElement, blockquote: HTMLElement) {
+        // 获取当前边注设置
+        const currentPosition = blockquote.getAttribute('data-margin-position') || 'normal';
+        
+        // 初始化边注工具栏状态
+        this.updateMarginToolbarState(menu, currentPosition);
+
+        // 为边注工具栏按钮添加点击事件
+        const marginButtons = menu.querySelectorAll('.margin-toolbar-btn');
+        marginButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const position = (button as HTMLElement).getAttribute('data-position')!;
+                this.applyMarginNoteSetting(blockquote, position);
+                this.updateMarginToolbarState(menu, position);
+                
+                // 延迟关闭菜单，让用户看到选中效果
+                setTimeout(() => {
+                    this.hideMenu(true);
+                }, 200);
+            });
+        });
+    }
+
+    /**
+     * 更新边注工具栏状态
+     */
+    private updateMarginToolbarState(menu: HTMLElement, currentPosition: string) {
+        const marginButtons = menu.querySelectorAll('.margin-toolbar-btn');
+        marginButtons.forEach(button => {
+            const position = (button as HTMLElement).getAttribute('data-position');
+            const element = button as HTMLElement;
+            
+            if (position === currentPosition) {
+                // 选中状态
+                element.style.borderColor = '#3b82f6';
+                element.style.borderWidth = '2px';
+                element.style.fontWeight = '600';
+                element.style.background = position === 'normal' ? '#f3f4f6' : 
+                                          position === 'left' ? '#dcfce7' : '#fef3c7';
+                element.style.transform = 'scale(1.02)';
+            } else {
+                // 未选中状态
+                element.style.borderColor = '#d1d5db';
+                element.style.borderWidth = '1px';
+                element.style.fontWeight = '500';
+                element.style.background = position === 'normal' ? '#f9fafb' : 
+                                          position === 'left' ? '#f0fdf4' : '#fffbeb';
+                element.style.transform = 'scale(1)';
+            }
+        });
+    }
+
+    /**
+     * 应用边注设置
+     */
+    private applyMarginNoteSetting(blockquote: HTMLElement, position: string) {
+        // 获取标题元素
+        const titleDiv = blockquote.querySelector('[data-callout-title="true"]') as HTMLElement;
+        if (!titleDiv) return;
+
+        // 清除现有边注设置
+        blockquote.removeAttribute('data-margin-position');
+        blockquote.removeAttribute('data-margin-width');
+        blockquote.removeAttribute('data-margin-spacing');
+        blockquote.style.removeProperty('--margin-width');
+        blockquote.style.removeProperty('--margin-spacing');
+
+        if (position !== 'normal') {
+            // 使用默认的宽度和间距
+            const defaultWidth = '30%';
+            const defaultSpacing = '1em';
+            
+            // 应用新的边注设置
+            blockquote.setAttribute('data-margin-position', position);
+            blockquote.setAttribute('data-margin-width', defaultWidth);
+            blockquote.setAttribute('data-margin-spacing', defaultSpacing);
+            
+            // 设置CSS变量
+            blockquote.style.setProperty('--margin-width', defaultWidth);
+            blockquote.style.setProperty('--margin-spacing', defaultSpacing);
+            
+            // 更新命令文本以保持持久化
+            const currentText = titleDiv.textContent?.trim() || '';
+            const baseCommand = currentText.split('|')[0]; // 获取基础命令 @info
+            const newCommand = `${baseCommand}|${position}`;
+            titleDiv.textContent = newCommand;
+        } else {
+            // 恢复普通模式，更新命令文本
+            const currentText = titleDiv.textContent?.trim() || '';
+            const baseCommand = currentText.split('|')[0]; // 获取基础命令 @info
+            titleDiv.textContent = baseCommand;
+        }
+        
+        // 触发重新处理（如果处理器可用）
+        if (this.processor) {
+            this.processor.processBlockquote(blockquote);
+        }
     }
 
     /**
@@ -483,10 +751,16 @@ export class CalloutMenu {
             const commandWithoutAt = type.command.toLowerCase().replace('@', '');
             const zhCommandWithoutAt = type.zhCommand?.toLowerCase().replace('@', '');
             
+            // 支持边注关键字搜索
+            const marginKeywords = ['left', '左', 'right', '右', 'margin', '边注'];
+            const hasMarginKeyword = marginKeywords.some(keyword => search.includes(keyword));
+            
             const commandMatch = commandWithoutAt.startsWith(search);
             const zhCommandMatch = zhCommandWithoutAt?.startsWith(search);
             const displayNameMatch = type.displayName.toLowerCase().includes(search);
-            return commandMatch || zhCommandMatch || displayNameMatch;
+            
+            // 如果搜索包含边注关键字，则显示该类型
+            return commandMatch || zhCommandMatch || displayNameMatch || hasMarginKeyword;
         });
     }
 
@@ -517,17 +791,44 @@ export class CalloutMenu {
             gridContainer.appendChild(noneItem);
         }
 
-        // 添加过滤后的类型
-        typesToShow.forEach((config, index) => {
-            const adjustedIndex = (this.filterMode && filteredTypes.length > 0) ? index : index + 1;
-            const item = this.createMenuItem({
+        // 添加过滤后的类型及其边注变体
+        typesToShow.forEach((config) => {
+            let itemIndex = this.menuItems.length;
+            
+            // 1. 普通类型
+            const normalItem = this.createMenuItem({
                 command: config.command,
                 displayName: config.displayName,
                 icon: config.icon,
                 color: config.color,
-                isNone: false
-            }, adjustedIndex, isEdit);
-            gridContainer.appendChild(item);
+                isNone: false,
+                isMarginNote: false
+            }, itemIndex++, isEdit);
+            gridContainer.appendChild(normalItem);
+            
+            // 2. 左侧边注
+            const leftItem = this.createMenuItem({
+                command: `${config.command}|left`,
+                displayName: `${config.displayName} (左侧)`,
+                icon: this.createMarginIcon(config.icon, 'left'),
+                color: config.color,
+                isNone: false,
+                isMarginNote: true,
+                marginPosition: 'left'
+            }, itemIndex++, isEdit);
+            gridContainer.appendChild(leftItem);
+            
+            // 3. 右侧边注
+            const rightItem = this.createMenuItem({
+                command: `${config.command}|right`,
+                displayName: `${config.displayName} (右侧)`,
+                icon: this.createMarginIcon(config.icon, 'right'),
+                color: config.color,
+                isNone: false,
+                isMarginNote: true,
+                marginPosition: 'right'
+            }, itemIndex++, isEdit);
+            gridContainer.appendChild(rightItem);
         });
 
         // 更新选中状态

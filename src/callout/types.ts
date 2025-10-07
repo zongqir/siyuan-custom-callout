@@ -21,6 +21,24 @@ export interface CalloutTypeConfig {
 }
 
 /**
+ * 解析后的Callout命令结果
+ */
+export interface ParsedCalloutCommand {
+    /** 基础类型 */
+    type: string;
+    /** 原始配置 */
+    config: CalloutTypeConfig;
+    /** 边注位置 */
+    position: 'normal' | 'left' | 'right';
+    /** 边注宽度 */
+    width?: string;
+    /** 边注间距 */
+    spacing?: string;
+    /** 原始命令文本 */
+    originalCommand: string;
+}
+
+/**
  * 预设的Callout类型
  */
 export const DEFAULT_CALLOUT_TYPES: CalloutTypeConfig[] = [

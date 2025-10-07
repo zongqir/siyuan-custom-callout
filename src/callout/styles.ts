@@ -222,7 +222,110 @@ export function generateCalloutStyles(customTypes?: CalloutTypeConfig[], themeId
         }
     }
 
+    // 添加边注功能CSS
+    styles.push(generateMarginNoteCSS());
+
     return styles.join('\n');
+}
+
+/**
+ * 生成边注功能CSS
+ */
+function generateMarginNoteCSS(): string {
+    return `
+/* ==================== 边注功能样式 ==================== */
+
+/* 左侧边注 */
+.protyle-wysiwyg .bq[custom-callout][data-margin-position="left"] {
+    float: left !important;
+    clear: left !important;
+    margin-right: var(--margin-spacing, 1em) !important;
+    margin-left: 0 !important;
+    width: var(--margin-width, 30%) !important;
+}
+
+/* 右侧边注 */
+.protyle-wysiwyg .bq[custom-callout][data-margin-position="right"] {
+    float: right !important;
+    clear: right !important;
+    margin-left: var(--margin-spacing, 1em) !important;
+    margin-right: 0 !important;
+    width: var(--margin-width, 30%) !important;
+}
+
+/* CSS变量通过JavaScript动态设置 */
+
+/* 边注专用样式优化 */
+.protyle-wysiwyg .bq[custom-callout][data-margin-position] {
+    font-size: 0.9em !important;
+    line-height: 1.4 !important;
+    margin-top: 0.5em !important;
+    margin-bottom: 1em !important;
+    
+    /* 防止内容溢出 */
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+    
+    /* 增加视觉层次 */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* 边注标题优化 */
+.protyle-wysiwyg .bq[custom-callout][data-margin-position] [data-callout-title="true"] {
+    font-size: 0.85em !important;
+    margin-bottom: 8px !important;
+    padding-left: calc(var(--callout-icon-size) + 8px) !important;
+}
+
+/* 边注图标大小调整 */
+.protyle-wysiwyg .bq[custom-callout][data-margin-position] [data-callout-title="true"]::before {
+    width: calc(var(--callout-icon-size) * 0.8) !important;
+    height: calc(var(--callout-icon-size) * 0.8) !important;
+}
+
+/* 响应式处理 - 小屏幕禁用边注 */
+@media (max-width: 768px) {
+    .protyle-wysiwyg .bq[custom-callout][data-margin-position] {
+        float: none !important;
+        clear: none !important;
+        width: 100% !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        font-size: inherit !important;
+        line-height: inherit !important;
+    }
+    
+    .protyle-wysiwyg .bq[custom-callout][data-margin-position] [data-callout-title="true"] {
+        font-size: var(--callout-title-font-size) !important;
+        padding-left: calc(var(--callout-icon-size) + 12px) !important;
+    }
+    
+    .protyle-wysiwyg .bq[custom-callout][data-margin-position] [data-callout-title="true"]::before {
+        width: var(--callout-icon-size) !important;
+        height: var(--callout-icon-size) !important;
+    }
+}
+
+/* 清除浮动 - 防止布局问题 */
+.protyle-wysiwyg .bq[custom-callout][data-margin-position="left"] ~ .bq:not([data-margin-position]),
+.protyle-wysiwyg .bq[custom-callout][data-margin-position="left"] ~ div:not(.bq),
+.protyle-wysiwyg .bq[custom-callout][data-margin-position="left"] ~ p {
+    clear: left !important;
+}
+
+.protyle-wysiwyg .bq[custom-callout][data-margin-position="right"] ~ .bq:not([data-margin-position]),
+.protyle-wysiwyg .bq[custom-callout][data-margin-position="right"] ~ div:not(.bq),
+.protyle-wysiwyg .bq[custom-callout][data-margin-position="right"] ~ p {
+    clear: right !important;
+}
+
+/* 边注与普通内容的间距调整 */
+.protyle-wysiwyg .bq[custom-callout][data-margin-position] + .bq:not([data-margin-position]),
+.protyle-wysiwyg .bq[custom-callout][data-margin-position] + div:not(.bq),
+.protyle-wysiwyg .bq[custom-callout][data-margin-position] + p {
+    margin-top: 1.5em !important;
+}
+`;
 }
 
 /**
