@@ -19,6 +19,9 @@ export class CalloutMenu {
     private filterText: string = '';
     private filterInput: HTMLElement | null = null;
     private allCalloutTypes: CalloutTypeConfig[] = [...DEFAULT_CALLOUT_TYPES];
+    
+    // 保存当前菜单的编辑状态
+    private currentIsEdit: boolean = false;
 
     constructor(processor: CalloutProcessor) {
         this.processor = processor;
@@ -49,6 +52,8 @@ export class CalloutMenu {
         }
 
         this.currentTargetBlockQuote = targetBlockQuote;
+        this.currentIsEdit = isEdit; // 保存编辑状态
+        // console.log('[Callout Menu] 🎯 createCommandMenu - isEdit:', isEdit);
         this.selectedMenuIndex = 0;
         this.menuItems = [];
 
@@ -473,6 +478,12 @@ export class CalloutMenu {
             item.style.backgroundColor = '#dbeafe';
             item.style.color = '#1e40af';
 
+            // console.log('[Callout Menu] 🖱️ 菜单项点击:', {
+            //     command: options.command,
+            //     isEdit: isEdit,
+            //     isNone: options.isNone
+            // });
+
             if (options.isNone) {
                 this.handleClearCallout();
             } else {
@@ -783,7 +794,9 @@ export class CalloutMenu {
      * 应用过滤
      */
     private applyFilter(filteredTypes: CalloutTypeConfig[]) {
-        const isEdit = this.commandMenu?.querySelector('[data-callout-title="true"]') !== null;
+        // 使用保存的编辑状态，而不是重新判断
+        const isEdit = this.currentIsEdit;
+        // console.log('[Callout Menu] 🔍 applyFilter - isEdit:', isEdit);
         
         // 清空现有菜单项
         const gridContainer = this.commandMenu?.querySelector('div[style*="grid-template-columns"]');
@@ -875,6 +888,7 @@ export class CalloutMenu {
      * 处理选择Callout
      */
     private handleSelectCallout(command: string, isEdit: boolean) {
+        // console.log('[Callout Menu] 📝 handleSelectCallout:', { command, isEdit });
         if (this.currentTargetBlockQuote) {
             this.insertCommand(command, this.currentTargetBlockQuote, isEdit);
         }
@@ -895,9 +909,17 @@ export class CalloutMenu {
         }
         if (!editableDiv) return;
 
+        // console.log('[Callout Menu] ✏️ insertCommand:', { 
+        //     command, 
+        //     isEdit, 
+        //     hasCalloutTitle: !!blockQuoteElement.querySelector('[data-callout-title="true"]'),
+        //     editableDiv: editableDiv?.getAttribute('data-callout-title')
+        // });
+
         try {
             if (isEdit) {
                 // 编辑模式：直接替换并立即处理
+                // console.log('[Callout Menu] ✅ 使用编辑模式（不换行）');
                 editableDiv.textContent = command;
                 editableDiv.dispatchEvent(new Event('input', { bubbles: true }));
                 editableDiv.dispatchEvent(new Event('change', { bubbles: true }));
@@ -907,6 +929,7 @@ export class CalloutMenu {
                 }, 100);
             } else {
                 // 新建模式：插入命令并自动换行
+                // console.log('[Callout Menu] ⚠️ 使用新建模式（会自动换行）');
                 editableDiv.textContent = command;
                 editableDiv.dispatchEvent(new Event('input', { bubbles: true }));
                 editableDiv.dispatchEvent(new Event('change', { bubbles: true }));
@@ -1025,6 +1048,7 @@ export class CalloutMenu {
         if (!this.commandMenu || !this.isMenuVisible) return;
 
         this.currentTargetBlockQuote = null;
+        this.currentIsEdit = false; // 重置编辑状态
         this.selectedMenuIndex = 0;
         this.menuItems = [];
         
