@@ -257,7 +257,10 @@
                         </div>
                         
                         <div class="menu-item-controls">
-                            <button class="hide-btn" on:click={() => handleToggleHide(calloutType)} title={isHidden(calloutType) ? '显示' : '隐藏'}>
+                            <button class="edit-btn" on:click|stopPropagation={() => handleEdit(calloutType)} title="编辑">
+                                <svg width="16" height="16"><use xlink:href="#iconEdit"></use></svg>
+                            </button>
+                            <button class="hide-btn" on:click|stopPropagation={() => handleToggleHide(calloutType)} title={isHidden(calloutType) ? '显示' : '隐藏'}>
                                 <svg width="16" height="16"><use xlink:href={isHidden(calloutType) ? '#iconEye' : '#iconEyeoff'}></use></svg>
                             </button>
                         </div>
@@ -563,6 +566,7 @@
         opacity: 1;
     }
 
+    .edit-btn,
     .hide-btn {
         width: 32px;
         height: 32px;
@@ -578,12 +582,19 @@
         transition: all 0.2s;
     }
 
+    .edit-btn:hover {
+        background: var(--b3-theme-secondary);
+        color: white;
+        transform: scale(1.1);
+    }
+
     .hide-btn:hover {
         background: var(--b3-theme-primary);
         color: white;
         transform: scale(1.1);
     }
 
+    .edit-btn svg,
     .hide-btn svg {
         width: 16px;
         height: 16px;

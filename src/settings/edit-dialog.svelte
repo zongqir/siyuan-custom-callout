@@ -94,9 +94,17 @@
         </div>
 
         <div class="dialog-body">
+            <!-- 使用说明 -->
+            <div class="usage-hint">
+                <div class="hint-icon">💡</div>
+                <div class="hint-text">
+                    <strong>简单三步：</strong>①填写名称 ②选择图标和颜色 ③保存后就能在笔记中使用啦！
+                </div>
+            </div>
+
             <!-- 预览 -->
             <div class="preview-section">
-                <label>预览</label>
+                <label>实时预览</label>
                 <div class="callout-preview" style="background: {useCustomColor ? createCustomColorScheme(customColor).bgGradient : COLOR_SCHEMES.find(c => c.id === selectedColorId)?.bgGradient}; border-left-color: {currentColor};">
                     <div class="preview-title" style="color: {currentColor};">
                         {@html currentIconSvg}
@@ -108,23 +116,30 @@
 
             <!-- 基本信息 -->
             <div class="form-group">
-                <label>类型ID *</label>
+                <label>
+                    内部标识 *
+                    <span class="label-hint">（系统用的ID，创建后不能改）</span>
+                </label>
                 <input
                     type="text"
                     bind:value={type}
-                    placeholder="例如: my-note"
+                    placeholder="my-note（只能用小写字母、数字和横线-）"
                     disabled={!isNew}
                     class:error={errors.type}
                 />
                 {#if errors.type}<span class="error-msg">{errors.type}</span>{/if}
+                {#if !isNew}<div class="field-hint">⚠️ 这个ID创建后就不能修改了哦</div>{/if}
             </div>
 
             <div class="form-group">
-                <label>显示名称 *</label>
+                <label>
+                    显示名称 *
+                    <span class="label-hint">（会显示在引用块标题上）</span>
+                </label>
                 <input
                     type="text"
                     bind:value={displayName}
-                    placeholder="例如: 我的笔记"
+                    placeholder="我的笔记"
                     class:error={errors.displayName}
                 />
                 {#if errors.displayName}<span class="error-msg">{errors.displayName}</span>{/if}
@@ -132,7 +147,10 @@
 
             <div class="form-row">
                 <div class="form-group">
-                    <label>命令 *</label>
+                    <label>
+                        英文触发词 *
+                        <span class="label-hint">（打这个就能创建）</span>
+                    </label>
                     <input
                         type="text"
                         bind:value={command}
@@ -143,14 +161,18 @@
                 </div>
 
                 <div class="form-group">
-                    <label>中文命令</label>
+                    <label>
+                        中文别名
+                        <span class="label-hint">（选填，用中文也能触发）</span>
+                    </label>
                     <input
                         type="text"
                         bind:value={zhCommand}
-                        placeholder="@我的笔记"
+                        placeholder="@我的笔记（可用中文输入法直接打）"
                         class:error={errors.zhCommand}
                     />
                     {#if errors.zhCommand}<span class="error-msg">{errors.zhCommand}</span>{/if}
+                    <div class="field-hint">💡 填了之后，输入 @my-note 或 @我的笔记 都能创建引用块</div>
                 </div>
             </div>
 
@@ -301,6 +323,51 @@
         padding: 20px;
         overflow-y: auto;
         flex: 1;
+    }
+
+    .usage-hint {
+        display: flex;
+        gap: 12px;
+        padding: 12px 16px;
+        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+        border: 1px solid #bfdbfe;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        align-items: flex-start;
+    }
+
+    .hint-icon {
+        font-size: 20px;
+        line-height: 1;
+        flex-shrink: 0;
+    }
+
+    .hint-text {
+        font-size: 13px;
+        color: #1e40af;
+        line-height: 1.5;
+    }
+
+    .hint-text strong {
+        color: #1e3a8a;
+    }
+
+    .label-hint {
+        font-size: 11px;
+        font-weight: 400;
+        color: var(--b3-theme-on-surface);
+        opacity: 0.7;
+        margin-left: 4px;
+    }
+
+    .field-hint {
+        margin-top: 8px;
+        font-size: 12px;
+        color: #6366f1;
+        background: #eef2ff;
+        padding: 8px 12px;
+        border-radius: 6px;
+        border-left: 3px solid #6366f1;
     }
 
     .preview-section {
