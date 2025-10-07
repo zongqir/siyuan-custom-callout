@@ -327,25 +327,29 @@ export class CalloutProcessor {
 
     /**
      * 解析参数化命令语法
-     * 支持格式: @info|left|30%|2em
+     * 支持格式: [!info|left|30%|2em]
      */
     parseCalloutCommand(text: string): ParsedCalloutCommand | null {
-        if (!text.startsWith('@')) {
+        // 匹配 [!type] 或 [!type|params] 格式
+        const match = text.match(/^\[!([^|\]]+)(\|.*?)?\]$/);
+        if (!match) {
             return null;
         }
 
-        // 解析参数化语法: @info|left|30%|2em
-        const parts = text.split('|');
-        const baseCommand = parts[0]; // @info
-        const params = parts.slice(1); // [left, 30%, 2em]
-
+        const calloutType = match[1]; // info
+        const paramsString = match[2]; // |left|30%|2em
+        
+        // 构造查找用的键（保持与现有配置兼容）
+        const searchKey = `@${calloutType}`;
+        
         // 查找匹配的配置
-        const config = this.calloutTypes.get(baseCommand);
+        const config = this.calloutTypes.get(searchKey);
         if (!config) {
             return null;
         }
 
         // 解析参数
+        const params = paramsString ? paramsString.substring(1).split('|') : []; // 移除开头的|
         const position = this.parsePosition(params[0]);
         const width = this.parseWidth(params[1]);
         const spacing = this.parseSpacing(params[2]);

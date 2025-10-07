@@ -589,13 +589,28 @@ export class CalloutMenu {
             
             // 更新命令文本以保持持久化
             const currentText = titleDiv.textContent?.trim() || '';
-            const baseCommand = currentText.split('|')[0]; // 获取基础命令 @info
-            const newCommand = `${baseCommand}|${position}`;
+            
+            // 从当前文本中提取类型
+            let baseType = '';
+            const match = currentText.match(/^\[!([^|\]]+)/);
+            if (match) {
+                baseType = match[1];
+            }
+            
+            const newCommand = `[!${baseType}|${position}]`;
             titleDiv.textContent = newCommand;
         } else {
             // 恢复普通模式，更新命令文本
             const currentText = titleDiv.textContent?.trim() || '';
-            const baseCommand = currentText.split('|')[0]; // 获取基础命令 @info
+            
+            // 从当前文本中提取类型
+            let baseType = '';
+            const match = currentText.match(/^\[!([^|\]]+)/);
+            if (match) {
+                baseType = match[1];
+            }
+            
+            const baseCommand = `[!${baseType}]`;
             titleDiv.textContent = baseCommand;
         }
         
@@ -713,7 +728,7 @@ export class CalloutMenu {
             this.filterInput.style.display = 'none';
             const textElement = (this.filterInput as any)._textElement;
             if (textElement) {
-                textElement.textContent = '@';
+                textElement.textContent = '[!';
             }
         }
         // 恢复所有类型
@@ -747,16 +762,16 @@ export class CalloutMenu {
 
         const search = searchText.toLowerCase();
         return this.allCalloutTypes.filter(type => {
-            // 去掉命令中的 @ 符号再匹配
-            const commandWithoutAt = type.command.toLowerCase().replace('@', '');
-            const zhCommandWithoutAt = type.zhCommand?.toLowerCase().replace('@', '');
+            // 去掉命令中的 [! 和 ] 符号再匹配
+            const commandClean = type.command.toLowerCase().replace(/^\[!|\]$/g, '');
+            const zhCommandClean = type.zhCommand?.toLowerCase().replace(/^\[!|\]$/g, '');
             
             // 支持边注关键字搜索
             const marginKeywords = ['left', '左', 'right', '右', 'margin', '边注'];
             const hasMarginKeyword = marginKeywords.some(keyword => search.includes(keyword));
             
-            const commandMatch = commandWithoutAt.startsWith(search);
-            const zhCommandMatch = zhCommandWithoutAt?.startsWith(search);
+            const commandMatch = commandClean.startsWith(search);
+            const zhCommandMatch = zhCommandClean?.startsWith(search);
             const displayNameMatch = type.displayName.toLowerCase().includes(search);
             
             // 如果搜索包含边注关键字，则显示该类型
