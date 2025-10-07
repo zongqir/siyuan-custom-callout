@@ -226,7 +226,7 @@
         <div class="theme-section">
             <div class="section-header">
                 <h3>🎨 整体风格</h3>
-                <p>选择不同的视觉风格，改变所有 Callout 的外观</p>
+                <p>点击任意风格即可切换</p>
             </div>
             <div class="theme-grid">
                 {#each THEME_STYLES as theme}
@@ -235,11 +235,58 @@
                         class:active={config.themeId === theme.id}
                         on:click={() => handleThemeChange(theme.id)}
                     >
-                        <div class="theme-preview">{theme.preview}</div>
-                        <div class="theme-info">
+                        <div class="theme-header">
+                            <div class="theme-emoji">{theme.preview}</div>
                             <div class="theme-name">{theme.name}</div>
-                            <div class="theme-desc">{theme.description}</div>
                         </div>
+                        
+                        <!-- 实时预览 -->
+                        <div class="theme-preview-box">
+                            <div 
+                                class="mini-callout"
+                                style="
+                                    background: linear-gradient(to bottom, #eff6ff, #ffffff);
+                                    border: {theme.borderWidth} solid #e5e7eb;
+                                    border-left: {theme.leftBorderWidth} solid #4493f8;
+                                    border-radius: {theme.borderRadius};
+                                    padding: {theme.padding};
+                                    box-shadow: {theme.boxShadow};
+                                    transition: {theme.transition};
+                                "
+                            >
+                                <div 
+                                    class="mini-title"
+                                    style="
+                                        font-size: {theme.titleFontSize};
+                                        font-weight: {theme.titleFontWeight};
+                                        padding: {theme.titlePadding};
+                                        color: #4493f8;
+                                        display: flex;
+                                        align-items: center;
+                                        gap: 8px;
+                                    "
+                                >
+                                    <svg width="{theme.iconSize}" height="{theme.iconSize}" viewBox="0 0 24 24" fill="none">
+                                        <circle cx="12" cy="12" r="10" stroke="#4493f8" stroke-width="1.7"/>
+                                        <rect x="11" y="7" width="2" height="7" rx="1" fill="#4493f8"/>
+                                        <circle cx="12" cy="17" r="1.2" fill="#4493f8"/>
+                                    </svg>
+                                    <span>信息说明</span>
+                                </div>
+                                <div 
+                                    class="mini-content"
+                                    style="
+                                        font-size: {theme.contentFontSize};
+                                        line-height: {theme.contentLineHeight};
+                                        padding: {theme.contentPadding};
+                                        color: #374151;
+                                    "
+                                >
+                                    这是示例内容
+                                </div>
+                            </div>
+                        </div>
+                        
                         {#if config.themeId === theme.id}
                             <div class="theme-check">✓</div>
                         {/if}
@@ -310,72 +357,6 @@
                         <div class="add-text">新建类型</div>
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <!-- 详细预览区域 -->
-        <div class="preview-section">
-            <div class="section-header">
-                <h3>🎨 类型详情</h3>
-                <p>点击卡片可编辑该类型的图标和颜色</p>
-            </div>
-
-            <div class="preview-grid">
-                {#each allTypes as calloutType}
-                    <div 
-                        class="preview-card" 
-                        class:modified={isModified(calloutType)} 
-                        class:custom={isCustom(calloutType)}
-                        class:hidden={isHidden(calloutType)}
-                        on:click={() => handleEdit(calloutType)}
-                    >
-                        <div class="preview-header">
-                            <div class="preview-icon" style="color: {calloutType.color};">
-                                {@html calloutType.icon}
-                            </div>
-                            <div class="preview-info">
-                                <div class="preview-name" style="color: {calloutType.color};">
-                                    {calloutType.displayName}
-                                    {#if isModified(calloutType)}
-                                        <span class="badge badge-modified">已修改</span>
-                                    {/if}
-                                    {#if isCustom(calloutType)}
-                                        <span class="badge badge-custom">自定义</span>
-                                    {/if}
-                                    {#if isHidden(calloutType)}
-                                        <span class="badge badge-hidden">已隐藏</span>
-                                    {/if}
-                                </div>
-                                <div class="preview-commands">
-                                    <code>{calloutType.command}</code>
-                                    {#if calloutType.zhCommand}
-                                        <code>{calloutType.zhCommand}</code>
-                                    {/if}
-                                </div>
-                            </div>
-                            <div class="preview-actions">
-                                {#if isModified(calloutType)}
-                                    <button class="icon-btn" on:click|stopPropagation={() => handleReset(calloutType)} title="重置">
-                                        <svg><use xlink:href="#iconUndo"></use></svg>
-                                    </button>
-                                {/if}
-                                {#if isCustom(calloutType)}
-                                    <button class="icon-btn delete-btn" on:click|stopPropagation={() => handleDelete(calloutType)} title="删除">
-                                        <svg><use xlink:href="#iconTrashcan"></use></svg>
-                                    </button>
-                                {/if}
-                            </div>
-                        </div>
-
-                        <div class="preview-demo" style="background: {calloutType.bgGradient}; border-left-color: {calloutType.borderColor};">
-                            <div class="demo-title" style="color: {calloutType.color};">
-                                {@html calloutType.icon}
-                                <span>{calloutType.displayName}</span>
-                            </div>
-                            <div class="demo-content">这是一个示例文本</div>
-                        </div>
-                    </div>
-                {/each}
             </div>
         </div>
     {/if}
@@ -466,72 +447,93 @@
 
     .theme-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-        gap: 12px;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 16px;
     }
 
     .theme-card {
         position: relative;
-        padding: 16px;
+        padding: 0;
         border: 2px solid var(--b3-border-color);
-        border-radius: 8px;
+        border-radius: 12px;
         background: var(--b3-theme-background);
         cursor: pointer;
-        transition: all 0.2s;
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow: hidden;
     }
 
     .theme-card:hover {
         border-color: var(--b3-theme-primary);
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
     }
 
     .theme-card.active {
         border-color: var(--b3-theme-primary);
-        background: var(--b3-theme-primary-lighter);
-        box-shadow: 0 4px 12px rgba(var(--b3-theme-primary), 0.15);
+        border-width: 3px;
+        background: linear-gradient(135deg, var(--b3-theme-primary-lighter) 0%, var(--b3-theme-background) 100%);
+        box-shadow: 0 8px 24px rgba(var(--b3-theme-primary), 0.2);
     }
 
-    .theme-preview {
-        font-size: 32px;
-        text-align: center;
+    .theme-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
+        background: linear-gradient(135deg, var(--b3-theme-surface) 0%, var(--b3-theme-background) 100%);
+        border-bottom: 1px solid var(--b3-border-color);
+    }
+
+    .theme-emoji {
+        font-size: 24px;
         line-height: 1;
-    }
-
-    .theme-info {
-        flex: 1;
+        flex-shrink: 0;
     }
 
     .theme-name {
-        font-size: 14px;
+        font-size: 15px;
         font-weight: 600;
         color: var(--b3-theme-on-background);
-        margin-bottom: 4px;
+        flex: 1;
     }
 
-    .theme-desc {
-        font-size: 12px;
-        color: var(--b3-theme-on-surface);
-        line-height: 1.4;
+    .theme-preview-box {
+        padding: 16px;
+        background: #f9fafb;
+    }
+
+    .mini-callout {
+        transition: transform 0.2s;
+    }
+
+    .theme-card:hover .mini-callout {
+        transform: scale(1.02);
+    }
+
+    .mini-title {
+        margin-bottom: 6px;
+    }
+
+    .mini-content {
+        opacity: 0.85;
     }
 
     .theme-check {
         position: absolute;
-        top: 8px;
-        right: 8px;
-        width: 24px;
-        height: 24px;
+        top: 12px;
+        right: 12px;
+        width: 28px;
+        height: 28px;
         background: var(--b3-theme-primary);
         color: white;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 14px;
+        font-size: 16px;
         font-weight: bold;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        z-index: 10;
     }
 
     /* 菜单模拟区域 */
@@ -757,175 +759,5 @@
         color: var(--b3-theme-primary);
     }
 
-    /* 预览区域 */
-    .preview-section {
-        margin-top: 32px;
-    }
-
-    .preview-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-        gap: 16px;
-    }
-
-    .preview-card {
-        border: 1px solid var(--b3-border-color);
-        border-radius: 6px;
-        padding: 16px;
-        background: var(--b3-theme-background);
-        cursor: pointer;
-        transition: all 0.2s;
-    }
-
-    .preview-card:hover {
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        transform: translateY(-2px);
-    }
-
-    .preview-card.modified {
-        border-left: 4px solid var(--b3-theme-primary);
-    }
-
-    .preview-card.custom {
-        border-left: 4px solid var(--b3-theme-secondary);
-    }
-
-    .preview-card.hidden {
-        opacity: 0.5;
-        background: var(--b3-theme-surface-lighter);
-    }
-
-    .preview-header {
-        display: flex;
-        gap: 12px;
-        margin-bottom: 12px;
-        align-items: flex-start;
-    }
-
-    .preview-icon {
-        width: 28px;
-        height: 28px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-    }
-
-    .preview-icon :global(svg) {
-        width: 24px;
-        height: 24px;
-    }
-
-    .preview-info {
-        flex: 1;
-        min-width: 0;
-    }
-
-    .preview-name {
-        font-size: 15px;
-        font-weight: 600;
-        margin-bottom: 4px;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        flex-wrap: wrap;
-    }
-
-    .badge {
-        font-size: 10px;
-        padding: 2px 6px;
-        border-radius: 8px;
-        font-weight: 500;
-    }
-
-    .badge-modified {
-        background: var(--b3-theme-primary-lighter);
-        color: var(--b3-theme-primary);
-    }
-
-    .badge-custom {
-        background: var(--b3-theme-secondary-lighter);
-        color: var(--b3-theme-secondary);
-    }
-
-    .badge-hidden {
-        background: var(--b3-theme-surface);
-        color: var(--b3-theme-on-surface);
-        border: 1px solid var(--b3-border-color);
-    }
-
-    .preview-commands {
-        display: flex;
-        gap: 6px;
-        flex-wrap: wrap;
-    }
-
-    .preview-commands code {
-        padding: 2px 6px;
-        background: var(--b3-theme-surface);
-        border-radius: 3px;
-        font-size: 11px;
-    }
-
-    .preview-actions {
-        display: flex;
-        gap: 4px;
-        flex-shrink: 0;
-    }
-
-    .icon-btn {
-        width: 28px;
-        height: 28px;
-        border: 1px solid var(--b3-border-color);
-        border-radius: 4px;
-        background: var(--b3-theme-surface);
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 0;
-    }
-
-    .icon-btn:hover {
-        background: var(--b3-theme-primary-lighter);
-        border-color: var(--b3-theme-primary);
-    }
-
-    .icon-btn.delete-btn:hover {
-        background: var(--b3-theme-error-lighter);
-        border-color: var(--b3-theme-error);
-        color: var(--b3-theme-error);
-    }
-
-    .icon-btn svg {
-        width: 14px;
-        height: 14px;
-    }
-
-    .preview-demo {
-        border: 1px solid #e5e7eb;
-        border-left: 4px solid;
-        border-radius: 4px;
-        padding: 12px;
-    }
-
-    .demo-title {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-weight: 600;
-        font-size: 13px;
-        margin-bottom: 6px;
-    }
-
-    .demo-title :global(svg) {
-        width: 16px;
-        height: 16px;
-    }
-
-    .demo-content {
-        font-size: 12px;
-        color: var(--b3-theme-on-background);
-    }
 </style>
 
