@@ -80,14 +80,19 @@
         const isDefaultType = DEFAULT_CALLOUT_TYPES.some(t => t.type === type.type);
         
         if (isDefaultType) {
-            showMessage('无法删除预设类型，但可以重置它', 3000, 'error');
-            return;
-        }
-
-        if (confirm(`确定要删除 "${type.displayName}" 吗？`)) {
-            config = ConfigManager.deleteCustomType(config, type.type);
-            await saveConfig();
-            showMessage('删除成功', 2000, 'info');
+            // 预设类型：隐藏
+            if (confirm(`确定要隐藏预设类型 "${type.displayName}" 吗？\n（可以通过"整体重置"恢复）`)) {
+                config = ConfigManager.hideDefaultType(config, type.type);
+                await saveConfig();
+                showMessage('已隐藏', 2000, 'info');
+            }
+        } else {
+            // 自定义类型：删除
+            if (confirm(`确定要删除 "${type.displayName}" 吗？`)) {
+                config = ConfigManager.deleteCustomType(config, type.type);
+                await saveConfig();
+                showMessage('删除成功', 2000, 'info');
+            }
         }
     }
 
@@ -109,6 +114,14 @@
     function refreshAll() {
         calloutManager.refresh();
         showMessage('已刷新所有 Callout', 2000, 'info');
+    }
+
+    async function handleResetAll() {
+        if (confirm('确定要重置所有配置吗？\n\n这将：\n• 恢复所有预设类型\n• 删除所有自定义类型\n• 清除所有修改记录\n\n此操作不可撤销！')) {
+            config = ConfigManager.resetAll();
+            await saveConfig();
+            showMessage('已重置所有配置', 2000, 'info');
+        }
     }
 
     function isModified(type: CalloutTypeConfig): boolean {
@@ -133,6 +146,10 @@
         <div class="settings-header">
             <h2>Callout 类型管理</h2>
             <div class="header-actions">
+                <button class="b3-button b3-button--text" on:click={handleResetAll} style="color: var(--b3-theme-error);">
+                    <svg class="b3-button__icon"><use xlink:href="#iconUndo"></use></svg>
+                    整体重置
+                </button>
                 <button class="b3-button b3-button--outline" on:click={refreshAll}>
                     <svg class="b3-button__icon"><use xlink:href="#iconRefresh"></use></svg>
                     刷新
@@ -145,8 +162,8 @@
         </div>
 
         <div class="settings-description">
-            <p>💡 你可以新建自定义 Callout 类型，或修改预设类型的样式。</p>
-            <p>📝 当前共有 <strong>{allTypes.length}</strong> 个类型（{DEFAULT_CALLOUT_TYPES.length} 个预设 + {config.customTypes.length} 个自定义）</p>
+            <p>💡 你可以新建自定义 Callout 类型，修改预设类型的样式，或隐藏不需要的类型。</p>
+            <p>📝 当前共有 <strong>{allTypes.length}</strong> 个可用类型（{ConfigManager.getVisibleDefaultTypesCount(config)} 个预设 + {config.customTypes.length} 个自定义{config.hiddenDefaults.size > 0 ? `，${config.hiddenDefaults.size} 个已隐藏` : ''}）</p>
         </div>
 
         <div class="types-list">
@@ -178,15 +195,13 @@
                                 <svg><use xlink:href="#iconEdit"></use></svg>
                             </button>
                             {#if isModified(calloutType)}
-                                <button class="action-btn" on:click={() => handleReset(calloutType)} title="重置">
+                                <button class="action-btn" on:click={() => handleReset(calloutType)} title="重置为默认">
                                     <svg><use xlink:href="#iconUndo"></use></svg>
                                 </button>
                             {/if}
-                            {#if isCustom(calloutType)}
-                                <button class="action-btn action-delete" on:click={() => handleDelete(calloutType)} title="删除">
-                                    <svg><use xlink:href="#iconTrashcan"></use></svg>
-                                </button>
-                            {/if}
+                            <button class="action-btn action-delete" on:click={() => handleDelete(calloutType)} title={isCustom(calloutType) ? '删除' : '隐藏'}>
+                                <svg><use xlink:href={isCustom(calloutType) ? '#iconTrashcan' : '#iconEyeoff'}></use></svg>
+                            </button>
                         </div>
                     </div>
 

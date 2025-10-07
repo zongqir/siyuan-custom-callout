@@ -8,6 +8,7 @@ export interface CalloutConfig {
     version: string;
     customTypes: CalloutTypeConfig[];
     modifiedDefaults: Map<string, Partial<CalloutTypeConfig>>;
+    hiddenDefaults: Set<string>; // 隐藏的预设类型ID
 }
 
 /**
@@ -30,7 +31,8 @@ export class ConfigManager {
             return {
                 version: data.version || this.CONFIG_VERSION,
                 customTypes: data.customTypes || [],
-                modifiedDefaults: new Map(Object.entries(data.modifiedDefaults || {}))
+                modifiedDefaults: new Map(Object.entries(data.modifiedDefaults || {})),
+                hiddenDefaults: new Set(data.hiddenDefaults || [])
             };
         } catch (error) {
             console.error('[Callout Config] Error loading config:', error);
@@ -46,7 +48,8 @@ export class ConfigManager {
             const data = {
                 version: config.version,
                 customTypes: config.customTypes,
-                modifiedDefaults: Object.fromEntries(config.modifiedDefaults)
+                modifiedDefaults: Object.fromEntries(config.modifiedDefaults),
+                hiddenDefaults: Array.from(config.hiddenDefaults)
             };
             await plugin.saveData(this.STORAGE_KEY, data);
         } catch (error) {
@@ -62,23 +65,26 @@ export class ConfigManager {
         return {
             version: this.CONFIG_VERSION,
             customTypes: [],
-            modifiedDefaults: new Map()
+            modifiedDefaults: new Map(),
+            hiddenDefaults: new Set()
         };
     }
 
     /**
-     * 获取所有 Callout 类型（合并默认和自定义）
+     * 获取所有 Callout 类型（合并默认和自定义，排除隐藏的）
      */
     static getAllTypes(config: CalloutConfig): CalloutTypeConfig[] {
         const types: CalloutTypeConfig[] = [];
 
-        // 添加修改后的默认类型
+        // 添加修改后的默认类型（排除隐藏的）
         DEFAULT_CALLOUT_TYPES.forEach(defaultType => {
-            const modifications = config.modifiedDefaults.get(defaultType.type);
-            if (modifications) {
-                types.push({ ...defaultType, ...modifications });
-            } else {
-                types.push(defaultType);
+            if (!config.hiddenDefaults.has(defaultType.type)) {
+                const modifications = config.modifiedDefaults.get(defaultType.type);
+                if (modifications) {
+                    types.push({ ...defaultType, ...modifications });
+                } else {
+                    types.push(defaultType);
+                }
             }
         });
 
@@ -165,6 +171,44 @@ export class ConfigManager {
             t.type !== excludeTypeId && 
             (t.command === command || t.zhCommand === command)
         );
+    }
+
+    /**
+     * 隐藏默认类型
+     */
+    static hideDefaultType(config: CalloutConfig, typeId: string): CalloutConfig {
+        const newHiddenDefaults = new Set(config.hiddenDefaults);
+        newHiddenDefaults.add(typeId);
+        return {
+            ...config,
+            hiddenDefaults: newHiddenDefaults
+        };
+    }
+
+    /**
+     * 显示默认类型
+     */
+    static showDefaultType(config: CalloutConfig, typeId: string): CalloutConfig {
+        const newHiddenDefaults = new Set(config.hiddenDefaults);
+        newHiddenDefaults.delete(typeId);
+        return {
+            ...config,
+            hiddenDefaults: newHiddenDefaults
+        };
+    }
+
+    /**
+     * 重置所有配置（恢复默认）
+     */
+    static resetAll(): CalloutConfig {
+        return this.getDefaultConfig();
+    }
+
+    /**
+     * 获取可见的默认类型数量
+     */
+    static getVisibleDefaultTypesCount(config: CalloutConfig): number {
+        return DEFAULT_CALLOUT_TYPES.length - config.hiddenDefaults.size;
     }
 }
 
