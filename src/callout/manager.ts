@@ -29,6 +29,7 @@ export class CalloutManager {
         const availableTypes = ConfigManager.getAvailableTypes(config); // 只使用可用的类型（排除隐藏的）
         this.processor.updateTypes(availableTypes);
         this.menu.updateTypes(availableTypes);
+        this.menu.updateGridColumns(config.gridColumns || 3);
     }
 
     /**
@@ -41,6 +42,7 @@ export class CalloutManager {
             const availableTypes = ConfigManager.getAvailableTypes(this.currentConfig); // 只使用可用的类型（排除隐藏的）
             this.processor.updateTypes(availableTypes);
             this.menu.updateTypes(availableTypes);
+            this.menu.updateGridColumns(this.currentConfig.gridColumns || 3);
         }
 
         // 注入样式

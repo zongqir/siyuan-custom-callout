@@ -10,6 +10,7 @@ export interface CalloutConfig {
     modifiedDefaults: Map<string, Partial<CalloutTypeConfig>>;
     hiddenDefaults: Set<string>; // 隐藏的预设类型ID（在命令菜单中不显示）
     typeOrder: string[]; // 类型显示顺序（类型ID列表）
+    gridColumns: number; // 网格列数（2/3/4）
 }
 
 /**
@@ -34,7 +35,8 @@ export class ConfigManager {
                 customTypes: data.customTypes || [],
                 modifiedDefaults: new Map(Object.entries(data.modifiedDefaults || {})),
                 hiddenDefaults: new Set(data.hiddenDefaults || []),
-                typeOrder: data.typeOrder || []
+                typeOrder: data.typeOrder || [],
+                gridColumns: data.gridColumns || 3
             };
         } catch (error) {
             console.error('[Callout Config] Error loading config:', error);
@@ -52,7 +54,8 @@ export class ConfigManager {
                 customTypes: config.customTypes,
                 modifiedDefaults: Object.fromEntries(config.modifiedDefaults),
                 hiddenDefaults: Array.from(config.hiddenDefaults),
-                typeOrder: config.typeOrder
+                typeOrder: config.typeOrder,
+                gridColumns: config.gridColumns
             };
             await plugin.saveData(this.STORAGE_KEY, data);
         } catch (error) {
@@ -70,7 +73,8 @@ export class ConfigManager {
             customTypes: [],
             modifiedDefaults: new Map(),
             hiddenDefaults: new Set(),
-            typeOrder: []
+            typeOrder: [],
+            gridColumns: 3
         };
     }
 
@@ -232,8 +236,12 @@ export class ConfigManager {
     /**
      * 重置所有配置（恢复默认）
      */
-    static resetAll(): CalloutConfig {
-        return this.getDefaultConfig();
+    static resetAll(preserveGridColumns: boolean = false, currentConfig?: CalloutConfig): CalloutConfig {
+        const defaultConfig = this.getDefaultConfig();
+        if (preserveGridColumns && currentConfig) {
+            defaultConfig.gridColumns = currentConfig.gridColumns;
+        }
+        return defaultConfig;
     }
 
     /**

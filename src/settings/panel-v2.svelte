@@ -17,6 +17,14 @@
     let editingType: CalloutTypeConfig | null = null;
     let isNewType = false;
     let loading = true;
+    let draggedIndex: number | null = null;
+    let dragOverIndex: number | null = null;
+    let gridColumns: number = 3; // 可选：2, 3, 4
+    
+    // 监听列数变化并保存
+    $: if (config && gridColumns !== config.gridColumns) {
+        handleGridColumnsChange(gridColumns);
+    }
 
     onMount(async () => {
         await loadConfig();
@@ -26,6 +34,13 @@
     async function loadConfig() {
         config = await ConfigManager.load(plugin);
         allTypes = ConfigManager.getAllTypes(config);
+        gridColumns = config.gridColumns || 3;
+    }
+    
+    async function handleGridColumnsChange(newColumns: number) {
+        if (!config) return;
+        config = { ...config, gridColumns: newColumns };
+        await saveConfig();
     }
 
     async function saveConfig() {
@@ -104,53 +119,60 @@
     }
 
     async function handleResetAll() {
-        if (confirm('确定要重置所有配置吗？\n\n这将：\n• 恢复所有预设类型\n• 删除所有自定义类型\n• 清除所有修改记录\n\n此操作不可撤销！')) {
-            config = ConfigManager.resetAll();
+        if (confirm('确定要重置所有配置吗？\n\n这将：\n• 恢复所有预设类型\n• 删除所有自定义类型\n• 清除所有修改记录\n• 保留网格列数设置\n\n此操作不可撤销！')) {
+            config = ConfigManager.resetAll(true, config);
             await saveConfig();
             showMessage('已重置所有配置', 2000, 'info');
         }
     }
 
-    async function moveUp(index: number) {
-        if (index <= 0) return;
-        const newTypes = [...allTypes];
-        [newTypes[index - 1], newTypes[index]] = [newTypes[index], newTypes[index - 1]];
-        const newOrder = newTypes.map(t => t.type);
-        config = ConfigManager.updateTypeOrder(config, newOrder);
-        await saveConfig();
+    // 拖拽相关函数
+    function handleDragStart(event: DragEvent, index: number) {
+        draggedIndex = index;
+        if (event.dataTransfer) {
+            event.dataTransfer.effectAllowed = 'move';
+            event.dataTransfer.setData('text/plain', index.toString());
+        }
     }
 
-    async function moveDown(index: number) {
-        if (index >= allTypes.length - 1) return;
-        const newTypes = [...allTypes];
-        [newTypes[index], newTypes[index + 1]] = [newTypes[index + 1], newTypes[index]];
-        const newOrder = newTypes.map(t => t.type);
-        config = ConfigManager.updateTypeOrder(config, newOrder);
-        await saveConfig();
+    function handleDragOver(event: DragEvent, index: number) {
+        event.preventDefault();
+        if (event.dataTransfer) {
+            event.dataTransfer.dropEffect = 'move';
+        }
+        dragOverIndex = index;
     }
 
-    async function moveLeft(index: number) {
-        const gridCols = 2;
-        const targetIndex = index - gridCols;
-        if (targetIndex < 0) return;
+    async function handleDrop(event: DragEvent, dropIndex: number) {
+        event.preventDefault();
         
+        if (draggedIndex === null || draggedIndex === dropIndex) {
+            draggedIndex = null;
+            dragOverIndex = null;
+            return;
+        }
+
+        // 重新排序
         const newTypes = [...allTypes];
-        [newTypes[index], newTypes[targetIndex]] = [newTypes[targetIndex], newTypes[index]];
+        const [draggedItem] = newTypes.splice(draggedIndex, 1);
+        newTypes.splice(dropIndex, 0, draggedItem);
+
+        // 更新顺序
         const newOrder = newTypes.map(t => t.type);
         config = ConfigManager.updateTypeOrder(config, newOrder);
         await saveConfig();
+
+        draggedIndex = null;
+        dragOverIndex = null;
     }
 
-    async function moveRight(index: number) {
-        const gridCols = 2;
-        const targetIndex = index + gridCols;
-        if (targetIndex >= allTypes.length) return;
-        
-        const newTypes = [...allTypes];
-        [newTypes[index], newTypes[targetIndex]] = [newTypes[targetIndex], newTypes[index]];
-        const newOrder = newTypes.map(t => t.type);
-        config = ConfigManager.updateTypeOrder(config, newOrder);
-        await saveConfig();
+    function handleDragEnd() {
+        draggedIndex = null;
+        dragOverIndex = null;
+    }
+
+    function handleDragLeave() {
+        dragOverIndex = null;
     }
 
     function isModified(type: CalloutTypeConfig): boolean {
@@ -179,6 +201,12 @@
         <div class="settings-header">
             <h2>Callout 类型管理</h2>
             <div class="header-actions">
+                <div class="column-selector">
+                    <span style="font-size: 13px; color: var(--b3-theme-on-surface);">列数：</span>
+                    <button class="col-btn" class:active={gridColumns === 2} on:click={() => gridColumns = 2}>2</button>
+                    <button class="col-btn" class:active={gridColumns === 3} on:click={() => gridColumns = 3}>3</button>
+                    <button class="col-btn" class:active={gridColumns === 4} on:click={() => gridColumns = 4}>4</button>
+                </div>
                 <button class="b3-button b3-button--text" on:click={handleResetAll} style="color: var(--b3-theme-error);">
                     <svg class="b3-button__icon"><use xlink:href="#iconUndo"></use></svg>
                     整体重置
@@ -190,22 +218,36 @@
         <div class="menu-section">
             <div class="section-header">
                 <h3>📋 命令菜单预览</h3>
-                <p>这里显示输入 <code>&gt;</code> 时弹出的菜单，可直接调整顺序和隐藏状态</p>
+                <p>拖拽卡片调整顺序，点击眼睛图标切换隐藏（输入 <code>&gt;</code> 时显示此菜单）</p>
             </div>
 
-            <div class="menu-grid">
+            <div class="menu-grid" style="grid-template-columns: repeat({gridColumns}, 1fr);">
                 <!-- 原生样式选项 -->
                 <div class="menu-item none-item">
-                    <div class="menu-item-icon">
-                        <svg width="20" height="20" viewBox="0 0 24 24"><path d="M18.364 5.636L5.636 18.364M5.636 5.636l12.728 12.728" stroke="#9ca3af" stroke-width="2" stroke-linecap="round"/></svg>
+                    <div class="menu-item-content" style="background: linear-gradient(to bottom, #f9fafb, #ffffff); border-left-color: #9ca3af;">
+                        <div class="menu-item-icon" style="color: #6b7280;">
+                            <svg width="20" height="20" viewBox="0 0 24 24"><path d="M18.364 5.636L5.636 18.364M5.636 5.636l12.728 12.728" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                        </div>
+                        <div class="menu-item-name" style="color: #6b7280;">原生样式</div>
                     </div>
-                    <div class="menu-item-name">原生样式</div>
                 </div>
 
                 <!-- 所有类型 -->
                 {#each allTypes as calloutType, index}
-                    <div class="menu-item" class:hidden={isHidden(calloutType)}>
+                    <div 
+                        class="menu-item" 
+                        class:hidden={isHidden(calloutType)}
+                        class:dragging={draggedIndex === index}
+                        class:drag-over={dragOverIndex === index && draggedIndex !== index}
+                        draggable="true"
+                        on:dragstart={(e) => handleDragStart(e, index)}
+                        on:dragover={(e) => handleDragOver(e, index)}
+                        on:dragleave={handleDragLeave}
+                        on:drop={(e) => handleDrop(e, index)}
+                        on:dragend={handleDragEnd}
+                    >
                         <div class="menu-item-content" style="background: {calloutType.bgGradient}; border-left-color: {calloutType.borderColor};">
+                            <div class="drag-indicator">⋮⋮</div>
                             <div class="menu-item-icon" style="color: {calloutType.color};">
                                 {@html calloutType.icon}
                             </div>
@@ -215,22 +257,8 @@
                         </div>
                         
                         <div class="menu-item-controls">
-                            <div class="arrow-controls">
-                                <button class="arrow-btn" on:click={() => moveUp(index)} disabled={index < 1} title="向上">
-                                    <svg width="12" height="12" viewBox="0 0 12 12"><path d="M6 2L6 10M6 2L2 6M6 2L10 6" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>
-                                </button>
-                                <button class="arrow-btn" on:click={() => moveLeft(index)} disabled={index < 2} title="向左">
-                                    <svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 6L10 6M2 6L6 2M2 6L6 10" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>
-                                </button>
-                                <button class="arrow-btn" on:click={() => moveRight(index)} disabled={index >= allTypes.length - 2} title="向右">
-                                    <svg width="12" height="12" viewBox="0 0 12 12"><path d="M10 6L2 6M10 6L6 2M10 6L6 10" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>
-                                </button>
-                                <button class="arrow-btn" on:click={() => moveDown(index)} disabled={index >= allTypes.length - 1} title="向下">
-                                    <svg width="12" height="12" viewBox="0 0 12 12"><path d="M6 10L6 2M6 10L2 6M6 10L10 6" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>
-                                </button>
-                            </div>
                             <button class="hide-btn" on:click={() => handleToggleHide(calloutType)} title={isHidden(calloutType) ? '显示' : '隐藏'}>
-                                <svg><use xlink:href={isHidden(calloutType) ? '#iconEye' : '#iconEyeoff'}></use></svg>
+                                <svg width="16" height="16"><use xlink:href={isHidden(calloutType) ? '#iconEye' : '#iconEyeoff'}></use></svg>
                             </button>
                         </div>
                     </div>
@@ -238,10 +266,12 @@
 
                 <!-- 添加新类型按钮 -->
                 <div class="menu-item add-item" on:click={handleAddNew}>
-                    <div class="add-icon">
-                        <svg width="32" height="32" viewBox="0 0 24 24"><path d="M12 5v14m-7-7h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                    <div class="add-content">
+                        <div class="add-icon">
+                            <svg width="28" height="28" viewBox="0 0 24 24"><path d="M12 5v14m-7-7h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                        </div>
+                        <div class="add-text">新建类型</div>
                     </div>
-                    <div class="add-text">新建类型</div>
                 </div>
             </div>
         </div>
@@ -353,6 +383,45 @@
         font-weight: 600;
     }
 
+    .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .column-selector {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 4px 8px;
+        background: var(--b3-theme-surface);
+        border-radius: 6px;
+        border: 1px solid var(--b3-border-color);
+    }
+
+    .col-btn {
+        width: 32px;
+        height: 28px;
+        border: 1px solid var(--b3-border-color);
+        background: var(--b3-theme-background);
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+
+    .col-btn:hover {
+        border-color: var(--b3-theme-primary);
+        color: var(--b3-theme-primary);
+    }
+
+    .col-btn.active {
+        background: var(--b3-theme-primary);
+        color: white;
+        border-color: var(--b3-theme-primary);
+    }
+
     /* 菜单模拟区域 */
     .menu-section {
         margin-bottom: 32px;
@@ -383,7 +452,6 @@
 
     .menu-grid {
         display: grid;
-        grid-template-columns: repeat(2, 1fr);
         gap: 12px;
         padding: 16px;
         background: var(--b3-theme-surface);
@@ -394,8 +462,13 @@
     .menu-item {
         position: relative;
         border-radius: 6px;
-        overflow: hidden;
+        overflow: visible;
         transition: all 0.2s;
+        cursor: grab;
+    }
+
+    .menu-item:not(.none-item):not(.add-item):active {
+        cursor: grabbing;
     }
 
     .menu-item:not(.none-item):not(.add-item):hover {
@@ -404,18 +477,55 @@
     }
 
     .menu-item.hidden {
-        opacity: 0.4;
+        opacity: 0.45;
+    }
+
+    .menu-item.dragging {
+        opacity: 0.5;
+        transform: scale(0.95);
+    }
+
+    .menu-item.drag-over {
+        border: 2px dashed var(--b3-theme-primary);
+        background: var(--b3-theme-primary-lighter);
+    }
+
+    .menu-item.none-item,
+    .menu-item.add-item {
+        cursor: default;
     }
 
     .menu-item-content {
-        padding: 16px;
+        padding: 14px 16px;
         border: 1px solid #e5e7eb;
         border-left: 4px solid;
         border-radius: 6px;
         display: flex;
         align-items: center;
         gap: 12px;
-        min-height: 60px;
+        min-height: 64px;
+        position: relative;
+    }
+
+    .drag-indicator {
+        position: absolute;
+        left: 6px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 16px;
+        color: var(--b3-theme-on-surface);
+        opacity: 0.3;
+        line-height: 1;
+        letter-spacing: -2px;
+        cursor: grab;
+    }
+
+    .menu-item:not(.none-item):not(.add-item):hover .drag-indicator {
+        opacity: 0.6;
+    }
+
+    .menu-item:not(.none-item):not(.add-item):active .drag-indicator {
+        cursor: grabbing;
     }
 
     .menu-item-icon {
@@ -440,76 +550,38 @@
 
     .menu-item-controls {
         position: absolute;
-        top: 4px;
-        right: 4px;
+        top: 6px;
+        right: 6px;
         display: flex;
         gap: 4px;
         opacity: 0;
         transition: opacity 0.2s;
+        z-index: 10;
     }
 
     .menu-item:hover .menu-item-controls {
         opacity: 1;
     }
 
-    .arrow-controls {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        grid-template-rows: repeat(2, 1fr);
-        gap: 2px;
-        background: var(--b3-theme-background);
-        border-radius: 4px;
-        padding: 2px;
-    }
-
-    .arrow-btn {
-        width: 20px;
-        height: 20px;
-        border: none;
-        background: var(--b3-theme-surface);
-        border-radius: 2px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 0;
-        color: var(--b3-theme-on-surface);
-    }
-
-    .arrow-btn:hover:not(:disabled) {
-        background: var(--b3-theme-primary);
-        color: white;
-    }
-
-    .arrow-btn:disabled {
-        opacity: 0.3;
-        cursor: not-allowed;
-    }
-
-    .arrow-btn:nth-child(1) {
-        grid-column: span 2;
-    }
-
-    .arrow-btn:nth-child(4) {
-        grid-column: span 2;
-    }
-
     .hide-btn {
-        width: 28px;
-        height: 42px;
+        width: 32px;
+        height: 32px;
         border: none;
-        background: var(--b3-theme-background);
-        border-radius: 4px;
+        background: rgba(255, 255, 255, 0.95);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        border-radius: 6px;
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
         padding: 0;
+        transition: all 0.2s;
     }
 
     .hide-btn:hover {
         background: var(--b3-theme-primary);
         color: white;
+        transform: scale(1.1);
     }
 
     .hide-btn svg {
@@ -517,23 +589,26 @@
         height: 16px;
     }
 
-    /* 原生样式和添加按钮 */
-    .none-item, .add-item {
-        border: 2px dashed var(--b3-border-color);
-        border-radius: 6px;
-        padding: 16px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        min-height: 80px;
-        background: var(--b3-theme-background-light);
+    /* 原生样式 */
+    .none-item {
+        cursor: default !important;
     }
 
+    .none-item .menu-item-content {
+        opacity: 0.9;
+    }
+
+    /* 添加按钮 */
     .add-item {
-        cursor: pointer;
+        border: 2px dashed var(--b3-border-color);
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 64px;
+        cursor: pointer !important;
         transition: all 0.2s;
+        background: var(--b3-theme-background-light);
     }
 
     .add-item:hover {
@@ -542,12 +617,22 @@
         transform: translateY(-2px);
     }
 
+    .add-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+    }
+
     .add-icon {
         color: var(--b3-theme-primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
     .add-text {
-        font-size: 14px;
+        font-size: 13px;
         font-weight: 600;
         color: var(--b3-theme-primary);
     }

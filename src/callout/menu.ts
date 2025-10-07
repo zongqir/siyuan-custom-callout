@@ -12,6 +12,7 @@ export class CalloutMenu {
     private menuItems: HTMLElement[] = [];
     private processor: CalloutProcessor;
     private calloutTypes: CalloutTypeConfig[] = [...DEFAULT_CALLOUT_TYPES];
+    private gridColumns: number = 3; // 默认3列
 
     constructor(processor: CalloutProcessor) {
         this.processor = processor;
@@ -23,6 +24,13 @@ export class CalloutMenu {
      */
     updateTypes(types: CalloutTypeConfig[]) {
         this.calloutTypes = types;
+    }
+
+    /**
+     * 更新网格列数
+     */
+    updateGridColumns(columns: number) {
+        this.gridColumns = columns;
     }
 
     /**
@@ -152,7 +160,7 @@ export class CalloutMenu {
         const gridContainer = document.createElement('div');
         gridContainer.style.cssText = `
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(${this.gridColumns}, 1fr);
             gap: 4px;
             padding: 8px;
         `;
