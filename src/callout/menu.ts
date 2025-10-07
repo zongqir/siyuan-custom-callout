@@ -13,6 +13,12 @@ export class CalloutMenu {
     private processor: CalloutProcessor;
     private calloutTypes: CalloutTypeConfig[] = [...DEFAULT_CALLOUT_TYPES];
     private gridColumns: number = 3; // 默认3列
+    
+    // 键盘过滤相关
+    private filterMode: boolean = false;
+    private filterText: string = '';
+    private filterInput: HTMLElement | null = null;
+    private allCalloutTypes: CalloutTypeConfig[] = [...DEFAULT_CALLOUT_TYPES];
 
     constructor(processor: CalloutProcessor) {
         this.processor = processor;
@@ -24,6 +30,7 @@ export class CalloutMenu {
      */
     updateTypes(types: CalloutTypeConfig[]) {
         this.calloutTypes = types;
+        this.allCalloutTypes = types;
     }
 
     /**
@@ -74,6 +81,11 @@ export class CalloutMenu {
         // 标题
         const header = this.createHeader(isEdit);
         menu.appendChild(header);
+
+        // 过滤输入框
+        const filterInputElement = this.createFilterInput();
+        menu.appendChild(filterInputElement);
+        this.filterInput = filterInputElement;
 
         // 菜单项网格
         const gridContainer = this.createMenuGrid(isEdit);
@@ -151,6 +163,78 @@ export class CalloutMenu {
         const headerText = isEdit ? '切换 Callout 类型' : 'Callout 命令菜单';
         header.innerHTML = `<div>${headerText}</div>`;
         return header;
+    }
+
+    /**
+     * 创建过滤输入框
+     */
+    private createFilterInput(): HTMLElement {
+        const container = document.createElement('div');
+        container.style.cssText = `
+            padding: 8px 16px 10px;
+            background: linear-gradient(to bottom, #fafbfc, #f6f8fa);
+            border-bottom: 1px solid #e1e4e8;
+            display: none;
+        `;
+
+        const inputWrapper = document.createElement('div');
+        inputWrapper.style.cssText = `
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            background: white;
+            border-radius: 8px;
+            border: 1.5px solid #3b82f6;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
+            transition: all 0.2s ease;
+        `;
+
+        // 搜索图标 (SVG)
+        const icon = document.createElement('span');
+        icon.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="11" cy="11" r="7" stroke="#3b82f6" stroke-width="2"/>
+            <path d="M20 20L16.65 16.65" stroke="#3b82f6" stroke-width="2" stroke-linecap="round"/>
+        </svg>`;
+        icon.style.cssText = `
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        `;
+
+        // 过滤文本显示
+        const text = document.createElement('span');
+        text.style.cssText = `
+            font-size: 14px;
+            font-weight: 500;
+            color: #1f2937;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace;
+            letter-spacing: 0.3px;
+        `;
+        text.textContent = '@';
+
+        // 提示标签
+        const hint = document.createElement('span');
+        hint.style.cssText = `
+            margin-left: auto;
+            font-size: 11px;
+            color: #9ca3af;
+            background: #f3f4f6;
+            padding: 2px 8px;
+            border-radius: 4px;
+        `;
+        hint.textContent = 'ESC 退出';
+
+        inputWrapper.appendChild(icon);
+        inputWrapper.appendChild(text);
+        inputWrapper.appendChild(hint);
+        container.appendChild(inputWrapper);
+
+        // 保存文本元素的引用
+        (container as any)._textElement = text;
+
+        return container;
     }
 
     /**
@@ -249,7 +333,7 @@ export class CalloutMenu {
             color: #9ca3af;
             text-align: center;
         `;
-        footer.innerHTML = '↑↓←→ 导航 • Enter 确认 • ESC 关闭';
+        footer.innerHTML = '↑↓←→ 导航 • Enter 确认 • 字母键 过滤 • ESC 关闭';
         return footer;
     }
 
@@ -259,6 +343,45 @@ export class CalloutMenu {
     private setupMenuKeyboardEvents(menu: HTMLElement) {
         menu.addEventListener('keydown', (e) => {
             const cols = this.gridColumns; // 使用动态列数
+            
+            // 处理 Backspace 键 - 删除过滤字符
+            if (e.key === 'Backspace') {
+                if (this.filterMode && this.filterText.length > 0) {
+                    e.preventDefault();
+                    this.filterText = this.filterText.slice(0, -1);
+                    this.updateFilter();
+                    return;
+                } else if (this.filterMode && this.filterText.length === 0) {
+                    // 退出过滤模式
+                    e.preventDefault();
+                    this.exitFilterMode();
+                    return;
+                }
+            }
+            
+            // 处理字母和数字键 - 激活或更新过滤模式
+            if (e.key.length === 1 && /^[a-zA-Z0-9]$/.test(e.key)) {
+                e.preventDefault();
+                if (!this.filterMode) {
+                    this.enterFilterMode();
+                }
+                this.filterText += e.key.toLowerCase();
+                this.updateFilter();
+                return;
+            }
+            
+            // ESC键 - 退出过滤模式或关闭菜单
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                if (this.filterMode) {
+                    this.exitFilterMode();
+                } else {
+                    this.hideMenu(true);
+                }
+                return;
+            }
+            
+            // 导航键和确认键
             if (e.key === 'ArrowDown') {
                 e.preventDefault();
                 this.selectedMenuIndex = Math.min(this.selectedMenuIndex + cols, this.menuItems.length - 1);
@@ -278,9 +401,6 @@ export class CalloutMenu {
             } else if (e.key === 'Enter') {
                 e.preventDefault();
                 this.selectCurrentMenuItem();
-            } else if (e.key === 'Escape') {
-                e.preventDefault();
-                this.hideMenu(true);
             }
         });
     }
@@ -302,6 +422,116 @@ export class CalloutMenu {
                 }
             });
         });
+    }
+
+    /**
+     * 进入过滤模式
+     */
+    private enterFilterMode() {
+        this.filterMode = true;
+        this.filterText = '';
+        if (this.filterInput) {
+            this.filterInput.style.display = 'block';
+        }
+    }
+
+    /**
+     * 退出过滤模式
+     */
+    private exitFilterMode() {
+        this.filterMode = false;
+        this.filterText = '';
+        if (this.filterInput) {
+            this.filterInput.style.display = 'none';
+            const textElement = (this.filterInput as any)._textElement;
+            if (textElement) {
+                textElement.textContent = '@';
+            }
+        }
+        // 恢复所有类型
+        this.applyFilter([]);
+    }
+
+    /**
+     * 更新过滤
+     */
+    private updateFilter() {
+        if (!this.filterInput) return;
+
+        // 更新显示的过滤文本
+        const textElement = (this.filterInput as any)._textElement;
+        if (textElement) {
+            textElement.textContent = '@' + this.filterText;
+        }
+
+        // 根据过滤文本获取匹配的类型
+        const filtered = this.getFilteredTypes(this.filterText);
+        this.applyFilter(filtered);
+    }
+
+    /**
+     * 获取过滤后的类型
+     */
+    private getFilteredTypes(searchText: string): CalloutTypeConfig[] {
+        if (!searchText) {
+            return [];
+        }
+
+        const search = searchText.toLowerCase();
+        return this.allCalloutTypes.filter(type => {
+            // 去掉命令中的 @ 符号再匹配
+            const commandWithoutAt = type.command.toLowerCase().replace('@', '');
+            const zhCommandWithoutAt = type.zhCommand?.toLowerCase().replace('@', '');
+            
+            const commandMatch = commandWithoutAt.startsWith(search);
+            const zhCommandMatch = zhCommandWithoutAt?.startsWith(search);
+            const displayNameMatch = type.displayName.toLowerCase().includes(search);
+            return commandMatch || zhCommandMatch || displayNameMatch;
+        });
+    }
+
+    /**
+     * 应用过滤
+     */
+    private applyFilter(filteredTypes: CalloutTypeConfig[]) {
+        const isEdit = this.commandMenu?.querySelector('[data-callout-title="true"]') !== null;
+        
+        // 清空现有菜单项
+        const gridContainer = this.commandMenu?.querySelector('div[style*="grid-template-columns"]');
+        if (!gridContainer) return;
+
+        gridContainer.innerHTML = '';
+        this.menuItems = [];
+        this.selectedMenuIndex = 0;
+
+        const typesToShow = filteredTypes.length > 0 ? filteredTypes : this.allCalloutTypes;
+
+        // 如果不在过滤模式，添加"原生样式"选项
+        if (!this.filterMode || filteredTypes.length === 0) {
+            const noneItem = this.createMenuItem({
+                command: 'none',
+                displayName: '原生样式',
+                icon: `<svg width="20" height="20" viewBox="0 0 24 24"><path d="M18.364 5.636L5.636 18.364M5.636 5.636l12.728 12.728" stroke="#9ca3af" stroke-width="2" stroke-linecap="round"/></svg>`,
+                isNone: true
+            }, 0, isEdit);
+            gridContainer.appendChild(noneItem);
+        }
+
+        // 添加过滤后的类型
+        typesToShow.forEach((config, index) => {
+            const adjustedIndex = (this.filterMode && filteredTypes.length > 0) ? index : index + 1;
+            const item = this.createMenuItem({
+                command: config.command,
+                displayName: config.displayName,
+                icon: config.icon,
+                color: config.color,
+                isNone: false
+            }, adjustedIndex, isEdit);
+            gridContainer.appendChild(item);
+        });
+
+        // 更新选中状态
+        this.updateMenuSelection();
     }
 
     /**
@@ -408,7 +638,7 @@ export class CalloutMenu {
     /**
      * 显示菜单
      */
-    showMenu(x: number, y: number, blockQuoteElement: HTMLElement, isEdit: boolean = false, allowToggle: boolean = false) {
+    showMenu(_x: number, _y: number, blockQuoteElement: HTMLElement, isEdit: boolean = false, allowToggle: boolean = false) {
         // 如果允许toggle且菜单已显示，则隐藏菜单
         if (allowToggle && this.isMenuVisible && this.currentTargetBlockQuote === blockQuoteElement) {
             this.hideMenu(true);
@@ -479,6 +709,11 @@ export class CalloutMenu {
         this.currentTargetBlockQuote = null;
         this.selectedMenuIndex = 0;
         this.menuItems = [];
+        
+        // 重置过滤状态
+        this.filterMode = false;
+        this.filterText = '';
+        this.filterInput = null;
 
         if (immediate) {
             this.commandMenu.remove();
