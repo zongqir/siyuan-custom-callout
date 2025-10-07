@@ -986,11 +986,112 @@ export class CalloutMenu {
      * 处理选择Callout
      */
     private handleSelectCallout(command: string, isEdit: boolean) {
-        // console.log('[Callout Menu] 📝 handleSelectCallout:', { command, isEdit });
         if (this.currentTargetBlockQuote) {
+            // 检测是否涉及边注位置切换
+            const isMarginPositionChange = this.detectMarginPositionChange(command, this.currentTargetBlockQuote);
+            
             this.insertCommand(command, this.currentTargetBlockQuote, isEdit);
+            
+            // 如果涉及边注位置切换，执行局部DOM刷新
+            if (isMarginPositionChange) {
+                setTimeout(() => {
+                    this.refreshAdjacentBlockquotes(this.currentTargetBlockQuote!);
+                }, 200);
+            }
         }
         setTimeout(() => this.hideMenu(true), 300);
+    }
+
+    /**
+     * 检测是否涉及边注位置切换
+     */
+    private detectMarginPositionChange(newCommand: string, blockquote: HTMLElement): boolean {
+        // 获取当前的边注位置
+        const currentPosition = blockquote.getAttribute('data-margin-position') || 'normal';
+        
+        // 解析新命令中的位置信息
+        let newPosition = 'normal';
+        const marginMatch = newCommand.match(/\|([^|\]]+)\]/);
+        if (marginMatch) {
+            const positionParam = marginMatch[1].toLowerCase();
+            if (positionParam === 'left' || positionParam === 'right') {
+                newPosition = positionParam;
+            }
+        }
+        
+        // 检测位置是否发生变化
+        const isPositionChange = currentPosition !== newPosition;
+        
+        console.log('[Callout Menu] 🔄 边注位置检测:', {
+            current: currentPosition,
+            new: newPosition,
+            hasChange: isPositionChange
+        });
+        
+        return isPositionChange;
+    }
+
+    /**
+     * 刷新相邻的blockquotes
+     */
+    private refreshAdjacentBlockquotes(targetBlockquote: HTMLElement) {
+        console.log('[Callout Menu] 🔄 开始局部DOM刷新');
+        
+        const elementsToRefresh = this.collectAdjacentElements(targetBlockquote);
+        
+        console.log('[Callout Menu] 🔄 需要刷新的元素数量:', elementsToRefresh.length);
+        
+        // 刷新相邻元素
+        elementsToRefresh.forEach((element, index) => {
+            setTimeout(() => {
+                if (this.isBlockquoteElement(element)) {
+                    console.log('[Callout Menu] 🔄 刷新相邻blockquote:', index + 1);
+                    this.processor.processBlockquote(element);
+                }
+            }, index * 50); // 错开刷新时间，避免并发问题
+        });
+    }
+
+    /**
+     * 收集需要刷新的相邻元素
+     */
+    private collectAdjacentElements(targetBlockquote: HTMLElement): HTMLElement[] {
+        const elements: HTMLElement[] = [];
+        
+        // 收集前面的元素（向上最多2个blockquote）
+        let prevElement = targetBlockquote.previousElementSibling as HTMLElement;
+        let prevCount = 0;
+        while (prevElement && prevCount < 2) {
+            if (this.isBlockquoteElement(prevElement)) {
+                elements.unshift(prevElement); // 添加到前面
+                prevCount++;
+            }
+            prevElement = prevElement.previousElementSibling as HTMLElement;
+        }
+        
+        // 收集后面的元素（向下最多2个blockquote）
+        let nextElement = targetBlockquote.nextElementSibling as HTMLElement;
+        let nextCount = 0;
+        while (nextElement && nextCount < 2) {
+            if (this.isBlockquoteElement(nextElement)) {
+                elements.push(nextElement); // 添加到后面
+                nextCount++;
+            }
+            nextElement = nextElement.nextElementSibling as HTMLElement;
+        }
+        
+        return elements;
+    }
+
+    /**
+     * 判断是否为blockquote元素
+     */
+    private isBlockquoteElement(element: HTMLElement): boolean {
+        return element && (
+            element.tagName === 'BLOCKQUOTE' || 
+            element.classList.contains('bq') ||
+            element.getAttribute('data-type') === 'NodeBlockquote'
+        );
     }
 
     /**
