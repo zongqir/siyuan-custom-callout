@@ -7,4 +7,7 @@ export * from './processor';
 export * from './menu';
 export * from './styles';
 export * from './manager';
+export * from './config';
+export * from './icons';
+export * from './colors';
 

@@ -1,10 +1,11 @@
-import { DEFAULT_CALLOUT_TYPES } from './types';
+import { DEFAULT_CALLOUT_TYPES, CalloutTypeConfig } from './types';
 
 /**
  * 生成Callout样式
  */
-export function generateCalloutStyles(): string {
+export function generateCalloutStyles(customTypes?: CalloutTypeConfig[]): string {
     const styles: string[] = [];
+    const types = customTypes || DEFAULT_CALLOUT_TYPES;
 
     // 通用样式
     styles.push(`
@@ -104,7 +105,7 @@ export function generateCalloutStyles(): string {
 `);
 
     // 为每个Callout类型生成样式
-    DEFAULT_CALLOUT_TYPES.forEach(config => {
+    types.forEach(config => {
         const encodedIcon = encodeURIComponent(config.icon);
 
         styles.push(`

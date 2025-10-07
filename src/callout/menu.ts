@@ -1,4 +1,4 @@
-import { DEFAULT_CALLOUT_TYPES } from './types';
+import { DEFAULT_CALLOUT_TYPES, CalloutTypeConfig } from './types';
 import { CalloutProcessor } from './processor';
 
 /**
@@ -11,10 +11,18 @@ export class CalloutMenu {
     private selectedMenuIndex: number = 0;
     private menuItems: HTMLElement[] = [];
     private processor: CalloutProcessor;
+    private calloutTypes: CalloutTypeConfig[] = [...DEFAULT_CALLOUT_TYPES];
 
     constructor(processor: CalloutProcessor) {
         this.processor = processor;
         this.setupGlobalEventListeners();
+    }
+
+    /**
+     * 更新 Callout 类型（动态配置）
+     */
+    updateTypes(types: CalloutTypeConfig[]) {
+        this.calloutTypes = types;
     }
 
     /**
@@ -159,7 +167,7 @@ export class CalloutMenu {
         gridContainer.appendChild(noneItem);
 
         // 添加所有Callout类型
-        DEFAULT_CALLOUT_TYPES.forEach((config, index) => {
+        this.calloutTypes.forEach((config, index) => {
             const adjustedIndex = index + 1; // 因为 none 占了第 0 位
             const item = this.createMenuItem({
                 command: config.command,

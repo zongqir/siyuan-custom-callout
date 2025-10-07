@@ -27,8 +27,8 @@ export default class CustomCalloutPlugin extends Plugin {
 </symbol>`);
 
         // 初始化Callout管理器
-        this.calloutManager = new CalloutManager();
-        this.calloutManager.initialize();
+        this.calloutManager = new CalloutManager(this);
+        await this.calloutManager.initialize();
 
         console.log("[Custom Callout] Plugin loaded successfully");
         showMessage(this.i18n.name + " 已加载");

@@ -1,6 +1,8 @@
 import { CalloutProcessor } from './processor';
 import { CalloutMenu } from './menu';
 import { generateCalloutStyles } from './styles';
+import type { CalloutConfig } from './config';
+import { ConfigManager } from './config';
 
 /**
  * Callout功能管理器 - 负责协调所有Callout相关功能
@@ -10,16 +12,37 @@ export class CalloutManager {
     private menu: CalloutMenu;
     private observer: MutationObserver | null = null;
     private styleElement: HTMLStyleElement | null = null;
+    private currentConfig: CalloutConfig | null = null;
+    private plugin: any;
 
-    constructor() {
+    constructor(plugin?: any) {
+        this.plugin = plugin;
         this.processor = new CalloutProcessor();
         this.menu = new CalloutMenu(this.processor);
     }
 
     /**
+     * 更新配置
+     */
+    updateConfig(config: CalloutConfig) {
+        this.currentConfig = config;
+        const allTypes = ConfigManager.getAllTypes(config);
+        this.processor.updateTypes(allTypes);
+        this.menu.updateTypes(allTypes);
+    }
+
+    /**
      * 初始化Callout功能
      */
-    initialize() {
+    async initialize() {
+        // 加载配置
+        if (this.plugin) {
+            this.currentConfig = await ConfigManager.load(this.plugin);
+            const allTypes = ConfigManager.getAllTypes(this.currentConfig);
+            this.processor.updateTypes(allTypes);
+            this.menu.updateTypes(allTypes);
+        }
+
         // 注入样式
         this.injectStyles();
 
@@ -39,9 +62,10 @@ export class CalloutManager {
             this.styleElement.remove();
         }
 
+        const types = this.currentConfig ? ConfigManager.getAllTypes(this.currentConfig) : undefined;
         this.styleElement = document.createElement('style');
         this.styleElement.id = 'custom-callout-styles';
-        this.styleElement.textContent = generateCalloutStyles();
+        this.styleElement.textContent = generateCalloutStyles(types);
         document.head.appendChild(this.styleElement);
     }
 
@@ -206,6 +230,7 @@ export class CalloutManager {
      * 刷新所有Callout
      */
     refresh() {
+        this.injectStyles();
         this.processor.processAllBlockquotes();
     }
 

@@ -219,7 +219,7 @@
 {#if showEditDialog}
     <EditDialog
         config={editingType}
-        isNew={isNewType}
+        {isNewType}
         onSave={handleSave}
         onCancel={() => showEditDialog = false}
         existingCommands={getExistingCommands()}

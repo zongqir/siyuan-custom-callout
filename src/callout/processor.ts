@@ -33,6 +33,19 @@ export class CalloutProcessor {
     }
 
     /**
+     * 更新 Callout 类型（动态配置）
+     */
+    updateTypes(types: CalloutTypeConfig[]) {
+        this.calloutTypes.clear();
+        types.forEach(config => {
+            this.calloutTypes.set(config.command, config);
+            if (config.zhCommand) {
+                this.calloutTypes.set(config.zhCommand, config);
+            }
+        });
+    }
+
+    /**
      * 处理单个引用块
      */
     processBlockquote(blockquote: HTMLElement): boolean {
