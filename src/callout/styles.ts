@@ -114,11 +114,16 @@ export function generateCalloutStyles(customTypes?: CalloutTypeConfig[], themeId
     // 为每个Callout类型生成样式
     types.forEach(config => {
         const encodedIcon = encodeURIComponent(config.icon);
+        
+        // 根据主题决定背景样式：纯色或渐变
+        const background = theme.backgroundStyle === 'solid' 
+            ? `rgba(${hexToRgb(config.color)}, 0.08)` // 纯色：使用主题色的8%透明度
+            : config.bgGradient; // 渐变：使用预设渐变
 
         styles.push(`
 /* ${config.displayName} - ${config.color} */
 .protyle-wysiwyg .bq[custom-callout="${config.type}"] {
-    background: ${config.bgGradient} !important;
+    background: ${background} !important;
     border: var(--callout-border-width) solid #e5e7eb !important;
     border-left: var(--callout-left-border-width) solid ${config.borderColor} !important;
     border-radius: var(--callout-border-radius) !important;
@@ -162,6 +167,16 @@ export function generateCalloutStyles(customTypes?: CalloutTypeConfig[], themeId
     });
 
     return styles.join('\n');
+}
+
+/**
+ * 将十六进制颜色转换为RGB
+ */
+function hexToRgb(hex: string): string {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `${r}, ${g}, ${b}`;
 }
 
 /**

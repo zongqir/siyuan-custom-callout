@@ -38,6 +38,8 @@ export const neumorphismTheme: ThemeStyle = {
     boxShadow: '8px 8px 16px rgba(0, 0, 0, 0.1), -8px -8px 16px rgba(255, 255, 255, 0.9)',
     backgroundOpacity: 1,
     hoverTransform: 'none',
-    transition: 'all 0.3s ease'
+    transition: 'all 0.3s ease',
+    
+    backgroundStyle: 'solid' as const
 };
 

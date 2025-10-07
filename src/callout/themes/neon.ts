@@ -38,6 +38,8 @@ export const neonTheme: ThemeStyle = {
     boxShadow: '0 0 20px rgba(var(--callout-color-rgb), 0.3)',
     backgroundOpacity: 0.95,
     hoverTransform: 'scale(1.02)',
-    transition: 'all 0.2s ease'
+    transition: 'all 0.2s ease',
+    
+    backgroundStyle: 'gradient' as const
 };
 

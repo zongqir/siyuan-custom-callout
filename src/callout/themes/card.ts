@@ -38,6 +38,8 @@ export const cardTheme: ThemeStyle = {
     boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06)',
     backgroundOpacity: 1,
     hoverTransform: 'translateY(-2px)',
-    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+    
+    backgroundStyle: 'gradient' as const
 };
 

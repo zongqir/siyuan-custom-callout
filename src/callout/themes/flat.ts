@@ -38,6 +38,8 @@ export const flatTheme: ThemeStyle = {
     boxShadow: 'none',
     backgroundOpacity: 0.9,
     hoverTransform: 'none',
-    transition: 'all 0.15s ease'
+    transition: 'all 0.15s ease',
+    
+    backgroundStyle: 'solid' as const
 };
 

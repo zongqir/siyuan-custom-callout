@@ -38,6 +38,8 @@ export const glassmorphismTheme: ThemeStyle = {
     boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
     backgroundOpacity: 0.7,
     hoverTransform: 'scale(1.01)',
-    transition: 'all 0.3s ease'
+    transition: 'all 0.3s ease',
+    
+    backgroundStyle: 'gradient' as const
 };
 

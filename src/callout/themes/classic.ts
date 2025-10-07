@@ -38,6 +38,8 @@ export const classicTheme: ThemeStyle = {
     boxShadow: 'none',
     backgroundOpacity: 0.95,
     hoverTransform: 'none',
-    transition: 'none'
+    transition: 'none',
+    
+    backgroundStyle: 'gradient' as const
 };
 

@@ -29,6 +29,9 @@ export interface ThemeStyle {
     backgroundOpacity: number;     // 背景透明度 (0-1)
     hoverTransform: string;        // 悬停变换效果
     transition: string;            // 过渡动画
+    
+    // 背景样式
+    backgroundStyle: 'solid' | 'gradient';  // 纯色 or 渐变
 }
 
 /**

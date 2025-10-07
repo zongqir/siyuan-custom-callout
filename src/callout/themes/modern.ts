@@ -38,6 +38,9 @@ export const modernTheme: ThemeStyle = {
     boxShadow: 'none',
     backgroundOpacity: 1,
     hoverTransform: 'none',
-    transition: 'all 0.2s ease'
+    transition: 'all 0.2s ease',
+    
+    // 背景样式
+    backgroundStyle: 'gradient' as const
 };
 

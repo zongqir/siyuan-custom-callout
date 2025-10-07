@@ -20,6 +20,14 @@ import { minimalTheme } from './minimal';
 import { glassmorphismTheme } from './glassmorphism';
 import { neumorphismTheme } from './neumorphism';
 import { neonTheme } from './neon';
+// 新增风格主题
+import { craftTheme } from './craft';
+import { macosTheme } from './macos';
+import { solidTheme } from './solid';
+import { notionTheme } from './notion';
+import { materialTheme } from './material';
+import { githubTheme } from './github';
+import { paperTheme } from './paper';
 
 // 工具函数
 export {
@@ -34,16 +42,36 @@ import type { ThemeStyle } from './types';
 
 /**
  * 所有预设主题
+ * 
+ * 分类说明：
+ * - 基础风格：现代简约、卡片、扁平、经典、极简
+ * - 纯色风格：Craft、macOS、纯色、Notion、GitHub
+ * - 效果风格：毛玻璃、新拟态、霓虹、纸质
+ * - 设计系统：Material Design
  */
 export const THEME_STYLES: ThemeStyle[] = [
+    // 基础通用风格
     modernTheme,
     cardTheme,
     flatTheme,
     classicTheme,
     minimalTheme,
+    
+    // 纯色风格（无渐变）
+    craftTheme,
+    macosTheme,
+    solidTheme,
+    notionTheme,
+    githubTheme,
+    
+    // 设计系统
+    materialTheme,
+    
+    // 特效风格
     glassmorphismTheme,
     neumorphismTheme,
-    neonTheme
+    neonTheme,
+    paperTheme
 ];
 
 /**

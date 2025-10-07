@@ -38,6 +38,8 @@ export const minimalTheme: ThemeStyle = {
     boxShadow: 'none',
     backgroundOpacity: 0.85,
     hoverTransform: 'none',
-    transition: 'all 0.1s ease'
+    transition: 'all 0.1s ease',
+    
+    backgroundStyle: 'gradient' as const
 };
 
