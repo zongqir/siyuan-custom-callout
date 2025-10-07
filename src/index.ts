@@ -74,7 +74,7 @@ export default class CustomCalloutPlugin extends Plugin {
 
         const panel = new SettingPanel({
             target: dialog.element.querySelector("#CustomCalloutSettingPanel") as HTMLElement,
-            props: {
+                    props: {
                 plugin: this,
                 calloutManager: this.calloutManager
             }
@@ -85,8 +85,8 @@ export default class CustomCalloutPlugin extends Plugin {
      * 打开设置面板（别名方法）
      */
     openSettings() {
-        this.openSetting();
-    }
+                this.openSetting();
+            }
 
     /**
      * 获取前端环境

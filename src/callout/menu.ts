@@ -258,7 +258,7 @@ export class CalloutMenu {
      */
     private setupMenuKeyboardEvents(menu: HTMLElement) {
         menu.addEventListener('keydown', (e) => {
-            const cols = 2;
+            const cols = this.gridColumns; // 使用动态列数
             if (e.key === 'ArrowDown') {
                 e.preventDefault();
                 this.selectedMenuIndex = Math.min(this.selectedMenuIndex + cols, this.menuItems.length - 1);
@@ -408,7 +408,13 @@ export class CalloutMenu {
     /**
      * 显示菜单
      */
-    showMenu(x: number, y: number, blockQuoteElement: HTMLElement, isEdit: boolean = false) {
+    showMenu(x: number, y: number, blockQuoteElement: HTMLElement, isEdit: boolean = false, allowToggle: boolean = false) {
+        // 如果允许toggle且菜单已显示，则隐藏菜单
+        if (allowToggle && this.isMenuVisible && this.currentTargetBlockQuote === blockQuoteElement) {
+            this.hideMenu(true);
+            return;
+        }
+        
         if (this.isMenuVisible) return;
 
         const menu = this.createCommandMenu(blockQuoteElement, isEdit);

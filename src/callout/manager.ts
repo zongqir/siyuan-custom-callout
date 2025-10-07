@@ -178,13 +178,13 @@ export class CalloutManager {
                     const rect = target.getBoundingClientRect();
                     const clickX = e.clientX - rect.left;
 
-                    // 点击图标区域（0-40px），显示切换主题菜单
+                    // 点击图标区域（0-40px），显示/隐藏切换主题菜单（toggle）
                     if (clickX >= 0 && clickX <= 40) {
                         e.preventDefault();
                         e.stopPropagation();
 
                         const bqRect = blockquote.getBoundingClientRect();
-                        this.menu.showMenu(bqRect.left, bqRect.top, blockquote, true);
+                        this.menu.showMenu(bqRect.left, bqRect.top, blockquote, true, true); // 最后一个参数为 allowToggle
                     }
                 }
             }
