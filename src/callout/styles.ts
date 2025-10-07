@@ -56,10 +56,19 @@ export function generateCalloutStyles(): string {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
 }
 
-/* 隐藏系统图标 */
+/* 隐藏系统图标和原生边框 */
 .protyle-wysiwyg .bq[custom-callout] .protyle-action,
 .protyle-wysiwyg .bq[custom-callout] .block__icon {
     display: none !important;
+}
+
+/* 覆盖思源原生引用块的边框样式 */
+.protyle-wysiwyg .bq[custom-callout]::before {
+    display: none !important;
+}
+
+.protyle-wysiwyg .bq[custom-callout] {
+    border-left: none !important;
 }
 
 /* 标题行样式 */
@@ -109,6 +118,15 @@ export function generateCalloutStyles(): string {
     margin: 12px 0 !important;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* 确保没有内边框 */
+.protyle-wysiwyg .bq[custom-callout="${config.type}"] > div {
+    border: none !important;
+}
+
+.protyle-wysiwyg .bq[custom-callout="${config.type}"] > div::before {
+    display: none !important;
 }
 
 .protyle-wysiwyg .bq[custom-callout="${config.type}"]:hover {
