@@ -1,5 +1,5 @@
 import { DEFAULT_CALLOUT_TYPES, CalloutTypeConfig } from './types';
-import { getThemeById, getDefaultTheme, generateThemeCSS, type ThemeStyle } from './themes/index';
+import { getThemeById, getDefaultTheme, generateThemeCSS } from './themes/index';
 import type { ThemeOverrides } from './config';
 
 /**
@@ -235,39 +235,52 @@ function generateMarginNoteCSS(): string {
     return `
 /* ==================== 边注功能样式 ==================== */
 
-/* 左侧边注 */
+/* 左侧边注 - 使用相对定位 + transform */
 .protyle-wysiwyg .bq[custom-callout][data-margin-position="left"] {
+    position: relative !important;
     float: left !important;
     clear: left !important;
-    margin-right: var(--margin-spacing, 1em) !important;
-    margin-left: 0 !important;
-    width: var(--margin-width, 30%) !important;
-}
-
-/* 右侧边注 */
-.protyle-wysiwyg .bq[custom-callout][data-margin-position="right"] {
-    float: right !important;
-    clear: right !important;
-    margin-left: var(--margin-spacing, 1em) !important;
-    margin-right: 0 !important;
-    width: var(--margin-width, 30%) !important;
-}
-
-/* CSS变量通过JavaScript动态设置 */
-
-/* 边注专用样式优化 */
-.protyle-wysiwyg .bq[custom-callout][data-margin-position] {
-    font-size: 0.9em !important;
+    width: var(--margin-width, 20%) !important;
+    max-width: 300px !important;
+    margin: 0 !important;
+    
+    /* 字体和排版 */
+    font-size: 0.85em !important;
     line-height: 1.4 !important;
-    margin-top: 0.5em !important;
-    margin-bottom: 1em !important;
     
     /* 防止内容溢出 */
     word-wrap: break-word !important;
     overflow-wrap: break-word !important;
+    hyphens: auto !important;
     
-    /* 增加视觉层次 */
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+    /* 视觉样式 */
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1) !important;
+    padding: 10px 12px !important;
+    z-index: 10 !important;
+}
+
+/* 右侧边注 - 使用相对定位 + transform */
+.protyle-wysiwyg .bq[custom-callout][data-margin-position="right"] {
+    position: relative !important;
+    float: right !important;
+    clear: right !important;
+    width: var(--margin-width, 20%) !important;
+    max-width: 300px !important;
+    margin: 0 !important;
+    
+    /* 字体和排版 */
+    font-size: 0.85em !important;
+    line-height: 1.4 !important;
+    
+    /* 防止内容溢出 */
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+    hyphens: auto !important;
+    
+    /* 视觉样式 */
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1) !important;
+    padding: 10px 12px !important;
+    z-index: 10 !important;
 }
 
 /* 边注标题优化 */
@@ -283,16 +296,24 @@ function generateMarginNoteCSS(): string {
     height: calc(var(--callout-icon-size) * 0.8) !important;
 }
 
+/* 避免后续元素与边注重叠 */
+.protyle-wysiwyg .bq[custom-callout][data-margin-position] + * {
+    clear: both !important;
+}
+
 /* 响应式处理 - 小屏幕禁用边注 */
 @media (max-width: 768px) {
     .protyle-wysiwyg .bq[custom-callout][data-margin-position] {
+        position: relative !important;
         float: none !important;
         clear: none !important;
+        transform: none !important;
         width: 100% !important;
-        margin-left: 0 !important;
-        margin-right: 0 !important;
+        max-width: none !important;
+        margin: 12px 0 !important;
         font-size: inherit !important;
         line-height: inherit !important;
+        padding: var(--callout-padding) !important;
     }
     
     .protyle-wysiwyg .bq[custom-callout][data-margin-position] [data-callout-title="true"] {
@@ -304,26 +325,6 @@ function generateMarginNoteCSS(): string {
         width: var(--callout-icon-size) !important;
         height: var(--callout-icon-size) !important;
     }
-}
-
-/* 清除浮动 - 防止布局问题 */
-.protyle-wysiwyg .bq[custom-callout][data-margin-position="left"] ~ .bq:not([data-margin-position]),
-.protyle-wysiwyg .bq[custom-callout][data-margin-position="left"] ~ div:not(.bq),
-.protyle-wysiwyg .bq[custom-callout][data-margin-position="left"] ~ p {
-    clear: left !important;
-}
-
-.protyle-wysiwyg .bq[custom-callout][data-margin-position="right"] ~ .bq:not([data-margin-position]),
-.protyle-wysiwyg .bq[custom-callout][data-margin-position="right"] ~ div:not(.bq),
-.protyle-wysiwyg .bq[custom-callout][data-margin-position="right"] ~ p {
-    clear: right !important;
-}
-
-/* 边注与普通内容的间距调整 */
-.protyle-wysiwyg .bq[custom-callout][data-margin-position] + .bq:not([data-margin-position]),
-.protyle-wysiwyg .bq[custom-callout][data-margin-position] + div:not(.bq),
-.protyle-wysiwyg .bq[custom-callout][data-margin-position] + p {
-    margin-top: 1.5em !important;
 }
 `;
 }

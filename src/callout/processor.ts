@@ -73,8 +73,16 @@ export class CalloutProcessor {
             // 设置边注相关属性
             if (parsedCommand.position !== 'normal') {
                 blockquote.setAttribute('data-margin-position', parsedCommand.position);
-                blockquote.setAttribute('data-margin-width', parsedCommand.width || '30%');
+                blockquote.setAttribute('data-margin-width', parsedCommand.width || '20%');
                 blockquote.setAttribute('data-margin-spacing', parsedCommand.spacing || '1em');
+                
+                // 调试日志
+                console.log('[Callout] 边注设置:', {
+                    position: parsedCommand.position,
+                    width: parsedCommand.width || '20%',
+                    spacing: parsedCommand.spacing || '1em',
+                    element: blockquote
+                });
                 
                 // 直接设置CSS变量，避免浏览器兼容性问题
                 this.applyMarginNoteStyles(blockquote, parsedCommand);
@@ -385,7 +393,7 @@ export class CalloutProcessor {
      * 解析宽度参数
      */
     private parseWidth(param?: string): string {
-        if (!param) return '30%'; // 默认宽度
+        if (!param) return '20%'; // 默认宽度 - 更窄，适合边注
         
         const normalized = param.trim();
         
@@ -397,12 +405,12 @@ export class CalloutProcessor {
         // 如果只是数字，默认当作百分比
         if (/^\d+$/.test(normalized)) {
             const num = parseInt(normalized);
-            if (num > 0 && num <= 100) {
+            if (num > 0 && num <= 50) { // 限制最大50%，防止太宽
                 return `${num}%`;
             }
         }
         
-        return '30%'; // 回退到默认值
+        return '20%'; // 回退到默认值
     }
 
     /**
@@ -430,29 +438,135 @@ export class CalloutProcessor {
     }
 
     /**
-     * 应用边注样式
+     * 应用边注样式 - 使用浮动 + transform
      */
     private applyMarginNoteStyles(blockquote: HTMLElement, parsedCommand: ParsedCalloutCommand) {
-        const existingStyle = blockquote.style.cssText;
-        const width = parsedCommand.width || '30%';
+        const width = parsedCommand.width || '20%';
         const spacing = parsedCommand.spacing || '1em';
         
         // 设置CSS变量
         blockquote.style.setProperty('--margin-width', width);
         blockquote.style.setProperty('--margin-spacing', spacing);
         
-        // 保留原有的样式
-        if (existingStyle && !existingStyle.includes('--margin-')) {
-            blockquote.style.cssText = existingStyle + '; --margin-width: ' + width + '; --margin-spacing: ' + spacing + ';';
+        // 查找上一个兄弟元素
+        const previousSibling = blockquote.previousElementSibling as HTMLElement;
+        
+        if (previousSibling) {
+            requestAnimationFrame(() => {
+                // 计算边注的宽度和间距（像素值）
+                const widthValue = this.parseWidthToPixels(width, blockquote);
+                const spacingValue = this.parseSpacingToPixels(spacing, blockquote);
+                
+                // 获取上一个元素的高度
+                const siblingHeight = previousSibling.offsetHeight;
+                const siblingMarginBottom = parseInt(getComputedStyle(previousSibling).marginBottom) || 0;
+                
+                // 计算需要向上移动的距离
+                const moveUpDistance = siblingHeight + siblingMarginBottom;
+                
+                // 使用 transform 向上移动
+                blockquote.style.setProperty('transform', `translateY(-${moveUpDistance}px)`, 'important');
+                
+                // 设置定位方式和间距
+                if (parsedCommand.position === 'left') {
+                    // 左侧边注 - 使用浮动
+                    blockquote.style.setProperty('float', 'left', 'important');
+                    blockquote.style.setProperty('clear', 'left', 'important');
+                    blockquote.style.setProperty('margin-right', `${spacingValue}px`, 'important');
+                    blockquote.style.setProperty('margin-left', '0', 'important');
+                    
+                    // 给上一个元素留出左边空间
+                    previousSibling.style.setProperty('margin-left', `${widthValue + spacingValue}px`, 'important');
+                    
+                } else if (parsedCommand.position === 'right') {
+                    // 右侧边注 - 使用 margin-left: auto 推到右边
+                    blockquote.style.removeProperty('float');
+                    blockquote.style.removeProperty('clear');
+                    
+                    // 使用 auto margin 推送到右边
+                    blockquote.style.setProperty('margin-left', 'auto', 'important');
+                    blockquote.style.setProperty('margin-right', `${spacingValue}px`, 'important');
+                    blockquote.style.setProperty('display', 'block', 'important');
+                    
+                    // 给上一个元素留出右边空间
+                    previousSibling.style.setProperty('margin-right', `${widthValue + spacingValue}px`, 'important');
+                }
+                
+                // 调试日志
+                console.log('[Callout] 边注应用:', {
+                    position: parsedCommand.position,
+                    width: widthValue,
+                    spacing: spacingValue,
+                    moveUpDistance,
+                    siblingHeight,
+                    transform: blockquote.style.transform,
+                    marginLeft: blockquote.style.marginLeft,
+                    marginRight: blockquote.style.marginRight,
+                    computedFloat: getComputedStyle(blockquote).float,
+                    containerWidth: blockquote.parentElement?.offsetWidth,
+                    blockquoteWidth: blockquote.offsetWidth
+                });
+            });
         }
+    }
+    
+    /**
+     * 将宽度值转换为像素值
+     */
+    private parseWidthToPixels(width: string, element: HTMLElement): number {
+        if (width.endsWith('%')) {
+            const percentage = parseFloat(width) / 100;
+            const containerWidth = element.parentElement?.offsetWidth || window.innerWidth;
+            return containerWidth * percentage;
+        } else if (width.endsWith('px')) {
+            return parseFloat(width);
+        } else if (width.endsWith('em') || width.endsWith('rem')) {
+            const fontSize = parseFloat(getComputedStyle(element).fontSize);
+            return parseFloat(width) * fontSize;
+        }
+        return 0;
+    }
+    
+    /**
+     * 将间距值转换为像素值
+     */
+    private parseSpacingToPixels(spacing: string, element: HTMLElement): number {
+        if (spacing.endsWith('px')) {
+            return parseFloat(spacing);
+        } else if (spacing.endsWith('em') || spacing.endsWith('rem')) {
+            const fontSize = parseFloat(getComputedStyle(element).fontSize);
+            return parseFloat(spacing) * fontSize;
+        } else if (spacing.endsWith('%')) {
+            const percentage = parseFloat(spacing) / 100;
+            const containerWidth = element.parentElement?.offsetWidth || window.innerWidth;
+            return containerWidth * percentage;
+        }
+        return 0;
     }
 
     /**
      * 清除边注样式
      */
     private clearMarginNoteStyles(blockquote: HTMLElement) {
+        // 清除所有边注相关的CSS属性
         blockquote.style.removeProperty('--margin-width');
         blockquote.style.removeProperty('--margin-spacing');
+        blockquote.style.removeProperty('transform');
+        blockquote.style.removeProperty('margin-left');
+        blockquote.style.removeProperty('margin-right');
+        blockquote.style.removeProperty('float');
+        blockquote.style.removeProperty('clear');
+        blockquote.style.removeProperty('position');
+        blockquote.style.removeProperty('left');
+        blockquote.style.removeProperty('right');
+        blockquote.style.removeProperty('display');
+        
+        // 恢复上一个兄弟元素的样式
+        const previousSibling = blockquote.previousElementSibling as HTMLElement;
+        if (previousSibling) {
+            previousSibling.style.removeProperty('margin-left');
+            previousSibling.style.removeProperty('margin-right');
+        }
     }
 
 
