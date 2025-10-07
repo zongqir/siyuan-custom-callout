@@ -1,10 +1,10 @@
 {
-  "name": "plugin-sample-vite-svelte",
+  "name": "siyuan-custom-callout",
   "author": "frostime",
-  "url": "https://github.com/siyuan-note/plugin-sample-vite-svelte",
+  "url": "https://github.com/siyuan-note/siyuan-custom-callout",
   "version": "0.4.1",
   "minAppVersion": "3.2.1",
-  "disabledInPublish": true,
+  "disabledInPublish": false,
   "backends": [
     "windows",
     "linux",
@@ -22,12 +22,12 @@
     "desktop-window"
   ],
   "displayName": {
-    "en_US": "Plugin sample with vite and svelte",
-    "zh_CN": "插件样例 vite + svelte 版"
+    "en_US": "SiYuan Custom Callout",
+    "zh_CN": "思源自定义引用块"
   },
   "description": {
-    "en_US": "SiYuan plugin sample with vite and svelte",
-    "zh_CN": "使用 vite 和 svelte 开发的思源插件样例"
+    "en_US": "Enhance blockquotes with custom callout designs, similar to Obsidian callouts",
+    "zh_CN": "在原始引用基础上实现自定义设计，类似于 Obsidian Callout"
   },
   "readme": {
     "en_US": "README.md",
@@ -39,8 +39,10 @@
     ]
   },
   "keywords": [
-    "plugin",
-    "sample",
-    "插件样例"
+    "callout",
+    "blockquote",
+    "引用块",
+    "自定义样式",
+    "custom style"
   ]
 }

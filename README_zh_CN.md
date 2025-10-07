@@ -1,27 +1,36 @@
 
-# 使用 vite + svelte 的思源笔记插件示例
+# 思源自定义引用块
 
 [English](./README.md)
 
+一个思源笔记插件，在原始引用基础上实现自定义设计，类似于 Obsidian Callout。
 
-> 本例同 [siyuan/plugin-sample](https://github.com/siyuan-note/plugin-sample) [v0.4.1](https://github.com/siyuan-note/plugin-sample/tree/v0.4.1)
- 
-1. 使用 vite 打包
-2. 使用符号链接、而不是把项目放到插件目录下的模式进行开发
-3. 内置对 svelte 框架的支持
-  
-   > **如果不想要 svelte，请移步这个模板:** [frostime/plugin-sample-vite](https://github.com/frostime/plugin-sample-vite)
-   >
-   > **这里还提供了一个 vite+solidjs 的模板**: [frostime/plugin-sample-vite-solidjs](https://github.com/frostime/plugin-sample-vite-solidjs)
+## 功能特性
 
-4. 提供一个github action 模板，能自动生成package.zip并上传到新版本中
+- 🎨 **自定义引用块样式**：将普通引用块转换为美观的、带样式的提示块
+- 🎯 **多种类型**：支持多种引用块类型（笔记、提示、警告、危险、信息等）
+- 🖌️ **可自定义**：完全可自定义的颜色、图标和样式
+- 🚀 **简单易用**：使用简单的语法即可在笔记中创建引用块
+- 📱 **跨平台**：支持桌面端、移动端和浏览器版本
 
-> [!NOTE]
-> 当前模板案例基于 `svelte4` 版本，我们在 `svelte5` 分支中维护了一个实验性模板，将 Svelte 升级至 5.x 版本。
->
-> 未来我们会将主分支默认版本切换至 svelte5。
+## 使用方法
 
-## 开始
+创建一个引用块，并在开头添加引用块类型标识：
+
+```markdown
+> [!note]
+> 这是一个笔记引用块
+
+> [!tip]
+> 这是一个提示引用块
+
+> [!warning]
+> 这是一个警告引用块
+```
+
+## 开发指南
+
+### 开始
 
 1. 通过 <kbd>Use this template</kbd> 按钮将该库文件复制到你自己的库中，请注意库名和插件名称一致，默认分支必须为 `main`
 2. 将你的库克隆到本地开发文件夹中

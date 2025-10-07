@@ -1,10 +1,10 @@
 {
-  "name": "plugin-sample-vite-svelte",
+  "name": "siyuan-custom-callout",
   "version": "0.4.1",
   "type": "module",
-  "description": "This is a sample plugin based on vite and svelte for Siyuan (https://b3log.org/siyuan)",
-  "repository": "",
-  "homepage": "",
+  "description": "Enhance SiYuan blockquotes with custom callout designs, similar to Obsidian callouts",
+  "repository": "https://github.com/siyuan-note/siyuan-custom-callout",
+  "homepage": "https://github.com/siyuan-note/siyuan-custom-callout",
   "author": "frostime",
   "license": "MIT",
   "scripts": {

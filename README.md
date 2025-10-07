@@ -1,27 +1,32 @@
 
-# SiYuan plugin sample with vite and svelte
+# SiYuan Custom Callout
 
 [中文版](./README_zh_CN.md)
 
-> Consistent with [siyuan/plugin-sample](https://github.com/siyuan-note/plugin-sample) [v0.4.1](https://github.com/siyuan-note/plugin-sample/tree/v0.4.1)
+A SiYuan plugin that enhances blockquotes with custom callout designs, similar to Obsidian callouts.
 
+## Features
 
+- 🎨 **Custom Callout Styles**: Transform regular blockquotes into beautiful, styled callout blocks
+- 🎯 **Multiple Types**: Support for various callout types (note, tip, warning, danger, info, etc.)
+- 🖌️ **Customizable**: Fully customizable colors, icons, and styles
+- 🚀 **Easy to Use**: Simple syntax to create callouts in your notes
+- 📱 **Cross-Platform**: Works on desktop, mobile, and browser versions
 
-1. Using vite for packaging
-2. Use symbolic linking instead of putting the project into the plugins directory program development
-3. Built-in support for the svelte framework
+## Usage
 
-     > **If don't want svelte, turn to this template**: [frostime/plugin-sample-vite](https://github.com/frostime/plugin-sample-vite)
-     >
-     > **We also provide with a vite+solidjs template**: [frostime/plugin-sample-vite-solidjs](https://github.com/frostime/plugin-sample-vite-solidjs)
+Create a blockquote and add a callout type indicator at the beginning:
 
-4. Provides a github action template to automatically generate package.zip and upload to new release
+```markdown
+> [!note]
+> This is a note callout
 
+> [!tip]
+> This is a tip callout
 
-> [!NOTE]
-> The current template case is based on `svelte4` version, we maintain an experimental template in the `svelte5` branch, which upgrades Svelte to 5.x version.
->
-> In the future, we will switch the default main branch to svelte5.
+> [!warning]
+> This is a warning callout
+```
 
 ## Get started
 
