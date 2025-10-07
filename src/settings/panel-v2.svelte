@@ -22,6 +22,10 @@
     let dragOverIndex: number | null = null;
     let gridColumns: number = 3; // 可选：2, 3, 4
     
+    // 折叠状态
+    let menuPreviewCollapsed = false;
+    let themeCollapsed = false;
+    
     // 监听列数变化并保存
     $: if (config && gridColumns !== config.gridColumns) {
         handleGridColumnsChange(gridColumns);
@@ -222,12 +226,91 @@
             </div>
         </div>
 
+        <!-- 命令菜单模拟区域 -->
+        <div class="menu-section">
+            <div class="section-header clickable" on:click={() => menuPreviewCollapsed = !menuPreviewCollapsed}>
+                <div class="header-left">
+                    <h3>📋 命令菜单预览</h3>
+                    <p>拖拽卡片调整顺序，点击眼睛图标切换隐藏（输入 <code>&gt;</code> 时显示此菜单）</p>
+                </div>
+                <button class="collapse-btn" class:collapsed={menuPreviewCollapsed}>
+                    <svg width="16" height="16" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg>
+                </button>
+            </div>
+
+            {#if !menuPreviewCollapsed}
+            <div class="menu-grid" style="grid-template-columns: repeat({gridColumns}, 1fr);">
+                <!-- 原生样式选项 -->
+                <div class="menu-item none-item">
+                    <div class="menu-item-content" style="background: linear-gradient(to bottom, #f9fafb, #ffffff); border-left-color: #9ca3af;">
+                        <div class="menu-item-icon" style="color: #6b7280;">
+                            <svg width="20" height="20" viewBox="0 0 24 24"><path d="M18.364 5.636L5.636 18.364M5.636 5.636l12.728 12.728" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                        </div>
+                        <div class="menu-item-name" style="color: #6b7280;">原生样式</div>
+                    </div>
+                </div>
+
+                <!-- 所有类型 -->
+                {#each allTypes as calloutType, index}
+                    <div 
+                        class="menu-item" 
+                        class:hidden={isHidden(calloutType)}
+                        class:dragging={draggedIndex === index}
+                        class:drag-over={dragOverIndex === index && draggedIndex !== index}
+                        draggable="true"
+                        on:dragstart={(e) => handleDragStart(e, index)}
+                        on:dragover={(e) => handleDragOver(e, index)}
+                        on:dragleave={handleDragLeave}
+                        on:drop={(e) => handleDrop(e, index)}
+                        on:dragend={handleDragEnd}
+                    >
+                        <div class="menu-item-content" style="background: {calloutType.bgGradient}; border-left-color: {calloutType.borderColor};">
+                            <div class="drag-indicator">⋮⋮</div>
+                            <div class="menu-item-icon" style="color: {calloutType.color};">
+                                {@html calloutType.icon}
+                            </div>
+                            <div class="menu-item-name" style="color: {calloutType.color};">
+                                {calloutType.displayName}
+                            </div>
+                        </div>
+                        
+                        <div class="menu-item-controls">
+                            <button class="edit-btn" on:click|stopPropagation={() => handleEdit(calloutType)} title="编辑">
+                                <svg width="16" height="16"><use xlink:href="#iconEdit"></use></svg>
+                            </button>
+                            <button class="hide-btn" on:click|stopPropagation={() => handleToggleHide(calloutType)} title={isHidden(calloutType) ? '显示' : '隐藏'}>
+                                <svg width="16" height="16"><use xlink:href={isHidden(calloutType) ? '#iconEye' : '#iconEyeoff'}></use></svg>
+                            </button>
+                        </div>
+                    </div>
+                {/each}
+
+                <!-- 添加新类型按钮 -->
+                <div class="menu-item add-item" on:click={handleAddNew}>
+                    <div class="add-content">
+                        <div class="add-icon">
+                            <svg width="28" height="28" viewBox="0 0 24 24"><path d="M12 5v14m-7-7h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                        </div>
+                        <div class="add-text">新建类型</div>
+                    </div>
+                </div>
+            </div>
+            {/if}
+        </div>
+
         <!-- 主题风格选择 -->
         <div class="theme-section">
-            <div class="section-header">
-                <h3>🎨 整体风格</h3>
-                <p>点击任意风格即可切换</p>
+            <div class="section-header clickable" on:click={() => themeCollapsed = !themeCollapsed}>
+                <div class="header-left">
+                    <h3>🎨 整体风格</h3>
+                    <p>点击任意风格即可切换</p>
+                </div>
+                <button class="collapse-btn" class:collapsed={themeCollapsed}>
+                    <svg width="16" height="16" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg>
+                </button>
             </div>
+
+            {#if !themeCollapsed}
             <div class="theme-grid">
                 {#each THEME_STYLES as theme}
                     <div 
@@ -293,71 +376,7 @@
                     </div>
                 {/each}
             </div>
-        </div>
-
-        <!-- 命令菜单模拟区域 -->
-        <div class="menu-section">
-            <div class="section-header">
-                <h3>📋 命令菜单预览</h3>
-                <p>拖拽卡片调整顺序，点击眼睛图标切换隐藏（输入 <code>&gt;</code> 时显示此菜单）</p>
-            </div>
-
-            <div class="menu-grid" style="grid-template-columns: repeat({gridColumns}, 1fr);">
-                <!-- 原生样式选项 -->
-                <div class="menu-item none-item">
-                    <div class="menu-item-content" style="background: linear-gradient(to bottom, #f9fafb, #ffffff); border-left-color: #9ca3af;">
-                        <div class="menu-item-icon" style="color: #6b7280;">
-                            <svg width="20" height="20" viewBox="0 0 24 24"><path d="M18.364 5.636L5.636 18.364M5.636 5.636l12.728 12.728" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-                        </div>
-                        <div class="menu-item-name" style="color: #6b7280;">原生样式</div>
-                    </div>
-                </div>
-
-                <!-- 所有类型 -->
-                {#each allTypes as calloutType, index}
-                    <div 
-                        class="menu-item" 
-                        class:hidden={isHidden(calloutType)}
-                        class:dragging={draggedIndex === index}
-                        class:drag-over={dragOverIndex === index && draggedIndex !== index}
-                        draggable="true"
-                        on:dragstart={(e) => handleDragStart(e, index)}
-                        on:dragover={(e) => handleDragOver(e, index)}
-                        on:dragleave={handleDragLeave}
-                        on:drop={(e) => handleDrop(e, index)}
-                        on:dragend={handleDragEnd}
-                    >
-                        <div class="menu-item-content" style="background: {calloutType.bgGradient}; border-left-color: {calloutType.borderColor};">
-                            <div class="drag-indicator">⋮⋮</div>
-                            <div class="menu-item-icon" style="color: {calloutType.color};">
-                                {@html calloutType.icon}
-                            </div>
-                            <div class="menu-item-name" style="color: {calloutType.color};">
-                                {calloutType.displayName}
-                            </div>
-                        </div>
-                        
-                        <div class="menu-item-controls">
-                            <button class="edit-btn" on:click|stopPropagation={() => handleEdit(calloutType)} title="编辑">
-                                <svg width="16" height="16"><use xlink:href="#iconEdit"></use></svg>
-                            </button>
-                            <button class="hide-btn" on:click|stopPropagation={() => handleToggleHide(calloutType)} title={isHidden(calloutType) ? '显示' : '隐藏'}>
-                                <svg width="16" height="16"><use xlink:href={isHidden(calloutType) ? '#iconEye' : '#iconEyeoff'}></use></svg>
-                            </button>
-                        </div>
-                    </div>
-                {/each}
-
-                <!-- 添加新类型按钮 -->
-                <div class="menu-item add-item" on:click={handleAddNew}>
-                    <div class="add-content">
-                        <div class="add-icon">
-                            <svg width="28" height="28" viewBox="0 0 24 24"><path d="M12 5v14m-7-7h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-                        </div>
-                        <div class="add-text">新建类型</div>
-                    </div>
-                </div>
-            </div>
+            {/if}
         </div>
     {/if}
 </div>
@@ -543,6 +562,28 @@
 
     .section-header {
         margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+    }
+
+    .section-header.clickable {
+        cursor: pointer;
+        user-select: none;
+        padding: 8px 12px;
+        margin: -8px -12px 16px -12px;
+        border-radius: 6px;
+        transition: background 0.2s;
+    }
+
+    .section-header.clickable:hover {
+        background: var(--b3-theme-surface);
+    }
+
+    .header-left {
+        flex: 1;
+        min-width: 0;
     }
 
     .section-header h3 {
@@ -562,6 +603,35 @@
         background: var(--b3-theme-surface);
         border-radius: 3px;
         font-size: 12px;
+    }
+
+    .collapse-btn {
+        flex-shrink: 0;
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+        transition: all 0.2s;
+        color: var(--b3-theme-on-surface);
+    }
+
+    .collapse-btn:hover {
+        background: var(--b3-theme-primary-lighter);
+        color: var(--b3-theme-primary);
+    }
+
+    .collapse-btn svg {
+        transition: transform 0.2s;
+    }
+
+    .collapse-btn.collapsed svg {
+        transform: rotate(-90deg);
     }
 
     .menu-grid {
