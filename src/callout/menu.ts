@@ -395,19 +395,8 @@ export class CalloutMenu {
      * 显示菜单
      */
     showMenu(x: number, y: number, blockQuoteElement: HTMLElement, isEdit: boolean = false) {
-        console.log('[Callout Menu] 📋 尝试显示菜单:', {
-            x, y,
-            isEdit,
-            isMenuVisible: this.isMenuVisible,
-            blockQuoteId: blockQuoteElement.getAttribute('data-node-id')
-        });
+        if (this.isMenuVisible) return;
 
-        if (this.isMenuVisible) {
-            console.log('[Callout Menu] ⚠️ 菜单已显示，跳过');
-            return;
-        }
-
-        console.log('[Callout Menu] ✅ 创建菜单...');
         const menu = this.createCommandMenu(blockQuoteElement, isEdit);
 
         // 计算位置

@@ -15,30 +15,22 @@ export default class CustomCalloutPlugin extends Plugin {
     private isMobile: boolean;
 
     async onload() {
-        console.log("=".repeat(60));
-        console.log("[Custom Callout] 🚀 插件开始加载...");
-        console.log("=".repeat(60));
+        console.log("[Custom Callout] Plugin loading...");
 
         const frontEnd = this.getFrontEnd();
         this.isMobile = frontEnd === "mobile" || frontEnd === "browser-mobile";
-        console.log("[Custom Callout] 📱 设备类型:", frontEnd, "| 是否移动端:", this.isMobile);
 
         // 添加图标
         this.addIcons(`<symbol id="iconCallout" viewBox="0 0 32 32">
 <path d="M4 6h24v4H4V6zm0 8h24v4H4v-4zm0 8h24v4H4v-4z" fill="currentColor"/>
 <path d="M2 4v24h2V4H2zm26 0v24h2V4h-28z" fill="currentColor" opacity="0.5"/>
 </symbol>`);
-        console.log("[Custom Callout] ✅ 图标已添加");
 
         // 初始化Callout管理器
-        console.log("[Custom Callout] 🔧 正在初始化 Callout 管理器...");
         this.calloutManager = new CalloutManager();
         this.calloutManager.initialize();
 
-        console.log("=".repeat(60));
-        console.log("[Custom Callout] ✅ 插件加载成功！");
-        console.log("[Custom Callout] 💡 提示: 打开控制台查看详细日志");
-        console.log("=".repeat(60));
+        console.log("[Custom Callout] Plugin loaded successfully");
         showMessage(this.i18n.name + " 已加载");
     }
 

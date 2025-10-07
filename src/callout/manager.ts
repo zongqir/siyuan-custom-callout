@@ -20,8 +20,6 @@ export class CalloutManager {
      * 初始化Callout功能
      */
     initialize() {
-        console.log('[Callout Manager] Initializing...');
-
         // 注入样式
         this.injectStyles();
 
@@ -31,8 +29,6 @@ export class CalloutManager {
         // 设置监听器
         this.setupObserver();
         this.setupEventListeners();
-
-        console.log('[Callout Manager] Initialized successfully');
     }
 
     /**
@@ -47,8 +43,6 @@ export class CalloutManager {
         this.styleElement.id = 'custom-callout-styles';
         this.styleElement.textContent = generateCalloutStyles();
         document.head.appendChild(this.styleElement);
-
-        console.log('[Callout Manager] Styles injected');
     }
 
     /**
@@ -72,7 +66,6 @@ export class CalloutManager {
                         // 检查是否是blockquote
                         if (element.getAttribute?.('data-type') === 'NodeBlockquote' ||
                             element.classList?.contains('bq')) {
-                            console.log('[Callout Observer] 🔍 发现新的引用块:', element);
                             newBlockquotes.push(element);
                         }
 
@@ -81,7 +74,6 @@ export class CalloutManager {
                             '[data-type="NodeBlockquote"], .bq'
                         );
                         if (childBlockquotes?.length > 0) {
-                            console.log('[Callout Observer] 🔍 发现子引用块数量:', childBlockquotes.length);
                             newBlockquotes.push(...Array.from(childBlockquotes) as HTMLElement[]);
                         }
                     }
@@ -91,17 +83,10 @@ export class CalloutManager {
             if (newBlockquotes.length > 0) {
                 // 去重
                 const uniqueBlockquotes = [...new Set(newBlockquotes)];
-                console.log('[Callout Observer] ✅ 处理引用块数量:', uniqueBlockquotes.length);
 
                 setTimeout(() => {
-                    uniqueBlockquotes.forEach((bq, index) => {
+                    uniqueBlockquotes.forEach(bq => {
                         const nodeId = bq.getAttribute('data-node-id');
-                        console.log(`[Callout Observer] 📝 处理引用块 ${index + 1}:`, {
-                            nodeId,
-                            isEmpty: this.processor.isBlockQuoteEmpty(bq),
-                            isInitialLoad: this.processor.isInInitialLoad(),
-                            isRecentlyCreated: nodeId ? this.processor.isRecentlyCreated(nodeId) : false
-                        });
 
                         // 标记为已跟踪
                         if (nodeId) {
@@ -109,27 +94,12 @@ export class CalloutManager {
                         }
 
                         // 如果不是初始加载且是空的blockquote，显示菜单
-                        const isEmpty = this.processor.isBlockQuoteEmpty(bq);
-                        const isInitialLoad = this.processor.isInInitialLoad();
-                        const isRecentlyCreated = nodeId ? this.processor.isRecentlyCreated(nodeId) : false;
-
-                        console.log(`[Callout Observer] 🎯 菜单显示条件检查:`, {
-                            isEmpty,
-                            isInitialLoad,
-                            hasNodeId: !!nodeId,
-                            isRecentlyCreated,
-                            shouldShowMenu: !isInitialLoad && isEmpty && nodeId && !isRecentlyCreated
-                        });
-
-                        if (!isInitialLoad && isEmpty && nodeId && !isRecentlyCreated) {
+                        if (!this.processor.isInInitialLoad() &&
+                            this.processor.isBlockQuoteEmpty(bq) &&
+                            nodeId && !this.processor.isRecentlyCreated(nodeId)) {
                             const rect = bq.getBoundingClientRect();
-                            console.log('[Callout Observer] 🎉 显示菜单!', {
-                                rect: { width: rect.width, height: rect.height, left: rect.left, top: rect.top }
-                            });
                             if (rect.width > 0 && rect.height > 0) {
                                 this.menu.showMenu(rect.left, rect.top, bq);
-                            } else {
-                                console.warn('[Callout Observer] ⚠️ 引用块尺寸为0，不显示菜单');
                             }
                         }
 
@@ -146,28 +116,22 @@ export class CalloutManager {
             attributes: false,
             characterData: false
         });
-
-        console.log('[Callout Manager] ✅ MutationObserver 已启动');
     }
 
     /**
      * 设置事件监听器
      */
     private setupEventListeners() {
-        console.log('[Callout Manager] 🎧 开始设置事件监听器...');
-
         // 输入事件监听（防抖）
         let inputTimeout: number;
         ['input', 'keyup', 'paste'].forEach(eventType => {
             document.addEventListener(eventType, (e) => {
                 const target = e.target as HTMLElement;
                 if (target.contentEditable === 'true') {
-                    console.log(`[Callout Event] ⌨️ ${eventType} 事件触发`);
                     clearTimeout(inputTimeout);
                     inputTimeout = window.setTimeout(() => {
                         const blockquote = target.closest('[data-type="NodeBlockquote"], .bq') as HTMLElement;
                         if (blockquote) {
-                            console.log('[Callout Event] 📝 处理引用块内容变化');
                             this.processor.processBlockquote(blockquote);
                         }
                     }, eventType === 'paste' ? 100 : 300);
@@ -181,21 +145,17 @@ export class CalloutManager {
 
             if (target.contentEditable === 'true' &&
                 target.getAttribute('data-callout-title') === 'true') {
-                console.log('[Callout Event] 🖱️ 点击 Callout 标题');
                 const blockquote = target.closest('[data-type="NodeBlockquote"], .bq') as HTMLElement;
 
                 if (blockquote && blockquote.hasAttribute('custom-callout')) {
                     const rect = target.getBoundingClientRect();
                     const clickX = e.clientX - rect.left;
 
-                    console.log(`[Callout Event] 📍 点击位置: ${clickX}px`);
-
                     // 点击图标区域（0-40px），显示切换主题菜单
                     if (clickX >= 0 && clickX <= 40) {
                         e.preventDefault();
                         e.stopPropagation();
 
-                        console.log('[Callout Event] 🎨 显示类型切换菜单');
                         const bqRect = blockquote.getBoundingClientRect();
                         this.menu.showMenu(bqRect.left, bqRect.top, blockquote, true);
                     }
@@ -205,50 +165,27 @@ export class CalloutManager {
 
         // 焦点事件监听
         document.addEventListener('focusin', (e) => {
+            if (this.processor.isInInitialLoad()) return;
+
             const target = e.target as HTMLElement;
-            console.log('[Callout Event] 🎯 焦点事件:', {
-                isContentEditable: target.contentEditable === 'true',
-                isInitialLoad: this.processor.isInInitialLoad()
-            });
-
-            if (this.processor.isInInitialLoad()) {
-                console.log('[Callout Event] ⏳ 初始加载中，跳过焦点处理');
-                return;
-            }
-
             if (target.contentEditable === 'true') {
                 const blockquote = target.closest('[data-type="NodeBlockquote"], .bq') as HTMLElement;
 
-                if (blockquote) {
-                    const isEmpty = this.processor.isBlockQuoteEmpty(blockquote);
+                if (blockquote && this.processor.isBlockQuoteEmpty(blockquote)) {
                     const nodeId = blockquote.getAttribute('data-node-id');
-                    const isRecentlyCreated = nodeId ? this.processor.isRecentlyCreated(nodeId) : false;
-
-                    console.log('[Callout Event] 🔍 焦点引用块检查:', {
-                        isEmpty,
-                        nodeId,
-                        isRecentlyCreated,
-                        shouldShowMenu: isEmpty && nodeId && !isRecentlyCreated
-                    });
-
-                    if (isEmpty && nodeId && !isRecentlyCreated) {
+                    if (nodeId && !this.processor.isRecentlyCreated(nodeId)) {
                         const rect = blockquote.getBoundingClientRect();
-                        console.log('[Callout Event] 🎉 焦点触发显示菜单!');
                         this.menu.showMenu(rect.left, rect.top, blockquote);
                     }
                 }
             }
         });
-
-        console.log('[Callout Manager] ✅ 事件监听器设置完成');
     }
 
     /**
      * 销毁Callout功能
      */
     destroy() {
-        console.log('[Callout Manager] Destroying...');
-
         // 移除observer
         if (this.observer) {
             this.observer.disconnect();
@@ -263,15 +200,12 @@ export class CalloutManager {
 
         // 隐藏菜单
         this.menu.hideMenu(true);
-
-        console.log('[Callout Manager] Destroyed');
     }
 
     /**
      * 刷新所有Callout
      */
     refresh() {
-        console.log('[Callout Manager] Refreshing...');
         this.processor.processAllBlockquotes();
     }
 

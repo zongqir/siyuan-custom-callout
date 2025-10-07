@@ -10,14 +10,11 @@ export class CalloutProcessor {
     private isInitialLoad: boolean = true;
 
     constructor() {
-        console.log('[Callout Processor] 🚀 初始化处理器...');
         this.loadDefaultTypes();
-        console.log('[Callout Processor] ✅ 加载了', this.calloutTypes.size, '个 Callout 类型');
         
         // 2秒后结束初始加载状态
         setTimeout(() => {
             this.isInitialLoad = false;
-            console.log('[Callout Processor] ✅ 初始加载完成，菜单触发器已激活');
         }, 2000);
     }
 
@@ -67,7 +64,6 @@ export class CalloutProcessor {
                 // 添加折叠功能
                 this.addCollapseToggle(blockquote, titleDiv);
 
-                console.log(`[Callout] Processed: ${trigger} -> ${config.type}`);
                 return true;
             }
         }
@@ -154,7 +150,6 @@ export class CalloutProcessor {
                 this.removeCollapseToggle(titleDiv);
             }
 
-            console.log('[Callout] Style cleared');
             return true;
         } catch (error) {
             console.error('[Callout] Error clearing style:', error);
