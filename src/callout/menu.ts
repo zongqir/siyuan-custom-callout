@@ -149,20 +149,18 @@ export class CalloutMenu {
             padding: 8px;
         `;
 
-        // 添加"原生样式"选项（仅在编辑模式）
-        if (isEdit) {
-            const noneItem = this.createMenuItem({
-                command: 'none',
-                displayName: '原生样式',
-                icon: `<svg width="20" height="20" viewBox="0 0 24 24"><path d="M18.364 5.636L5.636 18.364M5.636 5.636l12.728 12.728" stroke="#9ca3af" stroke-width="2" stroke-linecap="round"/></svg>`,
-                isNone: true
-            }, 0, isEdit);
-            gridContainer.appendChild(noneItem);
-        }
+        // 添加"原生样式"选项
+        const noneItem = this.createMenuItem({
+            command: 'none',
+            displayName: '原生样式',
+            icon: `<svg width="20" height="20" viewBox="0 0 24 24"><path d="M18.364 5.636L5.636 18.364M5.636 5.636l12.728 12.728" stroke="#9ca3af" stroke-width="2" stroke-linecap="round"/></svg>`,
+            isNone: true
+        }, 0, isEdit);
+        gridContainer.appendChild(noneItem);
 
         // 添加所有Callout类型
         DEFAULT_CALLOUT_TYPES.forEach((config, index) => {
-            const adjustedIndex = isEdit ? index + 1 : index;
+            const adjustedIndex = index + 1; // 因为 none 占了第 0 位
             const item = this.createMenuItem({
                 command: config.command,
                 displayName: config.displayName,
