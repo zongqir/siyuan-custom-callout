@@ -26,6 +26,12 @@
     let menuPreviewCollapsed = false;
     let themeCollapsed = false;
     
+    // 主题覆盖配置
+    let backgroundStyle: 'solid' | 'gradient' | 'default' = 'default';
+    let borderRadius: string = 'default';
+    let leftBorderWidth: string = 'default';
+    let borderWidth: string = 'default';
+    
     // 监听列数变化并保存
     $: if (config && gridColumns !== config.gridColumns) {
         handleGridColumnsChange(gridColumns);
@@ -40,6 +46,13 @@
         config = await ConfigManager.load(plugin);
         allTypes = ConfigManager.getAllTypes(config);
         gridColumns = config.gridColumns || 3;
+        
+        // 加载主题覆盖配置
+        const overrides = config.themeOverrides || {};
+        backgroundStyle = overrides.backgroundStyle || 'default';
+        borderRadius = overrides.borderRadius || 'default';
+        leftBorderWidth = overrides.leftBorderWidth || 'default';
+        borderWidth = overrides.borderWidth || 'default';
     }
     
     async function handleGridColumnsChange(newColumns: number) {
@@ -53,6 +66,21 @@
         config = { ...config, themeId: newThemeId };
         await saveConfig();
         showMessage(`已切换到「${THEME_STYLES.find(t => t.id === newThemeId)?.name}」风格`, 2000, 'info');
+    }
+    
+    async function handleOverrideChange() {
+        if (!config) return;
+        
+        // 构建覆盖配置（只保存非默认值）
+        const overrides: any = {};
+        if (backgroundStyle !== 'default') overrides.backgroundStyle = backgroundStyle;
+        if (borderRadius !== 'default') overrides.borderRadius = borderRadius;
+        if (leftBorderWidth !== 'default') overrides.leftBorderWidth = leftBorderWidth;
+        if (borderWidth !== 'default') overrides.borderWidth = borderWidth;
+        
+        config = { ...config, themeOverrides: overrides };
+        await saveConfig();
+        showMessage('样式已更新');
     }
 
     async function saveConfig() {
@@ -375,6 +403,61 @@
                         {/if}
                     </div>
                 {/each}
+            </div>
+            
+            <!-- 快捷配置 -->
+            <div class="theme-overrides">
+                <h4>快捷配置 <span class="hint">(覆盖当前主题的默认样式)</span></h4>
+                
+                <div class="override-grid">
+                    <!-- 背景样式 -->
+                    <div class="override-item">
+                        <label>背景样式</label>
+                        <select bind:value={backgroundStyle} on:change={handleOverrideChange}>
+                            <option value="default">默认</option>
+                            <option value="solid">纯色</option>
+                            <option value="gradient">渐变</option>
+                        </select>
+                    </div>
+                    
+                    <!-- 圆角大小 -->
+                    <div class="override-item">
+                        <label>圆角大小</label>
+                        <select bind:value={borderRadius} on:change={handleOverrideChange}>
+                            <option value="default">默认</option>
+                            <option value="0px">无圆角 (0px)</option>
+                            <option value="4px">小圆角 (4px)</option>
+                            <option value="8px">中圆角 (8px)</option>
+                            <option value="12px">大圆角 (12px)</option>
+                            <option value="16px">超大圆角 (16px)</option>
+                        </select>
+                    </div>
+                    
+                    <!-- 左侧条纹粗细 -->
+                    <div class="override-item">
+                        <label>左侧条纹</label>
+                        <select bind:value={leftBorderWidth} on:change={handleOverrideChange}>
+                            <option value="default">默认</option>
+                            <option value="0px">无条纹</option>
+                            <option value="2px">细 (2px)</option>
+                            <option value="4px">中 (4px)</option>
+                            <option value="6px">粗 (6px)</option>
+                            <option value="8px">超粗 (8px)</option>
+                        </select>
+                    </div>
+                    
+                    <!-- 边框粗细 -->
+                    <div class="override-item">
+                        <label>边框粗细</label>
+                        <select bind:value={borderWidth} on:change={handleOverrideChange}>
+                            <option value="default">默认</option>
+                            <option value="0px">无边框</option>
+                            <option value="1px">细 (1px)</option>
+                            <option value="2px">中 (2px)</option>
+                            <option value="3px">粗 (3px)</option>
+                        </select>
+                    </div>
+                </div>
             </div>
             {/if}
         </div>
@@ -827,6 +910,71 @@
         font-size: 13px;
         font-weight: 600;
         color: var(--b3-theme-primary);
+    }
+
+    /* 快捷配置 */
+    .theme-overrides {
+        margin-top: 24px;
+        padding: 20px;
+        background: var(--b3-theme-surface);
+        border-radius: 8px;
+        border: 1px solid var(--b3-border-color);
+    }
+
+    .theme-overrides h4 {
+        margin: 0 0 16px 0;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--b3-theme-on-background);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .theme-overrides .hint {
+        font-size: 12px;
+        font-weight: 400;
+        color: var(--b3-theme-on-surface);
+        opacity: 0.7;
+    }
+
+    .override-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+    }
+
+    .override-item {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .override-item label {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--b3-theme-on-background);
+    }
+
+    .override-item select {
+        padding: 8px 12px;
+        border: 1px solid var(--b3-border-color);
+        border-radius: 4px;
+        background: var(--b3-theme-background);
+        color: var(--b3-theme-on-background);
+        font-size: 13px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .override-item select:hover {
+        border-color: var(--b3-theme-primary);
+    }
+
+    .override-item select:focus {
+        outline: none;
+        border-color: var(--b3-theme-primary);
+        box-shadow: 0 0 0 2px var(--b3-theme-primary-lighter);
     }
 
 </style>

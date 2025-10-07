@@ -2,6 +2,16 @@ import type { CalloutTypeConfig } from './types';
 import { DEFAULT_CALLOUT_TYPES } from './types';
 
 /**
+ * 主题样式覆盖配置
+ */
+export interface ThemeOverrides {
+    backgroundStyle?: 'solid' | 'gradient';  // 纯色/渐变
+    borderRadius?: string;                   // 圆角大小
+    leftBorderWidth?: string;                // 左侧条纹粗细
+    borderWidth?: string;                    // 整体边框粗细
+}
+
+/**
  * 用户配置接口
  */
 export interface CalloutConfig {
@@ -12,6 +22,7 @@ export interface CalloutConfig {
     typeOrder: string[]; // 类型显示顺序（类型ID列表）
     gridColumns: number; // 网格列数（2/3/4）
     themeId: string; // 当前使用的主题ID
+    themeOverrides?: ThemeOverrides; // 主题样式覆盖
 }
 
 /**
@@ -38,7 +49,8 @@ export class ConfigManager {
                 hiddenDefaults: new Set(data.hiddenDefaults || []),
                 typeOrder: data.typeOrder || [],
                 gridColumns: data.gridColumns || 3,
-                themeId: data.themeId || 'modern'
+                themeId: data.themeId || 'modern',
+                themeOverrides: data.themeOverrides || {}
             };
         } catch (error) {
             console.error('[Callout Config] Error loading config:', error);
@@ -58,7 +70,8 @@ export class ConfigManager {
                 hiddenDefaults: Array.from(config.hiddenDefaults),
                 typeOrder: config.typeOrder,
                 gridColumns: config.gridColumns,
-                themeId: config.themeId
+                themeId: config.themeId,
+                themeOverrides: config.themeOverrides || {}
             };
             await plugin.saveData(this.STORAGE_KEY, data);
         } catch (error) {
@@ -78,7 +91,8 @@ export class ConfigManager {
             hiddenDefaults: new Set(),
             typeOrder: [],
             gridColumns: 3,
-            themeId: 'modern'
+            themeId: 'modern',
+            themeOverrides: {}
         };
     }
 

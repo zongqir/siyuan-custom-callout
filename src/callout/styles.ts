@@ -1,13 +1,19 @@
 import { DEFAULT_CALLOUT_TYPES, CalloutTypeConfig } from './types';
 import { getThemeById, getDefaultTheme, generateThemeCSS, type ThemeStyle } from './themes/index';
+import type { ThemeOverrides } from './config';
 
 /**
  * 生成Callout样式
  */
-export function generateCalloutStyles(customTypes?: CalloutTypeConfig[], themeId?: string): string {
+export function generateCalloutStyles(customTypes?: CalloutTypeConfig[], themeId?: string, themeOverrides?: ThemeOverrides): string {
     const styles: string[] = [];
     const types = customTypes || DEFAULT_CALLOUT_TYPES;
-    const theme = themeId ? getThemeById(themeId) || getDefaultTheme() : getDefaultTheme();
+    let theme = themeId ? getThemeById(themeId) || getDefaultTheme() : getDefaultTheme();
+    
+    // 应用主题覆盖配置
+    if (themeOverrides) {
+        theme = { ...theme, ...themeOverrides };
+    }
 
     // 主题CSS变量
     styles.push(`
