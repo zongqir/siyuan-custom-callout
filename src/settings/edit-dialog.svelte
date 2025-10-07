@@ -45,14 +45,14 @@
 
         if (!command.trim()) {
             errors.command = '命令不能为空';
-        } else if (!command.startsWith('@')) {
-            errors.command = '命令必须以 @ 开头';
+        } else if (!command.startsWith('[!') || !command.endsWith(']')) {
+            errors.command = '命令格式必须是 [!命令名]，例如 [!info]';
         } else if (existingCommands.includes(command)) {
             errors.command = '该命令已被使用';
         }
 
-        if (zhCommand && !zhCommand.startsWith('@')) {
-            errors.zhCommand = '中文命令必须以 @ 开头';
+        if (zhCommand && (!zhCommand.startsWith('[!') || !zhCommand.endsWith(']'))) {
+            errors.zhCommand = '中文命令格式必须是 [!命令名]，例如 [!信息]';
         } else if (zhCommand && existingCommands.includes(zhCommand)) {
             errors.zhCommand = '该中文命令已被使用';
         }
@@ -148,13 +148,13 @@
             <div class="form-row">
                 <div class="form-group">
                     <label>
-                        英文触发词 *
-                        <span class="label-hint">（打这个就能创建）</span>
+                        英文命令 *
+                        <span class="label-hint">（输入此命令创建 callout）</span>
                     </label>
                     <input
                         type="text"
                         bind:value={command}
-                        placeholder="@my-note"
+                        placeholder="[!my-note]"
                         class:error={errors.command}
                     />
                     {#if errors.command}<span class="error-msg">{errors.command}</span>{/if}
@@ -162,17 +162,17 @@
 
                 <div class="form-group">
                     <label>
-                        中文别名
+                        中文命令
                         <span class="label-hint">（选填，用中文也能触发）</span>
                     </label>
                     <input
                         type="text"
                         bind:value={zhCommand}
-                        placeholder="@我的笔记（可用中文输入法直接打）"
+                        placeholder="[!我的笔记]"
                         class:error={errors.zhCommand}
                     />
                     {#if errors.zhCommand}<span class="error-msg">{errors.zhCommand}</span>{/if}
-                    <div class="field-hint">💡 填了之后，输入 @my-note 或 @我的笔记 都能创建引用块</div>
+                    <div class="field-hint">💡 填了之后，输入 [!my-note] 或 [!我的笔记] 都能创建引用块</div>
                 </div>
             </div>
 

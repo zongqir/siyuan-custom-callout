@@ -919,11 +919,43 @@ export class CalloutMenu {
         try {
             if (isEdit) {
                 // 编辑模式：直接替换并立即处理
-                // console.log('[Callout Menu] ✅ 使用编辑模式（不换行）');
-                editableDiv.textContent = command;
-                editableDiv.dispatchEvent(new Event('input', { bubbles: true }));
-                editableDiv.dispatchEvent(new Event('change', { bubbles: true }));
-
+                console.log('[Callout Menu] ✏️ 编辑模式 - 修改命令:', command);
+                console.log('[Callout Menu] 📄 修改前文本:', editableDiv.textContent);
+                
+                // 先清除所有 callout 相关的属性，避免状态不一致
+                blockQuoteElement.removeAttribute('custom-callout');
+                blockQuoteElement.removeAttribute('data-margin-position');
+                blockQuoteElement.removeAttribute('data-margin-width');
+                blockQuoteElement.removeAttribute('data-margin-spacing');
+                blockQuoteElement.removeAttribute('data-collapsed');
+                
+                console.log('[Callout Menu] 🧹 已清除所有 callout 属性');
+                
+                // 模拟真实编辑：先聚焦，然后选中所有文本，删除，再输入新文本
+                editableDiv.focus();
+                
+                console.log('[Callout Menu] ✂️ 模拟真实编辑操作');
+                
+                // 1. 选中所有文本
+                const selection = window.getSelection();
+                const range = document.createRange();
+                range.selectNodeContents(editableDiv);
+                selection?.removeAllRanges();
+                selection?.addRange(range);
+                
+                console.log('[Callout Menu] 📝 已选中全部文本');
+                
+                // 2. 使用 execCommand 删除（模拟按删除键）
+                document.execCommand('delete', false);
+                
+                console.log('[Callout Menu] 🗑️ 已删除文本');
+                
+                // 3. 使用 execCommand 插入新文本（模拟键盘输入）
+                document.execCommand('insertText', false, command);
+                
+                console.log('[Callout Menu] ✍️ 已插入新文本:', command);
+                
+                // 4. 处理 callout
                 setTimeout(() => {
                     this.processor.processBlockquote(blockQuoteElement);
                 }, 100);
