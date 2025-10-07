@@ -1,0 +1,445 @@
+/* ==================== Callout 样式配置 ==================== */
+
+/* 🔥 通用：标题图标区域可点击提示 */
+.protyle-wysiwyg .bq[custom-callout] [data-callout-title="true"] {
+    cursor: pointer !important;
+    position: relative;
+}
+
+.protyle-wysiwyg .bq[custom-callout] [data-callout-title="true"]::before {
+    cursor: pointer !important;
+    transition: transform 0.2s ease, opacity 0.2s ease !important;
+}
+
+.protyle-wysiwyg .bq[custom-callout] [data-callout-title="true"]:hover::before {
+    transform: translateY(-50%) scale(1.1) !important;
+    opacity: 0.8 !important;
+}
+
+/* 🔥 折叠功能样式 */
+/* 标题可点击（右侧40px之后的区域用于折叠切换） */
+.protyle-wysiwyg .bq[custom-callout] [data-callout-title="true"] {
+    user-select: none !important;
+}
+
+/* 折叠状态下隐藏内容（除了第一个段落/标题） */
+.protyle-wysiwyg .bq[custom-callout][data-collapsed="true"] > div:not(:first-child) {
+    display: none !important;
+}
+
+/* 折叠状态下的视觉效果 - 压缩高度 */
+.protyle-wysiwyg .bq[custom-callout][data-collapsed="true"] {
+    padding: 4px 12px !important;
+    cursor: pointer !important;
+    margin: 4px 0 !important;
+    min-height: auto !important;
+}
+
+/* 折叠状态下标题行高压缩 */
+.protyle-wysiwyg .bq[custom-callout][data-collapsed="true"] [data-callout-title="true"] {
+    margin-bottom: 0 !important;
+    line-height: 1.2 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+}
+
+/* 折叠状态下悬停提示（点击展开） */
+.protyle-wysiwyg .bq[custom-callout][data-collapsed="true"]:hover {
+    opacity: 0.85 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* 折叠功能：点击标题区域（除图标外）切换折叠状态 */
+
+/* 1. 信息说明 - 蓝色 */
+.protyle-wysiwyg .bq[custom-callout="info"] {
+    background: linear-gradient(to bottom, #eff6ff, #ffffff) !important;
+    border: 1px solid #e5e7eb !important;
+    border-left: 4px solid #4493f8 !important;
+    border-radius: 6px !important;
+    padding: 16px !important;
+    margin: 12px 0 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.protyle-wysiwyg .bq[custom-callout="info"]:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(68, 147, 248, 0.12) !important;
+}
+
+.protyle-wysiwyg .bq[custom-callout="info"] [data-callout-title="true"]::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    background: url('data:image/svg+xml,<svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" stroke="%234493f8" stroke-width="1.7" fill="none"/><rect x="11" y="7" width="2" height="7" rx="1" fill="%234493f8"/><circle cx="12" cy="17" r="1.2" fill="%234493f8"/></svg>') center/contain no-repeat;
+}
+
+.protyle-wysiwyg .bq[custom-callout="info"] [data-callout-title="true"]::after {
+    color: #4493f8 !important;
+}
+
+/* 2. 概念解释 - 紫色 */
+.protyle-wysiwyg .bq[custom-callout="concept"] {
+    background: linear-gradient(to bottom, #faf5ff, #ffffff) !important;
+    border: 1px solid #e5e7eb !important;
+    border-left: 4px solid #9333ea !important;
+    border-radius: 6px !important;
+    padding: 16px !important;
+    margin: 12px 0 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.protyle-wysiwyg .bq[custom-callout="concept"]:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(147, 51, 234, 0.12) !important;
+}
+
+.protyle-wysiwyg .bq[custom-callout="concept"] [data-callout-title="true"]::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    background: url('data:image/svg+xml,<svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" stroke="%239333ea" stroke-width="1.5" fill="none"/></svg>') center/contain no-repeat;
+}
+
+.protyle-wysiwyg .bq[custom-callout="concept"] [data-callout-title="true"]::after {
+    color: #9333ea !important;
+}
+
+/* 3. 示例演示 - 绿色 */
+.protyle-wysiwyg .bq[custom-callout="example"] {
+    background: linear-gradient(to bottom, #f0fdf4, #ffffff) !important;
+    border: 1px solid #e5e7eb !important;
+    border-left: 4px solid #10b981 !important;
+    border-radius: 6px !important;
+    padding: 16px !important;
+    margin: 12px 0 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.protyle-wysiwyg .bq[custom-callout="example"]:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.12) !important;
+}
+
+.protyle-wysiwyg .bq[custom-callout="example"] [data-callout-title="true"]::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    background: url('data:image/svg+xml,<svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="2" stroke="%2310b981" stroke-width="1.5" fill="none"/><path d="M8 10h8M8 14h5" stroke="%2310b981" stroke-width="1.5" stroke-linecap="round"/></svg>') center/contain no-repeat;
+}
+
+.protyle-wysiwyg .bq[custom-callout="example"] [data-callout-title="true"]::after {
+    color: #10b981 !important;
+}
+
+/* 4. 使用技巧 - 黄绿色 */
+.protyle-wysiwyg .bq[custom-callout="tip"] {
+    background: linear-gradient(to bottom, #f7fee7, #ffffff) !important;
+    border: 1px solid #e5e7eb !important;
+    border-left: 4px solid #84cc16 !important;
+    border-radius: 6px !important;
+    padding: 16px !important;
+    margin: 12px 0 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.protyle-wysiwyg .bq[custom-callout="tip"]:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(132, 204, 22, 0.12) !important;
+}
+
+.protyle-wysiwyg .bq[custom-callout="tip"] [data-callout-title="true"]::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    background: url('data:image/svg+xml,<svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" stroke="%2384cc16" stroke-width="1.5" fill="none"/></svg>') center/contain no-repeat;
+}
+
+.protyle-wysiwyg .bq[custom-callout="tip"] [data-callout-title="true"]::after {
+    color: #84cc16 !important;
+}
+
+/* 5. 最佳实践 - 深绿色 */
+.protyle-wysiwyg .bq[custom-callout="best-practice"] {
+    background: linear-gradient(to bottom, #ecfdf5, #ffffff) !important;
+    border: 1px solid #e5e7eb !important;
+    border-left: 4px solid #059669 !important;
+    border-radius: 6px !important;
+    padding: 16px !important;
+    margin: 12px 0 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.protyle-wysiwyg .bq[custom-callout="best-practice"]:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.12) !important;
+}
+
+.protyle-wysiwyg .bq[custom-callout="best-practice"] [data-callout-title="true"]::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    background: url('data:image/svg+xml,<svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="%23059669" stroke-width="1.5" fill="none"/></svg>') center/contain no-repeat;
+}
+
+.protyle-wysiwyg .bq[custom-callout="best-practice"] [data-callout-title="true"]::after {
+    color: #059669 !important;
+}
+
+/* 6. 权衡取舍 - 橙色 */
+.protyle-wysiwyg .bq[custom-callout="tradeoff"] {
+    background: linear-gradient(to bottom, #fff7ed, #ffffff) !important;
+    border: 1px solid #e5e7eb !important;
+    border-left: 4px solid #ea580c !important;
+    border-radius: 6px !important;
+    padding: 16px !important;
+    margin: 12px 0 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.protyle-wysiwyg .bq[custom-callout="tradeoff"]:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(234, 88, 12, 0.12) !important;
+}
+
+.protyle-wysiwyg .bq[custom-callout="tradeoff"] [data-callout-title="true"]::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    background: url('data:image/svg+xml,<svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 12h18M12 3v18" stroke="%23ea580c" stroke-width="1.5"/><circle cx="7" cy="7" r="2" fill="%23ea580c"/><circle cx="17" cy="17" r="2" fill="%23ea580c"/></svg>') center/contain no-repeat;
+}
+
+.protyle-wysiwyg .bq[custom-callout="tradeoff"] [data-callout-title="true"]::after {
+    color: #ea580c !important;
+}
+
+/* 7. 深水区 - 深蓝色 */
+.protyle-wysiwyg .bq[custom-callout="deep-dive"] {
+    background: linear-gradient(to bottom, #eff6ff, #ffffff) !important;
+    border: 1px solid #e5e7eb !important;
+    border-left: 4px solid #1e40af !important;
+    border-radius: 6px !important;
+    padding: 16px !important;
+    margin: 12px 0 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.protyle-wysiwyg .bq[custom-callout="deep-dive"]:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(30, 64, 175, 0.12) !important;
+}
+
+.protyle-wysiwyg .bq[custom-callout="deep-dive"] [data-callout-title="true"]::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    background: url('data:image/svg+xml,<svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3v18m0 0l-6-6m6 6l6-6" stroke="%231e40af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 8h18" stroke="%231e40af" stroke-width="1.5" stroke-linecap="round"/></svg>') center/contain no-repeat;
+}
+
+.protyle-wysiwyg .bq[custom-callout="deep-dive"] [data-callout-title="true"]::after {
+    color: #1e40af !important;
+}
+
+/* 8. 对比分析 - 靛蓝色 */
+.protyle-wysiwyg .bq[custom-callout="comparison"] {
+    background: linear-gradient(to bottom, #eef2ff, #ffffff) !important;
+    border: 1px solid #e5e7eb !important;
+    border-left: 4px solid #6366f1 !important;
+    border-radius: 6px !important;
+    padding: 16px !important;
+    margin: 12px 0 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.protyle-wysiwyg .bq[custom-callout="comparison"]:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.12) !important;
+}
+
+.protyle-wysiwyg .bq[custom-callout="comparison"] [data-callout-title="true"]::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    background: url('data:image/svg+xml,<svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" stroke="%236366f1" stroke-width="1.5" fill="none"/><path d="M9 12h6M9 16h6" stroke="%236366f1" stroke-width="1.5" stroke-linecap="round"/></svg>') center/contain no-repeat;
+}
+
+.protyle-wysiwyg .bq[custom-callout="comparison"] [data-callout-title="true"]::after {
+    color: #6366f1 !important;
+}
+
+/* 9. 章节总结 - 青色 */
+.protyle-wysiwyg .bq[custom-callout="summary"] {
+    background: linear-gradient(to bottom, #ecfeff, #ffffff) !important;
+    border: 1px solid #e5e7eb !important;
+    border-left: 4px solid #06b6d4 !important;
+    border-radius: 6px !important;
+    padding: 16px !important;
+    margin: 12px 0 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.protyle-wysiwyg .bq[custom-callout="summary"]:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(6, 182, 212, 0.12) !important;
+}
+
+.protyle-wysiwyg .bq[custom-callout="summary"] [data-callout-title="true"]::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    background: url('data:image/svg+xml,<svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" stroke="%2306b6d4" stroke-width="1.5" fill="none"/></svg>') center/contain no-repeat;
+}
+
+.protyle-wysiwyg .bq[custom-callout="summary"] [data-callout-title="true"]::after {
+    color: #06b6d4 !important;
+}
+
+/* 10. 常见陷阱 - 红色 */
+.protyle-wysiwyg .bq[custom-callout="pitfall"] {
+    background: linear-gradient(to bottom, #fef2f2, #ffffff) !important;
+    border: 1px solid #e5e7eb !important;
+    border-left: 4px solid #dc2626 !important;
+    border-radius: 6px !important;
+    padding: 16px !important;
+    margin: 12px 0 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.protyle-wysiwyg .bq[custom-callout="pitfall"]:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.12) !important;
+}
+
+.protyle-wysiwyg .bq[custom-callout="pitfall"] [data-callout-title="true"]::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    background: url('data:image/svg+xml,<svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" stroke="%23dc2626" stroke-width="1.5" fill="none"/></svg>') center/contain no-repeat;
+}
+
+.protyle-wysiwyg .bq[custom-callout="pitfall"] [data-callout-title="true"]::after {
+    color: #dc2626 !important;
+}
+
+/* ==================== 通用样式 ==================== */
+
+/* 隐藏所有callout的系统图标和伪元素 */
+.protyle-wysiwyg .bq[custom-callout] .protyle-action,
+.protyle-wysiwyg .bq[custom-callout] .block__icon {
+    display: none !important;
+}
+
+/* 标题行样式 */
+.protyle-wysiwyg .bq[custom-callout] [data-callout-title="true"] {
+    font-weight: 600 !important;
+    font-size: 0.95em !important;
+    margin-bottom: 12px !important;
+    padding-left: 28px !important;
+    position: relative !important;
+    display: block !important;
+    color: transparent !important;
+    line-height: 1.5 !important;
+}
+
+/* 完全隐藏原始命令文本（如 @tradeoff） */
+.protyle-wysiwyg .bq[custom-callout] [data-callout-title="true"] * {
+    display: none !important;
+    visibility: hidden !important;
+}
+
+/* 图标样式由每个类型单独定义 */
+
+/* 显示友好的标题名称 */
+.protyle-wysiwyg .bq[custom-callout] [data-callout-title="true"]::after {
+    content: attr(data-callout-display-name) !important;
+    font-size: 0.95em !important;
+    font-weight: 600 !important;
+    opacity: 1 !important;
+    position: absolute !important;
+    left: 28px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    line-height: 1 !important;
+}
+
+/* 11. 重要亮点 - 金黄色 */
+.protyle-wysiwyg .bq[custom-callout="highlight"] {
+    background: linear-gradient(to bottom, #fffbeb, #ffffff) !important;
+    border: 1px solid #e5e7eb !important;
+    border-left: 4px solid #f59e0b !important;
+    border-radius: 6px !important;
+    padding: 16px !important;
+    margin: 12px 0 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.protyle-wysiwyg .bq[custom-callout="highlight"]:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.12) !important;
+}
+
+.protyle-wysiwyg .bq[custom-callout="highlight"] [data-callout-title="true"]::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    background: url('data:image/svg+xml,<svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3l2.163 6.636L21 12l-6.837 2.364L12 21l-2.163-6.636L3 12l6.837-2.364L12 3z" fill="%23f59e0b" stroke="%23f59e0b" stroke-width="1.5"/></svg>') center/contain no-repeat;
+}
+
+.protyle-wysiwyg .bq[custom-callout="highlight"] [data-callout-title="true"]::after {
+    color: #f59e0b !important;
+}
