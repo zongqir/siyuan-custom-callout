@@ -457,8 +457,8 @@ export class CalloutMenu {
         item.innerHTML = `
             <span style="width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${options.icon}</span>
             <div style="flex: 1; min-width: 0;">
-                <div style="font-weight: 500; color: #374151; font-size: 13px; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${options.command}</div>
-                <div style="color: #6b7280; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${options.displayName}</div>
+                <div style="font-weight: 600; color: #1f2937; font-size: 14px; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${options.displayName}</div>
+                <div style="color: #9ca3af; font-size: 10px; font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${options.command}</div>
             </div>
         `;
 
