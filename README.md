@@ -15,18 +15,51 @@ A SiYuan plugin that enhances blockquotes with custom callout designs, similar t
 
 ## Usage
 
-Create a blockquote and add a callout type indicator at the beginning:
+### Creating Callouts
+
+There are two ways to create callouts:
+
+#### Method 1: Automatic Menu (Recommended)
+1. Create a new blockquote (type `>` and press space)
+2. A command menu will automatically appear
+3. Select your desired callout type using arrow keys or mouse
+4. Press Enter or click to confirm
+
+#### Method 2: Manual Command
+Type a callout command at the beginning of a blockquote:
 
 ```markdown
-> [!note]
-> This is a note callout
+> @info
+> This is an information callout
 
-> [!tip]
+> @tip
 > This is a tip callout
 
-> [!warning]
+> @warning
 > This is a warning callout
 ```
+
+### Available Callout Types
+
+| Command | Chinese | Type | Description |
+|---------|---------|------|-------------|
+| `@info` | `@信息` | 信息说明 | General information |
+| `@concept` | `@概念` | 概念解释 | Concept explanation |
+| `@example` | `@示例` | 示例演示 | Example demonstration |
+| `@tip` | `@技巧` | 使用技巧 | Usage tips |
+| `@best-practice` | `@最佳实践` | 最佳实践 | Best practices |
+| `@tradeoff` | `@权衡取舍` | 权衡取舍 | Tradeoffs |
+| `@deep-dive` | `@深水区` | 深水区 | Deep dive |
+| `@comparison` | `@对比` | 对比分析 | Comparison |
+| `@summary` | `@总结` | 章节总结 | Summary |
+| `@pitfall` | `@陷阱` | 常见陷阱 | Common pitfalls |
+| `@highlight` | `@亮点` | 重要亮点 | Important highlights |
+
+### Interactive Features
+
+- **Switch Type**: Click the icon area (left side) of a callout title to switch types
+- **Collapse/Expand**: Click the title text area (right side) to collapse or expand the content
+- **Quick Access**: Use the command menu for easy callout type selection
 
 ## Get started
 
