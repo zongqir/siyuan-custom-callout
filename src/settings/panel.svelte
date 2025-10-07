@@ -17,6 +17,8 @@
     let editingType: CalloutTypeConfig | null = null;
     let isNewType = false;
     let loading = true;
+    let draggedIndex: number | null = null;
+    let dragOverIndex: number | null = null;
 
     onMount(async () => {
         await loadConfig();
@@ -76,23 +78,28 @@
         }
     }
 
-    async function handleDelete(type: CalloutTypeConfig) {
-        const isDefaultType = DEFAULT_CALLOUT_TYPES.some(t => t.type === type.type);
+    async function handleToggleHide(type: CalloutTypeConfig) {
+        const isHidden = ConfigManager.isTypeHidden(config, type.type);
         
-        if (isDefaultType) {
-            // 预设类型：隐藏
-            if (confirm(`确定要隐藏预设类型 "${type.displayName}" 吗？\n（可以通过"整体重置"恢复）`)) {
-                config = ConfigManager.hideDefaultType(config, type.type);
-                await saveConfig();
-                showMessage('已隐藏', 2000, 'info');
-            }
+        if (isHidden) {
+            // 显示
+            config = ConfigManager.showDefaultType(config, type.type);
+            await saveConfig();
+            showMessage('已显示', 2000, 'info');
         } else {
-            // 自定义类型：删除
-            if (confirm(`确定要删除 "${type.displayName}" 吗？`)) {
-                config = ConfigManager.deleteCustomType(config, type.type);
-                await saveConfig();
-                showMessage('删除成功', 2000, 'info');
-            }
+            // 隐藏
+            config = ConfigManager.hideDefaultType(config, type.type);
+            await saveConfig();
+            showMessage('已隐藏', 2000, 'info');
+        }
+    }
+
+    async function handleDelete(type: CalloutTypeConfig) {
+        // 自定义类型：删除
+        if (confirm(`确定要删除 "${type.displayName}" 吗？`)) {
+            config = ConfigManager.deleteCustomType(config, type.type);
+            await saveConfig();
+            showMessage('删除成功', 2000, 'info');
         }
     }
 
@@ -132,10 +139,61 @@
         return config.customTypes.some(t => t.type === type.type);
     }
 
+    function isHidden(type: CalloutTypeConfig): boolean {
+        return ConfigManager.isTypeHidden(config, type.type);
+    }
+
     function getExistingCommands(): string[] {
         return allTypes
             .filter(t => !editingType || t.type !== editingType.type)
             .flatMap(t => [t.command, t.zhCommand].filter(Boolean) as string[]);
+    }
+
+    // 拖拽相关函数
+    function handleDragStart(event: DragEvent, index: number) {
+        draggedIndex = index;
+        if (event.dataTransfer) {
+            event.dataTransfer.effectAllowed = 'move';
+            event.dataTransfer.setData('text/plain', index.toString());
+        }
+    }
+
+    function handleDragOver(event: DragEvent, index: number) {
+        event.preventDefault();
+        if (event.dataTransfer) {
+            event.dataTransfer.dropEffect = 'move';
+        }
+        dragOverIndex = index;
+    }
+
+    async function handleDrop(event: DragEvent, dropIndex: number) {
+        event.preventDefault();
+        
+        if (draggedIndex === null || draggedIndex === dropIndex) {
+            draggedIndex = null;
+            return;
+        }
+
+        // 重新排序
+        const newTypes = [...allTypes];
+        const [draggedItem] = newTypes.splice(draggedIndex, 1);
+        newTypes.splice(dropIndex, 0, draggedItem);
+
+        // 更新顺序
+        const newOrder = newTypes.map(t => t.type);
+        config = ConfigManager.updateTypeOrder(config, newOrder);
+        await saveConfig();
+
+        draggedIndex = null;
+    }
+
+    function handleDragEnd() {
+        draggedIndex = null;
+        dragOverIndex = null;
+    }
+
+    function handleDragLeave() {
+        dragOverIndex = null;
     }
 </script>
 
@@ -162,14 +220,31 @@
         </div>
 
         <div class="settings-description">
-            <p>💡 你可以新建自定义 Callout 类型，修改预设类型的样式，或隐藏不需要的类型。</p>
-            <p>📝 当前共有 <strong>{allTypes.length}</strong> 个可用类型（{ConfigManager.getVisibleDefaultTypesCount(config)} 个预设 + {config.customTypes.length} 个自定义{config.hiddenDefaults.size > 0 ? `，${config.hiddenDefaults.size} 个已隐藏` : ''}）</p>
+            <p>💡 你可以新建自定义 Callout 类型，修改预设类型的样式，或隐藏不需要的类型（隐藏后在命令菜单中不显示，但仍可在设置中查看和恢复）。</p>
+            <p>🔀 拖拽卡片可以调整类型的显示顺序。</p>
+            <p>📝 当前共有 <strong>{allTypes.length}</strong> 个类型（{ConfigManager.getVisibleDefaultTypesCount(config)} 个预设可用 + {config.customTypes.length} 个自定义{config.hiddenDefaults.size > 0 ? `，${config.hiddenDefaults.size} 个已隐藏` : ''}）</p>
         </div>
 
         <div class="types-list">
-            {#each allTypes as calloutType}
-                <div class="type-card" class:modified={isModified(calloutType)} class:custom={isCustom(calloutType)}>
+            {#each allTypes as calloutType, index}
+                <div 
+                    class="type-card" 
+                    class:modified={isModified(calloutType)} 
+                    class:custom={isCustom(calloutType)}
+                    class:hidden={isHidden(calloutType)}
+                    class:dragging={draggedIndex === index}
+                    class:drag-over={dragOverIndex === index && draggedIndex !== index}
+                    draggable="true"
+                    on:dragstart={(e) => handleDragStart(e, index)}
+                    on:dragover={(e) => handleDragOver(e, index)}
+                    on:dragleave={handleDragLeave}
+                    on:drop={(e) => handleDrop(e, index)}
+                    on:dragend={handleDragEnd}
+                >
                     <div class="type-header">
+                        <div class="drag-handle" title="拖拽排序">
+                            <svg width="16" height="16" viewBox="0 0 16 16"><path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                        </div>
                         <div class="type-icon" style="color: {calloutType.color};">
                             {@html calloutType.icon}
                         </div>
@@ -181,6 +256,9 @@
                                 {/if}
                                 {#if isCustom(calloutType)}
                                     <span class="badge badge-custom">自定义</span>
+                                {/if}
+                                {#if isHidden(calloutType)}
+                                    <span class="badge badge-hidden">已隐藏</span>
                                 {/if}
                             </div>
                             <div class="type-commands">
@@ -199,9 +277,17 @@
                                     <svg><use xlink:href="#iconUndo"></use></svg>
                                 </button>
                             {/if}
-                            <button class="action-btn action-delete" on:click={() => handleDelete(calloutType)} title={isCustom(calloutType) ? '删除' : '隐藏'}>
-                                <svg><use xlink:href={isCustom(calloutType) ? '#iconTrashcan' : '#iconEyeoff'}></use></svg>
-                            </button>
+                            {#if !isCustom(calloutType)}
+                                <!-- 预设类型：隐藏/显示 -->
+                                <button class="action-btn" on:click={() => handleToggleHide(calloutType)} title={isHidden(calloutType) ? '显示' : '隐藏'}>
+                                    <svg><use xlink:href={isHidden(calloutType) ? '#iconEye' : '#iconEyeoff'}></use></svg>
+                                </button>
+                            {:else}
+                                <!-- 自定义类型：删除 -->
+                                <button class="action-btn action-delete" on:click={() => handleDelete(calloutType)} title="删除">
+                                    <svg><use xlink:href="#iconTrashcan"></use></svg>
+                                </button>
+                            {/if}
                         </div>
                     </div>
 
@@ -318,6 +404,53 @@
         border-left: 4px solid var(--b3-theme-secondary);
     }
 
+    .type-card.hidden {
+        opacity: 0.6;
+        background: var(--b3-theme-surface-lighter);
+    }
+
+    .type-card.dragging {
+        opacity: 0.4;
+        transform: scale(0.95);
+        border: 2px dashed var(--b3-theme-primary);
+    }
+
+    .type-card.drag-over {
+        border-top: 3px solid var(--b3-theme-primary);
+        margin-top: -3px;
+        padding-top: 19px;
+    }
+
+    .type-card {
+        cursor: grab;
+        transition: all 0.2s ease;
+    }
+
+    .type-card:active {
+        cursor: grabbing;
+    }
+
+    .drag-handle {
+        width: 24px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: grab;
+        color: var(--b3-theme-on-surface);
+        opacity: 0.4;
+        flex-shrink: 0;
+        margin-right: 8px;
+    }
+
+    .drag-handle:hover {
+        opacity: 0.8;
+    }
+
+    .type-card:active .drag-handle {
+        cursor: grabbing;
+    }
+
     .type-header {
         display: flex;
         gap: 12px;
@@ -369,6 +502,12 @@
     .badge-custom {
         background: var(--b3-theme-secondary-lighter);
         color: var(--b3-theme-secondary);
+    }
+
+    .badge-hidden {
+        background: var(--b3-theme-surface);
+        color: var(--b3-theme-on-surface);
+        border: 1px solid var(--b3-border-color);
     }
 
     .type-commands {

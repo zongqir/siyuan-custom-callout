@@ -8,7 +8,8 @@ export interface CalloutConfig {
     version: string;
     customTypes: CalloutTypeConfig[];
     modifiedDefaults: Map<string, Partial<CalloutTypeConfig>>;
-    hiddenDefaults: Set<string>; // 隐藏的预设类型ID
+    hiddenDefaults: Set<string>; // 隐藏的预设类型ID（在命令菜单中不显示）
+    typeOrder: string[]; // 类型显示顺序（类型ID列表）
 }
 
 /**
@@ -32,7 +33,8 @@ export class ConfigManager {
                 version: data.version || this.CONFIG_VERSION,
                 customTypes: data.customTypes || [],
                 modifiedDefaults: new Map(Object.entries(data.modifiedDefaults || {})),
-                hiddenDefaults: new Set(data.hiddenDefaults || [])
+                hiddenDefaults: new Set(data.hiddenDefaults || []),
+                typeOrder: data.typeOrder || []
             };
         } catch (error) {
             console.error('[Callout Config] Error loading config:', error);
@@ -49,7 +51,8 @@ export class ConfigManager {
                 version: config.version,
                 customTypes: config.customTypes,
                 modifiedDefaults: Object.fromEntries(config.modifiedDefaults),
-                hiddenDefaults: Array.from(config.hiddenDefaults)
+                hiddenDefaults: Array.from(config.hiddenDefaults),
+                typeOrder: config.typeOrder
             };
             await plugin.saveData(this.STORAGE_KEY, data);
         } catch (error) {
@@ -66,32 +69,61 @@ export class ConfigManager {
             version: this.CONFIG_VERSION,
             customTypes: [],
             modifiedDefaults: new Map(),
-            hiddenDefaults: new Set()
+            hiddenDefaults: new Set(),
+            typeOrder: []
         };
     }
 
     /**
-     * 获取所有 Callout 类型（合并默认和自定义，排除隐藏的）
+     * 获取所有 Callout 类型（合并默认和自定义，设置面板显示所有类型）
      */
     static getAllTypes(config: CalloutConfig): CalloutTypeConfig[] {
-        const types: CalloutTypeConfig[] = [];
+        const typesMap = new Map<string, CalloutTypeConfig>();
 
-        // 添加修改后的默认类型（排除隐藏的）
+        // 添加修改后的默认类型（包括隐藏的）
         DEFAULT_CALLOUT_TYPES.forEach(defaultType => {
-            if (!config.hiddenDefaults.has(defaultType.type)) {
-                const modifications = config.modifiedDefaults.get(defaultType.type);
-                if (modifications) {
-                    types.push({ ...defaultType, ...modifications });
-                } else {
-                    types.push(defaultType);
-                }
+            const modifications = config.modifiedDefaults.get(defaultType.type);
+            if (modifications) {
+                typesMap.set(defaultType.type, { ...defaultType, ...modifications });
+            } else {
+                typesMap.set(defaultType.type, defaultType);
             }
         });
 
         // 添加自定义类型
-        types.push(...config.customTypes);
+        config.customTypes.forEach(customType => {
+            typesMap.set(customType.type, customType);
+        });
 
-        return types;
+        // 按照保存的顺序排序
+        if (config.typeOrder.length > 0) {
+            const orderedTypes: CalloutTypeConfig[] = [];
+            const remainingTypes = new Set(typesMap.keys());
+
+            // 先按顺序添加
+            config.typeOrder.forEach(typeId => {
+                if (typesMap.has(typeId)) {
+                    orderedTypes.push(typesMap.get(typeId)!);
+                    remainingTypes.delete(typeId);
+                }
+            });
+
+            // 添加不在顺序列表中的新类型
+            remainingTypes.forEach(typeId => {
+                orderedTypes.push(typesMap.get(typeId)!);
+            });
+
+            return orderedTypes;
+        }
+
+        return Array.from(typesMap.values());
+    }
+
+    /**
+     * 获取可用的 Callout 类型（排除隐藏的，用于命令菜单）
+     */
+    static getAvailableTypes(config: CalloutConfig): CalloutTypeConfig[] {
+        return this.getAllTypes(config).filter(type => !config.hiddenDefaults.has(type.type));
     }
 
     /**
@@ -209,6 +241,23 @@ export class ConfigManager {
      */
     static getVisibleDefaultTypesCount(config: CalloutConfig): number {
         return DEFAULT_CALLOUT_TYPES.length - config.hiddenDefaults.size;
+    }
+
+    /**
+     * 更新类型顺序
+     */
+    static updateTypeOrder(config: CalloutConfig, typeOrder: string[]): CalloutConfig {
+        return {
+            ...config,
+            typeOrder
+        };
+    }
+
+    /**
+     * 检查类型是否被隐藏
+     */
+    static isTypeHidden(config: CalloutConfig, typeId: string): boolean {
+        return config.hiddenDefaults.has(typeId);
     }
 }
 

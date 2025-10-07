@@ -26,9 +26,9 @@ export class CalloutManager {
      */
     updateConfig(config: CalloutConfig) {
         this.currentConfig = config;
-        const allTypes = ConfigManager.getAllTypes(config);
-        this.processor.updateTypes(allTypes);
-        this.menu.updateTypes(allTypes);
+        const availableTypes = ConfigManager.getAvailableTypes(config); // 只使用可用的类型（排除隐藏的）
+        this.processor.updateTypes(availableTypes);
+        this.menu.updateTypes(availableTypes);
     }
 
     /**
@@ -38,9 +38,9 @@ export class CalloutManager {
         // 加载配置
         if (this.plugin) {
             this.currentConfig = await ConfigManager.load(this.plugin);
-            const allTypes = ConfigManager.getAllTypes(this.currentConfig);
-            this.processor.updateTypes(allTypes);
-            this.menu.updateTypes(allTypes);
+            const availableTypes = ConfigManager.getAvailableTypes(this.currentConfig); // 只使用可用的类型（排除隐藏的）
+            this.processor.updateTypes(availableTypes);
+            this.menu.updateTypes(availableTypes);
         }
 
         // 注入样式
@@ -62,6 +62,7 @@ export class CalloutManager {
             this.styleElement.remove();
         }
 
+        // 样式需要包含所有类型（包括隐藏的），因为隐藏的类型可能已经在文档中使用了
         const types = this.currentConfig ? ConfigManager.getAllTypes(this.currentConfig) : undefined;
         this.styleElement = document.createElement('style');
         this.styleElement.id = 'custom-callout-styles';
