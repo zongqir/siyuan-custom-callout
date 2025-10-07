@@ -87,10 +87,10 @@ export function generateCalloutStyles(customTypes?: CalloutTypeConfig[], themeId
 
 /* 标题行样式 */
 .protyle-wysiwyg .bq[custom-callout] [data-callout-title="true"] {
-    font-weight: 600 !important;
-    font-size: 0.95em !important;
+    font-weight: var(--callout-title-font-weight) !important;
+    font-size: var(--callout-title-font-size) !important;
     margin-bottom: 12px !important;
-    padding-left: 28px !important;
+    padding-left: calc(var(--callout-icon-size) + 12px) !important;
     position: relative !important;
     display: block !important;
     color: transparent !important;
@@ -106,11 +106,11 @@ export function generateCalloutStyles(customTypes?: CalloutTypeConfig[], themeId
 /* 显示友好的标题名称 */
 .protyle-wysiwyg .bq[custom-callout] [data-callout-title="true"]::after {
     content: attr(data-callout-display-name) !important;
-    font-size: 0.95em !important;
-    font-weight: 600 !important;
+    font-size: var(--callout-title-font-size) !important;
+    font-weight: var(--callout-title-font-weight) !important;
     opacity: 1 !important;
     position: absolute !important;
-    left: 28px !important;
+    left: calc(var(--callout-icon-size) + 12px) !important;
     top: 50% !important;
     transform: translateY(-50%) !important;
     line-height: 1 !important;

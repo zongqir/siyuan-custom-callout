@@ -31,6 +31,9 @@
     let borderRadius: string = 'default';
     let leftBorderWidth: string = 'default';
     let borderWidth: string = 'default';
+    let titleFontSize: string = 'default';
+    let titleFontWeight: string = 'default';
+    let iconSize: string = 'default';
     
     // 监听列数变化并保存
     $: if (config && gridColumns !== config.gridColumns) {
@@ -53,6 +56,9 @@
         borderRadius = overrides.borderRadius || 'default';
         leftBorderWidth = overrides.leftBorderWidth || 'default';
         borderWidth = overrides.borderWidth || 'default';
+        titleFontSize = overrides.titleFontSize || 'default';
+        titleFontWeight = overrides.titleFontWeight || 'default';
+        iconSize = overrides.iconSize || 'default';
     }
     
     async function handleGridColumnsChange(newColumns: number) {
@@ -77,6 +83,9 @@
         if (borderRadius !== 'default') overrides.borderRadius = borderRadius;
         if (leftBorderWidth !== 'default') overrides.leftBorderWidth = leftBorderWidth;
         if (borderWidth !== 'default') overrides.borderWidth = borderWidth;
+        if (titleFontSize !== 'default') overrides.titleFontSize = titleFontSize;
+        if (titleFontWeight !== 'default') overrides.titleFontWeight = titleFontWeight;
+        if (iconSize !== 'default') overrides.iconSize = iconSize;
         
         config = { ...config, themeOverrides: overrides };
         await saveConfig();
@@ -456,6 +465,107 @@
                             <option value="2px">中 (2px)</option>
                             <option value="3px">粗 (3px)</option>
                         </select>
+                    </div>
+                    
+                    <!-- 标题字体大小 -->
+                    <div class="override-item">
+                        <label>标题字体大小</label>
+                        <select bind:value={titleFontSize} on:change={handleOverrideChange}>
+                            <option value="default">默认</option>
+                            <option value="0.8em">极小 (0.8em)</option>
+                            <option value="0.85em">小 (0.85em)</option>
+                            <option value="0.9em">偏小 (0.9em)</option>
+                            <option value="0.95em">中 (0.95em)</option>
+                            <option value="1em">标准 (1em)</option>
+                            <option value="1.05em">偏大 (1.05em)</option>
+                            <option value="1.1em">大 (1.1em)</option>
+                            <option value="1.2em">超大 (1.2em)</option>
+                        </select>
+                    </div>
+                    
+                    <!-- 标题字体粗细 -->
+                    <div class="override-item">
+                        <label>标题字体粗细</label>
+                        <select bind:value={titleFontWeight} on:change={handleOverrideChange}>
+                            <option value="default">默认</option>
+                            <option value="400">正常 (400)</option>
+                            <option value="500">稍粗 (500)</option>
+                            <option value="600">粗体 (600)</option>
+                            <option value="700">超粗 (700)</option>
+                            <option value="800">特粗 (800)</option>
+                        </select>
+                    </div>
+                    
+                    <!-- 图标大小 -->
+                    <div class="override-item">
+                        <label>图标大小</label>
+                        <select bind:value={iconSize} on:change={handleOverrideChange}>
+                            <option value="default">默认</option>
+                            <option value="14px">小 (14px)</option>
+                            <option value="16px">中 (16px)</option>
+                            <option value="18px">偏大 (18px)</option>
+                            <option value="20px">大 (20px)</option>
+                            <option value="22px">超大 (22px)</option>
+                            <option value="24px">特大 (24px)</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- 实时预览 -->
+                <div class="override-preview">
+                    <h4>实时预览 <span class="hint">(查看样式效果)</span></h4>
+                    <div class="preview-container">
+                        <div 
+                            class="preview-callout"
+                            style="
+                                background: {backgroundStyle === 'solid' 
+                                    ? 'rgba(68, 147, 248, 0.08)' 
+                                    : (backgroundStyle === 'gradient' || backgroundStyle === 'default')
+                                        ? 'linear-gradient(to bottom, #eff6ff, #ffffff)'
+                                        : 'linear-gradient(to bottom, #eff6ff, #ffffff)'
+                                };
+                                border: {borderWidth !== 'default' ? borderWidth : '1px'} solid #e5e7eb;
+                                border-left: {leftBorderWidth !== 'default' ? leftBorderWidth : '4px'} solid #4493f8;
+                                border-radius: {borderRadius !== 'default' ? borderRadius : '8px'};
+                                padding: 16px;
+                                box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                            "
+                        >
+                            <div 
+                                class="preview-title"
+                                style="
+                                    font-size: {titleFontSize !== 'default' ? titleFontSize : '0.95em'};
+                                    font-weight: {titleFontWeight !== 'default' ? titleFontWeight : '600'};
+                                    color: #4493f8;
+                                    display: flex;
+                                    align-items: center;
+                                    gap: 8px;
+                                    margin-bottom: 8px;
+                                "
+                            >
+                                <svg 
+                                    width="{iconSize !== 'default' ? iconSize : '20px'}" 
+                                    height="{iconSize !== 'default' ? iconSize : '20px'}" 
+                                    viewBox="0 0 24 24"
+                                    style="flex-shrink: 0;"
+                                >
+                                    <circle cx="12" cy="12" r="10" stroke="#4493f8" stroke-width="1.7" fill="none"/>
+                                    <rect x="11" y="7" width="2" height="7" rx="1" fill="#4493f8"/>
+                                    <circle cx="12" cy="17" r="1.2" fill="#4493f8"/>
+                                </svg>
+                                <span>信息说明</span>
+                            </div>
+                            <div 
+                                class="preview-content"
+                                style="
+                                    font-size: 0.9em;
+                                    color: #374151;
+                                    line-height: 1.6;
+                                "
+                            >
+                                这是一个示例 Callout 块，用于展示你的自定义样式效果。调整上方的配置选项，这里会实时显示最终效果。
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -975,6 +1085,41 @@
         outline: none;
         border-color: var(--b3-theme-primary);
         box-shadow: 0 0 0 2px var(--b3-theme-primary-lighter);
+    }
+
+    /* 预览区域 */
+    .override-preview {
+        margin-top: 32px;
+        padding-top: 24px;
+        border-top: 1px solid var(--b3-border-color);
+    }
+
+    .override-preview h4 {
+        margin: 0 0 16px 0;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--b3-theme-on-background);
+    }
+
+    .preview-container {
+        background: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 24px;
+    }
+
+    .preview-callout {
+        max-width: 600px;
+        margin: 0 auto;
+        transition: all 0.2s ease;
+    }
+
+    .preview-title {
+        user-select: none;
+    }
+
+    .preview-content {
+        user-select: none;
     }
 
 </style>
