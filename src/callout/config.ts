@@ -12,6 +12,8 @@ export interface ThemeOverrides {
     titleFontSize?: string;                  // 标题字体大小
     titleFontWeight?: string;                // 标题字体粗细
     iconSize?: string;                       // 图标大小
+    hideIcon?: boolean;                      // 隐藏图标
+    hideTitle?: boolean;                     // 隐藏标题文字
 }
 
 /**

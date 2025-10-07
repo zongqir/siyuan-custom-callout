@@ -34,6 +34,8 @@
     let titleFontSize: string = 'default';
     let titleFontWeight: string = 'default';
     let iconSize: string = 'default';
+    let hideIcon: boolean = false;
+    let hideTitle: boolean = false;
     
     // 监听列数变化并保存
     $: if (config && gridColumns !== config.gridColumns) {
@@ -59,6 +61,8 @@
         titleFontSize = overrides.titleFontSize || 'default';
         titleFontWeight = overrides.titleFontWeight || 'default';
         iconSize = overrides.iconSize || 'default';
+        hideIcon = overrides.hideIcon || false;
+        hideTitle = overrides.hideTitle || false;
     }
     
     async function handleGridColumnsChange(newColumns: number) {
@@ -86,6 +90,8 @@
         if (titleFontSize !== 'default') overrides.titleFontSize = titleFontSize;
         if (titleFontWeight !== 'default') overrides.titleFontWeight = titleFontWeight;
         if (iconSize !== 'default') overrides.iconSize = iconSize;
+        if (hideIcon) overrides.hideIcon = hideIcon;
+        if (hideTitle) overrides.hideTitle = hideTitle;
         
         config = { ...config, themeOverrides: overrides };
         await saveConfig();
@@ -509,6 +515,22 @@
                             <option value="24px">特大 (24px)</option>
                         </select>
                     </div>
+                    
+                    <!-- 隐藏图标 -->
+                    <div class="override-item override-checkbox">
+                        <label>
+                            <input type="checkbox" bind:checked={hideIcon} on:change={handleOverrideChange} />
+                            <span>隐藏图标</span>
+                        </label>
+                    </div>
+                    
+                    <!-- 隐藏标题文字 -->
+                    <div class="override-item override-checkbox">
+                        <label>
+                            <input type="checkbox" bind:checked={hideTitle} on:change={handleOverrideChange} />
+                            <span>隐藏标题文字</span>
+                        </label>
+                    </div>
                 </div>
                 
                 <!-- 实时预览 -->
@@ -543,6 +565,7 @@
                                     margin-bottom: 8px;
                                 "
                             >
+                                {#if !hideIcon}
                                 <svg 
                                     width="{iconSize !== 'default' ? iconSize : '20px'}" 
                                     height="{iconSize !== 'default' ? iconSize : '20px'}" 
@@ -553,7 +576,10 @@
                                     <rect x="11" y="7" width="2" height="7" rx="1" fill="#4493f8"/>
                                     <circle cx="12" cy="17" r="1.2" fill="#4493f8"/>
                                 </svg>
+                                {/if}
+                                {#if !hideTitle}
                                 <span>信息说明</span>
+                                {/if}
                             </div>
                             <div 
                                 class="preview-content"
@@ -1085,6 +1111,28 @@
         outline: none;
         border-color: var(--b3-theme-primary);
         box-shadow: 0 0 0 2px var(--b3-theme-primary-lighter);
+    }
+
+    /* 复选框样式 */
+    .override-checkbox label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .override-checkbox input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+        accent-color: var(--b3-theme-primary);
+    }
+
+    .override-checkbox span {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--b3-theme-on-background);
     }
 
     /* 预览区域 */

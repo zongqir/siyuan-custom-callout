@@ -15,6 +15,10 @@ export function generateCalloutStyles(customTypes?: CalloutTypeConfig[], themeId
         theme = { ...theme, ...themeOverrides };
     }
 
+    // 处理隐藏选项
+    const hideIcon = themeOverrides?.hideIcon || false;
+    const hideTitle = themeOverrides?.hideTitle || false;
+
     // 主题CSS变量
     styles.push(`
 /* ==================== Callout 主题变量 ==================== */
@@ -171,6 +175,52 @@ export function generateCalloutStyles(customTypes?: CalloutTypeConfig[], themeId
 }
 `);
     });
+
+    // 应用全局隐藏设置
+    if (hideIcon || hideTitle) {
+        styles.push(`
+/* ==================== 全局隐藏设置 ==================== */`);
+        
+        if (hideIcon) {
+            styles.push(`
+/* 全局隐藏图标 */
+.protyle-wysiwyg .bq[custom-callout] [data-callout-title="true"]::before {
+    display: none !important;
+}
+
+.protyle-wysiwyg .bq[custom-callout] [data-callout-title="true"] {
+    padding-left: 0 !important;
+}
+
+.protyle-wysiwyg .bq[custom-callout] [data-callout-title="true"]::after {
+    left: 0 !important;
+}
+`);
+        }
+        
+        if (hideTitle) {
+            styles.push(`
+/* 全局隐藏标题文字 */
+.protyle-wysiwyg .bq[custom-callout] [data-callout-title="true"]::after {
+    display: none !important;
+}
+
+.protyle-wysiwyg .bq[custom-callout] [data-callout-title="true"] {
+    min-height: 0 !important;
+    margin-bottom: 0 !important;
+}
+`);
+        }
+        
+        if (hideIcon && hideTitle) {
+            styles.push(`
+/* 同时隐藏图标和标题 */
+.protyle-wysiwyg .bq[custom-callout] [data-callout-title="true"] {
+    display: none !important;
+}
+`);
+        }
+    }
 
     return styles.join('\n');
 }
