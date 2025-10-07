@@ -618,19 +618,7 @@ export class CalloutProcessor {
                 const widthValue = this.parseWidthToPixels(width, blockquote);
                 const spacingValue = this.parseSpacingToPixels(spacing, blockquote);
                 
-                // 获取上一个元素的高度
-                const siblingHeight = previousSibling.offsetHeight;
-                const siblingMarginBottom = parseInt(getComputedStyle(previousSibling).marginBottom) || 0;
-                
-                // 计算需要向上移动的距离
-                const moveUpDistance = siblingHeight + siblingMarginBottom;
-                
-                // 使用 transform 向上移动
-                console.log('[Callout] 🎨 设置transform向上移动:', `-${moveUpDistance}px`);
-                blockquote.style.setProperty('transform', `translateY(-${moveUpDistance}px)`, 'important');
-                console.log('[Callout] 🎨 transform设置后:', blockquote.style.transform);
-                
-                // 设置定位方式和间距
+                // 先设置定位方式和间距，让布局稳定
                 console.log('[Callout] 🎨 开始设置CSS，position:', parsedCommand.position);
                 if (parsedCommand.position === 'left') {
                     // 左侧边注 - 使用浮动
@@ -679,19 +667,40 @@ export class CalloutProcessor {
                     });
                 }
                 
-                // 调试日志
-                console.log('[Callout] 边注应用:', {
-                    position: parsedCommand.position,
-                    width: widthValue,
-                    spacing: spacingValue,
-                    moveUpDistance,
-                    siblingHeight,
-                    transform: blockquote.style.transform,
-                    marginLeft: blockquote.style.marginLeft,
-                    marginRight: blockquote.style.marginRight,
-                    computedFloat: getComputedStyle(blockquote).float,
-                    containerWidth: blockquote.parentElement?.offsetWidth,
-                    blockquoteWidth: blockquote.offsetWidth
+                // 等待布局完成后，再计算精确位置并设置 transform
+                requestAnimationFrame(() => {
+                    // 使用 getBoundingClientRect 精确计算位置差
+                    const siblingRect = previousSibling.getBoundingClientRect();
+                    const blockquoteRect = blockquote.getBoundingClientRect();
+                    
+                    // 计算边注顶部到上一个元素顶部的距离
+                    const moveUpDistance = blockquoteRect.top - siblingRect.top;
+                    
+                    console.log('[Callout] 📏 位置信息 (CSS设置后):', {
+                        siblingTop: siblingRect.top,
+                        blockquoteTop: blockquoteRect.top,
+                        距离差: moveUpDistance
+                    });
+                    
+                    // 使用 transform 向上移动，让边注顶部对齐到上一个元素顶部
+                    console.log('[Callout] 🎨 设置transform向上移动:', `-${moveUpDistance}px`);
+                    blockquote.style.setProperty('transform', `translateY(-${moveUpDistance}px)`, 'important');
+                    console.log('[Callout] 🎨 transform设置后:', blockquote.style.transform);
+                    
+                    // 调试日志
+                    console.log('[Callout] 边注应用:', {
+                        position: parsedCommand.position,
+                        width: widthValue,
+                        spacing: spacingValue,
+                        moveUpDistance,
+                        siblingHeight: siblingRect.height,
+                        transform: blockquote.style.transform,
+                        marginLeft: blockquote.style.marginLeft,
+                        marginRight: blockquote.style.marginRight,
+                        computedFloat: getComputedStyle(blockquote).float,
+                        containerWidth: blockquote.parentElement?.offsetWidth,
+                        blockquoteWidth: blockquote.offsetWidth
+                    });
                 });
             });
         }
