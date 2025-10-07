@@ -5,7 +5,7 @@ import {
 import "./index.scss";
 
 import { CalloutManager } from "./callout";
-import SettingPanel from "./settings/panel.svelte";
+import SettingPanel from "./settings/panel-v2.svelte";
 import { Dialog } from "siyuan";
 
 const STORAGE_NAME = "callout-config";
