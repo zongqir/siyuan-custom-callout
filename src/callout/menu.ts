@@ -577,58 +577,45 @@ export class CalloutMenu {
         const titleDiv = blockquote.querySelector('[data-callout-title="true"]') as HTMLElement;
         if (!titleDiv) return;
 
-        // 清除现有边注设置
+        // 清除所有 callout 相关的属性，避免状态不一致
+        blockquote.removeAttribute('custom-callout');
         blockquote.removeAttribute('data-margin-position');
         blockquote.removeAttribute('data-margin-width');
         blockquote.removeAttribute('data-margin-spacing');
+        blockquote.removeAttribute('data-collapsed');
         blockquote.style.removeProperty('--margin-width');
         blockquote.style.removeProperty('--margin-spacing');
+        
+        console.log('[Callout Menu] 🧹 工具栏切换 - 已清除所有 callout 属性');
+
+        // 获取当前文本并提取类型
+        const currentText = titleDiv.textContent?.trim() || '';
+        let baseType = '';
+        const match = currentText.match(/^\[!([^|\]]+)(\|.*?)?\]?/);
+        if (match) {
+            baseType = match[1];
+        }
 
         if (position !== 'normal') {
-            // 使用默认的宽度和间距
-            const defaultWidth = '30%';
-            const defaultSpacing = '1em';
-            
-            // 应用新的边注设置
-            blockquote.setAttribute('data-margin-position', position);
-            blockquote.setAttribute('data-margin-width', defaultWidth);
-            blockquote.setAttribute('data-margin-spacing', defaultSpacing);
-            
-            // 设置CSS变量
-            blockquote.style.setProperty('--margin-width', defaultWidth);
-            blockquote.style.setProperty('--margin-spacing', defaultSpacing);
-            
-            // 更新命令文本以保持持久化
-            const currentText = titleDiv.textContent?.trim() || '';
-            
-            // 从当前文本中提取类型 - 支持 [!info] 或 [!info|params] 格式
-            let baseType = '';
-            const match = currentText.match(/^\[!([^|\]]+)(\|.*?)?\]?/);
-            if (match) {
-                baseType = match[1];
-            }
-            
+            // 生成边注命令
             const newCommand = `[!${baseType}|${position}]`;
-            titleDiv.textContent = newCommand;
+            console.log('[Callout Menu] 🔄 工具栏切换到边注模式:', newCommand);
+            // 使用统一的文本更新函数
+            this.updateEditableText(titleDiv, newCommand);
         } else {
-            // 恢复普通模式，更新命令文本
-            const currentText = titleDiv.textContent?.trim() || '';
-            
-            // 从当前文本中提取类型 - 支持 [!info] 或 [!info|params] 格式
-            let baseType = '';
-            const match = currentText.match(/^\[!([^|\]]+)(\|.*?)?\]?/);
-            if (match) {
-                baseType = match[1];
-            }
-            
+            // 生成普通命令
             const baseCommand = `[!${baseType}]`;
-            titleDiv.textContent = baseCommand;
+            console.log('[Callout Menu] 🔄 工具栏切换到普通模式:', baseCommand);
+            // 使用统一的文本更新函数
+            this.updateEditableText(titleDiv, baseCommand);
         }
         
-        // 触发重新处理（如果处理器可用）
-        if (this.processor) {
-            this.processor.processBlockquote(blockquote);
-        }
+        // 延迟触发重新处理，确保文本更新完成
+        setTimeout(() => {
+            if (this.processor) {
+                this.processor.processBlockquote(blockquote);
+            }
+        }, 100);
     }
 
     /**
@@ -896,6 +883,37 @@ export class CalloutMenu {
     }
 
     /**
+     * 统一的文本更新函数 - 模拟真实编辑
+     */
+    private updateEditableText(editableDiv: HTMLElement, newText: string) {
+        console.log('[Callout Menu] ✂️ 统一文本更新 - 模拟真实编辑');
+        console.log('[Callout Menu] 📄 修改前文本:', editableDiv.textContent);
+        
+        // 聚焦
+        editableDiv.focus();
+        
+        // 1. 选中所有文本
+        const selection = window.getSelection();
+        const range = document.createRange();
+        range.selectNodeContents(editableDiv);
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+        
+        console.log('[Callout Menu] 📝 已选中全部文本');
+        
+        // 2. 使用 execCommand 删除（模拟按删除键）
+        document.execCommand('delete', false);
+        
+        console.log('[Callout Menu] 🗑️ 已删除文本');
+        
+        // 3. 使用 execCommand 插入新文本（模拟键盘输入）
+        document.execCommand('insertText', false, newText);
+        
+        console.log('[Callout Menu] ✍️ 已插入新文本:', newText);
+        console.log('[Callout Menu] 📄 修改后文本:', editableDiv.textContent);
+    }
+
+    /**
      * 插入命令到引用块
      */
     private insertCommand(command: string, blockQuoteElement: HTMLElement, isEdit: boolean) {
@@ -931,31 +949,10 @@ export class CalloutMenu {
                 
                 console.log('[Callout Menu] 🧹 已清除所有 callout 属性');
                 
-                // 模拟真实编辑：先聚焦，然后选中所有文本，删除，再输入新文本
-                editableDiv.focus();
+                // 使用统一的文本更新函数
+                this.updateEditableText(editableDiv, command);
                 
-                console.log('[Callout Menu] ✂️ 模拟真实编辑操作');
-                
-                // 1. 选中所有文本
-                const selection = window.getSelection();
-                const range = document.createRange();
-                range.selectNodeContents(editableDiv);
-                selection?.removeAllRanges();
-                selection?.addRange(range);
-                
-                console.log('[Callout Menu] 📝 已选中全部文本');
-                
-                // 2. 使用 execCommand 删除（模拟按删除键）
-                document.execCommand('delete', false);
-                
-                console.log('[Callout Menu] 🗑️ 已删除文本');
-                
-                // 3. 使用 execCommand 插入新文本（模拟键盘输入）
-                document.execCommand('insertText', false, command);
-                
-                console.log('[Callout Menu] ✍️ 已插入新文本:', command);
-                
-                // 4. 处理 callout
+                // 处理 callout
                 setTimeout(() => {
                     this.processor.processBlockquote(blockQuoteElement);
                 }, 100);
