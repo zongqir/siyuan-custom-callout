@@ -10,4 +10,5 @@ export * from './manager';
 export * from './config';
 export * from './icons';
 export * from './colors';
+export * from './themes';
 

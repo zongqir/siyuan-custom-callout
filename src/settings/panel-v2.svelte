@@ -5,6 +5,7 @@
     import type { CalloutTypeConfig } from '../callout/types';
     import { DEFAULT_CALLOUT_TYPES } from '../callout/types';
     import { ConfigManager, type CalloutConfig } from '../callout/config';
+    import { THEME_STYLES } from '../callout/themes';
     import EditDialog from './edit-dialog.svelte';
     import { showMessage } from 'siyuan';
 
@@ -41,6 +42,13 @@
         if (!config) return;
         config = { ...config, gridColumns: newColumns };
         await saveConfig();
+    }
+
+    async function handleThemeChange(newThemeId: string) {
+        if (!config) return;
+        config = { ...config, themeId: newThemeId };
+        await saveConfig();
+        showMessage(`已切换到「${THEME_STYLES.find(t => t.id === newThemeId)?.name}」风格`, 2000, 'info');
     }
 
     async function saveConfig() {
@@ -211,6 +219,32 @@
                     <svg class="b3-button__icon"><use xlink:href="#iconUndo"></use></svg>
                     整体重置
                 </button>
+            </div>
+        </div>
+
+        <!-- 主题风格选择 -->
+        <div class="theme-section">
+            <div class="section-header">
+                <h3>🎨 整体风格</h3>
+                <p>选择不同的视觉风格，改变所有 Callout 的外观</p>
+            </div>
+            <div class="theme-grid">
+                {#each THEME_STYLES as theme}
+                    <div 
+                        class="theme-card" 
+                        class:active={config.themeId === theme.id}
+                        on:click={() => handleThemeChange(theme.id)}
+                    >
+                        <div class="theme-preview">{theme.preview}</div>
+                        <div class="theme-info">
+                            <div class="theme-name">{theme.name}</div>
+                            <div class="theme-desc">{theme.description}</div>
+                        </div>
+                        {#if config.themeId === theme.id}
+                            <div class="theme-check">✓</div>
+                        {/if}
+                    </div>
+                {/each}
             </div>
         </div>
 
@@ -423,6 +457,81 @@
         background: var(--b3-theme-primary);
         color: white;
         border-color: var(--b3-theme-primary);
+    }
+
+    /* 主题选择区域 */
+    .theme-section {
+        margin-bottom: 32px;
+    }
+
+    .theme-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 12px;
+    }
+
+    .theme-card {
+        position: relative;
+        padding: 16px;
+        border: 2px solid var(--b3-border-color);
+        border-radius: 8px;
+        background: var(--b3-theme-background);
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .theme-card:hover {
+        border-color: var(--b3-theme-primary);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .theme-card.active {
+        border-color: var(--b3-theme-primary);
+        background: var(--b3-theme-primary-lighter);
+        box-shadow: 0 4px 12px rgba(var(--b3-theme-primary), 0.15);
+    }
+
+    .theme-preview {
+        font-size: 32px;
+        text-align: center;
+        line-height: 1;
+    }
+
+    .theme-info {
+        flex: 1;
+    }
+
+    .theme-name {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--b3-theme-on-background);
+        margin-bottom: 4px;
+    }
+
+    .theme-desc {
+        font-size: 12px;
+        color: var(--b3-theme-on-surface);
+        line-height: 1.4;
+    }
+
+    .theme-check {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        width: 24px;
+        height: 24px;
+        background: var(--b3-theme-primary);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        font-weight: bold;
     }
 
     /* 菜单模拟区域 */

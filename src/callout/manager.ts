@@ -66,9 +66,10 @@ export class CalloutManager {
 
         // 样式需要包含所有类型（包括隐藏的），因为隐藏的类型可能已经在文档中使用了
         const types = this.currentConfig ? ConfigManager.getAllTypes(this.currentConfig) : undefined;
+        const themeId = this.currentConfig?.themeId || 'modern';
         this.styleElement = document.createElement('style');
         this.styleElement.id = 'custom-callout-styles';
-        this.styleElement.textContent = generateCalloutStyles(types);
+        this.styleElement.textContent = generateCalloutStyles(types, themeId);
         document.head.appendChild(this.styleElement);
     }
 

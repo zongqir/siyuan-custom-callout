@@ -1,14 +1,21 @@
 import { DEFAULT_CALLOUT_TYPES, CalloutTypeConfig } from './types';
+import { getThemeById, getDefaultTheme, generateThemeCSS, type ThemeStyle } from './themes';
 
 /**
  * 生成Callout样式
  */
-export function generateCalloutStyles(customTypes?: CalloutTypeConfig[]): string {
+export function generateCalloutStyles(customTypes?: CalloutTypeConfig[], themeId?: string): string {
     const styles: string[] = [];
     const types = customTypes || DEFAULT_CALLOUT_TYPES;
+    const theme = themeId ? getThemeById(themeId) || getDefaultTheme() : getDefaultTheme();
 
-    // 通用样式
+    // 主题CSS变量
     styles.push(`
+/* ==================== Callout 主题变量 ==================== */
+:root {
+    ${generateThemeCSS(theme)}
+}
+
 /* ==================== Callout 通用样式 ==================== */
 
 /* 标题图标区域可点击提示 */
@@ -19,7 +26,7 @@ export function generateCalloutStyles(customTypes?: CalloutTypeConfig[]): string
 
 .protyle-wysiwyg .bq[custom-callout] [data-callout-title="true"]::before {
     cursor: pointer !important;
-    transition: transform 0.2s ease, opacity 0.2s ease !important;
+    transition: var(--callout-transition) !important;
 }
 
 .protyle-wysiwyg .bq[custom-callout] [data-callout-title="true"]:hover::before {
@@ -112,13 +119,13 @@ export function generateCalloutStyles(customTypes?: CalloutTypeConfig[]): string
 /* ${config.displayName} - ${config.color} */
 .protyle-wysiwyg .bq[custom-callout="${config.type}"] {
     background: ${config.bgGradient} !important;
-    border: 1px solid #e5e7eb !important;
-    border-left: 4px solid ${config.borderColor} !important;
-    border-radius: 6px !important;
-    padding: 16px !important;
+    border: var(--callout-border-width) solid #e5e7eb !important;
+    border-left: var(--callout-left-border-width) solid ${config.borderColor} !important;
+    border-radius: var(--callout-border-radius) !important;
+    padding: var(--callout-padding) !important;
     margin: 12px 0 !important;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-shadow: var(--callout-box-shadow) !important;
+    transition: var(--callout-transition) !important;
 }
 
 /* 确保没有内边框 */
@@ -131,7 +138,7 @@ export function generateCalloutStyles(customTypes?: CalloutTypeConfig[]): string
 }
 
 .protyle-wysiwyg .bq[custom-callout="${config.type}"]:hover {
-    transform: translateY(-2px) !important;
+    transform: var(--callout-hover-transform) !important;
     box-shadow: 0 4px 12px ${hexToRgba(config.color, 0.12)} !important;
 }
 
@@ -141,13 +148,15 @@ export function generateCalloutStyles(customTypes?: CalloutTypeConfig[]): string
     left: 0;
     top: 50%;
     transform: translateY(-50%);
-    width: 20px;
-    height: 20px;
+    width: var(--callout-icon-size);
+    height: var(--callout-icon-size);
     background: url('data:image/svg+xml,${encodedIcon}') center/contain no-repeat;
 }
 
 .protyle-wysiwyg .bq[custom-callout="${config.type}"] [data-callout-title="true"]::after {
     color: ${config.color} !important;
+    font-size: var(--callout-title-font-size) !important;
+    font-weight: var(--callout-title-font-weight) !important;
 }
 `);
     });

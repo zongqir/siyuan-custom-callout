@@ -11,6 +11,7 @@ export interface CalloutConfig {
     hiddenDefaults: Set<string>; // 隐藏的预设类型ID（在命令菜单中不显示）
     typeOrder: string[]; // 类型显示顺序（类型ID列表）
     gridColumns: number; // 网格列数（2/3/4）
+    themeId: string; // 当前使用的主题ID
 }
 
 /**
@@ -36,7 +37,8 @@ export class ConfigManager {
                 modifiedDefaults: new Map(Object.entries(data.modifiedDefaults || {})),
                 hiddenDefaults: new Set(data.hiddenDefaults || []),
                 typeOrder: data.typeOrder || [],
-                gridColumns: data.gridColumns || 3
+                gridColumns: data.gridColumns || 3,
+                themeId: data.themeId || 'modern'
             };
         } catch (error) {
             console.error('[Callout Config] Error loading config:', error);
@@ -55,7 +57,8 @@ export class ConfigManager {
                 modifiedDefaults: Object.fromEntries(config.modifiedDefaults),
                 hiddenDefaults: Array.from(config.hiddenDefaults),
                 typeOrder: config.typeOrder,
-                gridColumns: config.gridColumns
+                gridColumns: config.gridColumns,
+                themeId: config.themeId
             };
             await plugin.saveData(this.STORAGE_KEY, data);
         } catch (error) {
@@ -74,7 +77,8 @@ export class ConfigManager {
             modifiedDefaults: new Map(),
             hiddenDefaults: new Set(),
             typeOrder: [],
-            gridColumns: 3
+            gridColumns: 3,
+            themeId: 'modern'
         };
     }
 
@@ -236,10 +240,11 @@ export class ConfigManager {
     /**
      * 重置所有配置（恢复默认）
      */
-    static resetAll(preserveGridColumns: boolean = false, currentConfig?: CalloutConfig): CalloutConfig {
+    static resetAll(preserveSettings: boolean = false, currentConfig?: CalloutConfig): CalloutConfig {
         const defaultConfig = this.getDefaultConfig();
-        if (preserveGridColumns && currentConfig) {
+        if (preserveSettings && currentConfig) {
             defaultConfig.gridColumns = currentConfig.gridColumns;
+            defaultConfig.themeId = currentConfig.themeId;
         }
         return defaultConfig;
     }
