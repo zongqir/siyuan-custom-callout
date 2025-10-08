@@ -275,6 +275,9 @@ export class CalloutManager {
             this.focusinEventHandler = null;
         }
 
+        // 销毁处理器（包括清理 callout 元素上的事件监听器）
+        this.processor.destroy();
+
         // 销毁拖拽调整功能
         if (this.dragResizer) {
             this.dragResizer.destroy();

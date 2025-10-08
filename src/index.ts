@@ -1,6 +1,5 @@
 import {
     Plugin,
-    showMessage,
 } from "siyuan";
 import "./index.scss";
 
@@ -32,7 +31,6 @@ export default class CustomCalloutPlugin extends Plugin {
         await this.calloutManager.initialize();
 
         logger.log("Plugin loaded successfully");
-        showMessage(this.i18n.name + " 已加载");
     }
 
     onLayoutReady() {

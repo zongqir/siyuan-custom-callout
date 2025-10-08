@@ -833,5 +833,25 @@ export class CalloutProcessor {
         
         logger.log('[Callout] ✅ 标题已更新:', newContent);
     }
+
+    /**
+     * 销毁处理器，清理所有资源
+     */
+    destroy() {
+        // 遍历所有已跟踪的 callout，移除事件监听器
+        this.trackedBlockQuotes.forEach(nodeId => {
+            const callout = document.querySelector(`[data-node-id="${nodeId}"][custom-callout]`);
+            if (callout) {
+                const titleDiv = callout.querySelector('[data-callout-title="true"]') as HTMLElement;
+                if (titleDiv) {
+                    this.removeCollapseToggle(titleDiv);
+                }
+            }
+        });
+        
+        // 清空跟踪集合
+        this.trackedBlockQuotes.clear();
+        this.recentlyCreatedBlockQuotes.clear();
+    }
 }
 

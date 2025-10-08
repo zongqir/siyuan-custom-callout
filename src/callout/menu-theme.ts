@@ -5,6 +5,8 @@ export class MenuThemeManager {
     private isDarkMode: boolean = false;
     private observers: Set<(isDark: boolean) => void> = new Set();
     private mutationObserver: MutationObserver | null = null;
+    private mediaQueryList: MediaQueryList | null = null;
+    private mediaQueryHandler: (() => void) | null = null;
 
     constructor() {
         this.detectTheme();
@@ -56,11 +58,12 @@ export class MenuThemeManager {
      */
     private setupListeners(): void {
         // 监听系统主题变化
-        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-        mediaQuery.addEventListener('change', () => {
+        this.mediaQueryList = window.matchMedia('(prefers-color-scheme: dark)');
+        this.mediaQueryHandler = () => {
             this.detectTheme();
             this.notifyObservers();
-        });
+        };
+        this.mediaQueryList.addEventListener('change', this.mediaQueryHandler);
 
         // 监听DOM变化
         this.mutationObserver = new MutationObserver(() => {
@@ -112,10 +115,20 @@ export class MenuThemeManager {
      * 销毁
      */
     destroy(): void {
+        // 移除媒体查询监听器
+        if (this.mediaQueryList && this.mediaQueryHandler) {
+            this.mediaQueryList.removeEventListener('change', this.mediaQueryHandler);
+            this.mediaQueryList = null;
+            this.mediaQueryHandler = null;
+        }
+        
+        // 断开 MutationObserver
         if (this.mutationObserver) {
             this.mutationObserver.disconnect();
             this.mutationObserver = null;
         }
+        
+        // 清空观察者
         this.observers.clear();
     }
 }

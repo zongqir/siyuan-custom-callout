@@ -13,6 +13,7 @@ export class CalloutAutocomplete {
     private suggestions: CalloutTypeConfig[] = [];
     private processor: CalloutProcessor;
     private calloutTypes: CalloutTypeConfig[] = [];
+    private globalClickHandler: ((e: MouseEvent) => void) | null = null;
 
     constructor(processor: CalloutProcessor) {
         this.processor = processor;
@@ -292,19 +293,27 @@ export class CalloutAutocomplete {
      */
     private setupGlobalEventListeners() {
         // 点击外部关闭
-        document.addEventListener('click', (e) => {
+        this.globalClickHandler = (e: MouseEvent) => {
             if (this.isMenuVisible && 
                 this.autocompleteMenu && 
                 !this.autocompleteMenu.contains(e.target as Node)) {
                 this.hideAutocomplete();
             }
-        }, true);
+        };
+        document.addEventListener('click', this.globalClickHandler, true);
     }
 
     /**
      * 销毁自动补全菜单
      */
     destroy() {
+        // 移除全局事件监听器
+        if (this.globalClickHandler) {
+            document.removeEventListener('click', this.globalClickHandler, true);
+            this.globalClickHandler = null;
+        }
+        
+        // 移除菜单元素
         if (this.autocompleteMenu) {
             this.autocompleteMenu.remove();
             this.autocompleteMenu = null;
