@@ -2,7 +2,7 @@
   "name": "siyuan-custom-callout",
   "version": "0.4.1",
   "type": "module",
-  "description": "Enhance SiYuan blockquotes with custom callout designs, similar to Obsidian callouts",
+  "description": "Transform SiYuan blockquotes into beautiful, customizable callout blocks with rich features",
   "repository": "https://github.com/siyuan-note/siyuan-custom-callout",
   "homepage": "https://github.com/siyuan-note/siyuan-custom-callout",
   "author": "frostime",

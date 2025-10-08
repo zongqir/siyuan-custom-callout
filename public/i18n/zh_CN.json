@@ -1,6 +1,6 @@
 {
     "name": "思源自定义引用块",
-    "description": "在原始引用基础上实现自定义设计，类似于 Obsidian Callout",
+    "description": "将引用块转换为美观、可自定义的 Callout 提示块，功能丰富",
     "cancel": "取消",
     "save": "保存",
     "settings": "设置",

@@ -1,320 +1,621 @@
-
 # SiYuan Custom Callout
 
 [中文版](./README_zh_CN.md)
 
-A SiYuan plugin that enhances blockquotes with custom callout designs, similar to Obsidian callouts.
+A powerful plugin for SiYuan Notes that transforms your blockquotes into beautiful, functional callout blocks with rich features and high customizability!
 
-## Features
+## ✨ Core Features
 
-- 🎨 **Custom Callout Styles**: Transform regular blockquotes into beautiful, styled callout blocks
-- 🎯 **Multiple Types**: Support for various callout types (note, tip, warning, danger, info, etc.)
-- 🖌️ **Customizable**: Fully customizable colors, icons, and styles
-- 🚀 **Easy to Use**: Simple syntax to create callouts in your notes
-- 📱 **Cross-Platform**: Works on desktop, mobile, and browser versions
+- 🎨 **11 Preset Types** - Beautiful styles for every use case
+- 🎭 **8 Theme Styles** - From modern minimalist to neon glow
+- 🛠️ **Fully Customizable** - Create your own callout types with custom icons and colors
+- 📐 **Smart Margin System** - Support for left/right margins with drag-to-resize
+- ⚡ **3 Creation Methods** - Visual menu, command input, or smart autocomplete
+- 🎯 **Rich Interactions** - Collapse/expand, type switching, drag-to-resize
+- 📱 **Cross-Platform** - Works on desktop, mobile, and browser
 
-## Usage
+---
 
-### Creating Callouts
+## 📖 Quick Start
 
-There are two ways to create callouts:
+### Install Plugin
 
-#### Method 1: Automatic Menu (Recommended)
-1. Create a new blockquote (type `>` and press space)
-2. A command menu will automatically appear
-3. Select your desired callout type using arrow keys or mouse
-4. Press Enter or click to confirm
+1. Open SiYuan Notes
+2. Go to `Settings` → `Marketplace` → `Plugins`
+3. Search for "Custom Callout"
+4. Download and enable
 
-#### Method 2: Manual Command
-Type a callout command at the beginning of a blockquote:
+### Create Your First Callout
+
+There are two ways to create callouts - choose your favorite:
+
+#### Method 1: Visual Menu (Recommended)
+
+1. Type `>` followed by space to create a blockquote
+2. Wait 1-2 seconds for the command menu to appear automatically
+3. Use **arrow keys** (↑↓←→) to select a type
+4. Press `Enter` to confirm and start typing
+
+![Command Menu Example](https://via.placeholder.com/600x300?text=Command+Menu)
+
+#### Method 2: Quick Filter (Recommended for Power Users)
+
+1. Type `>` followed by space to create a blockquote
+2. After the menu appears, **type letters directly** to filter
+3. For example, type `i` to filter `info`, type `tip` to filter `tip`
+4. Use arrow keys to select, `Enter` to confirm
+
+**Supports Chinese search**: Type `信` to match "信息", type `技` to match "技巧"
+
+---
+
+## 🎯 11 Preset Types
+
+| Command | Chinese | Type Name | Use Case | Color |
+|---------|---------|-----------|----------|-------|
+| `@info` | `@信息` | Information | General information and explanations | 🔵 Blue |
+| `@concept` | `@概念` | Concept | Define terms and explain concepts | 🟣 Purple |
+| `@example` | `@示例` | Example | Code examples and use cases | 🟢 Green |
+| `@tip` | `@技巧` | Tip | Practical tips and tricks | 🟡 Yellow-Green |
+| `@best-practice` | `@最佳实践` | Best Practice | Recommended approaches and standards | 🌲 Dark Green |
+| `@tradeoff` | `@权衡取舍` | Tradeoff | Pros/cons analysis and comparisons | 🟠 Orange |
+| `@deep-dive` | `@深水区` | Deep Dive | In-depth exploration of advanced topics | 🔵 Dark Blue |
+| `@comparison` | `@对比` | Comparison | Compare different approaches | 🟣 Indigo |
+| `@summary` | `@总结` | Summary | Summarize key points | 🔷 Cyan |
+| `@pitfall` | `@陷阱` | Pitfall | Warnings and cautions | 🔴 Red |
+| `@highlight` | `@亮点` | Highlight | Emphasize important points | 🟡 Golden |
+
+---
+
+## 🎨 Interactive Features
+
+### 1. Collapse & Expand
+
+**Click directly on the Callout title** to collapse or expand content:
+
+```
+┌─────────────────────────┐
+│ 💡 Tip                  │ ← Click title to collapse
+├─────────────────────────┤
+│ Content goes here...     │
+│ Multiple lines...        │
+└─────────────────────────┘
+
+       ↓ Collapsed ↓
+
+┌─────────────────────────┐
+│ 💡 Tip                  │ ← Click again to expand
+└─────────────────────────┘
+```
+
+**Use Cases**:
+- Temporarily hide content when organizing long documents
+- Control progressive disclosure during presentations
+- Save screen space and focus on current content
+
+### 2. Quick Type Switching
+
+Click on the **icon area** on the left (about 40px wide) to switch types:
+
+1. Click the icon area
+2. Type selection menu appears
+3. Select a new type
+4. Content stays the same, style updates instantly
+
+**Use Cases**:
+- Adjust content positioning: change "info" to "tip"
+- Adjust importance: change "note" to "warning"
+- Quickly experiment with different visual effects
+
+### 3. Resize by Dragging
+
+Callout supports **drag-to-resize width and height**:
+
+**Resize Width**:
+1. Move mouse to the **right edge** of the Callout
+2. A semi-transparent resize handle appears
+3. Click and drag to desired width
+4. Release mouse, changes saved automatically
+
+**Resize Height**:
+1. Move mouse to the **bottom edge** of the Callout
+2. A semi-transparent resize handle appears
+3. Click and drag to desired height
+4. Release mouse, changes saved automatically
+
+**Use Cases**:
+- Adjust display width based on content
+- Fix height to maintain consistent page layout
+- Optimize display for different screen sizes
+
+**Real-time Feedback**:
+- Shows current dimensions while dragging
+- Green success notification after completion
+- Automatically hidden on small screens (prevent accidental touches)
+
+
+---
+
+## 🎨 8 Theme Styles
+
+Click the Callout icon in the top bar, open settings panel, and select a theme in the "🎨 Theme Style" section:
+
+### 1. Modern (Default)
+**Features**: Clean and smooth, medium rounded corners, thin borders, no shadows  
+**Best for**: Daily use, clean and fresh style
+
+### 2. Card
+**Features**: Large rounded corners, shadows, hover lift effect  
+**Best for**: Notes requiring depth, prominent visual effect
+
+### 3. Flat
+**Features**: Solid flat colors, small rounded corners, thick left border  
+**Best for**: Simple and direct expression, focus on content
+
+### 4. Classic
+**Features**: No rounded corners, medium borders, stable and elegant  
+**Best for**: Formal documents, academic papers, serious notes
+
+### 5. Minimal
+**Features**: Extremely simple, thin borders, small icons, compact layout  
+**Best for**: Minimalism lovers, high information density
+
+### 6. Glassmorphism
+**Features**: Semi-transparent background, blur effect, modern tech feel  
+**Best for**: Modern design enthusiasts, glass texture lovers
+
+### 7. Neumorphism
+**Features**: Soft raised or depressed effects, dual shadows, 3D texture  
+**Best for**: Unique visual experience, artistic notes
+
+### 8. Neon
+**Features**: Vibrant glowing borders, hover zoom effect  
+**Best for**: Eye-catching alerts, important content emphasis
+
+**How to Switch**:
+1. Open settings panel
+2. Click any theme card
+3. All callouts instantly apply the new style!
+
+---
+
+## 🛠️ Customization Features
+
+### Create Your Own Callout Types
+
+1. **Open Settings**: Click the Callout icon in the top bar
+2. **New Type**: Click "New Type" button in the top right
+3. **Fill Information**:
+   - **Type ID**: Unique identifier (e.g., `my-note`)
+   - **Display Name**: Name shown in the title (e.g., `My Note`)
+   - **Command**: Trigger command (e.g., `@my-note`)
+   - **Chinese Command** (optional): Chinese alias (e.g., `@我的笔记`)
+4. **Choose Icon**: Select from 70+ icons
+5. **Choose Color**: Select from 18 preset colors or customize
+6. **Save**: Click save, takes effect immediately!
+
+### Edit Preset Types
+
+Don't like the default icons or colors? You can modify them:
+
+1. Find the type to modify in settings panel
+2. Click the "Edit" button (pencil icon) on the right
+3. Modify icon or color
+4. Save
+
+Not satisfied? Click "Reset" button to restore defaults.
+
+### Hide Unused Types
+
+If you don't use certain preset types, you can hide them:
+
+1. Find the type to hide
+2. Click the "Hide" button (eye icon)
+3. The type no longer appears in the command menu
+
+**Note**:
+- Hidden types remain visible in settings panel (shown semi-transparent)
+- Can be restored anytime by clicking "Show" button
+- Hiding doesn't affect existing callouts
+
+### Drag to Reorder
+
+Want to adjust the display order in the menu? Just drag:
+
+1. In settings panel, click and hold any type card
+2. Drag to target position
+3. Release mouse
+4. Order is saved automatically, command menu updates instantly
+
+### Full Reset
+
+If you want to restore to initial state:
+
+1. Click "Reset All" button in top right
+2. Confirm the operation
+3. All custom configurations cleared, back to defaults
+
+**Reset Will Clear**:
+- All custom types
+- Modifications to preset types
+- Hidden type list
+- Custom display order
+
+**Reset Will Preserve**:
+- Theme style selection
+- Grid column settings
+
+---
+
+## 🎯 Theme Quick Config
+
+In the "Theme Style" tab, you can fine-tune current theme styles:
+
+### Background Style
+- **Solid**: Single color background
+- **Gradient**: Gradient background (more depth)
+
+### Border Radius
+- No radius (0px) → Extra large (20px)
+- 7 levels available
+
+### Left Border Width
+- No border (0px) → Extra thick (6px)
+- Left accent border thickness
+
+### Border Width
+- No border (0px) → Extra thick (3px)
+
+### Title Font Size
+- Extra small (0.8em) → Extra large (1.2em)
+
+### Title Font Weight
+- Normal (400) → Extra bold (800)
+
+### Icon Size
+- Small (14px) → Extra large (24px)
+
+### Advanced Options
+- ☑️ **Hide Icon**: Show only text title
+- ☑️ **Hide Title Text**: Show only icon
+- ☑️ Both selected: Hide title completely, keep only content
+
+**Usage Suggestions**:
+- First select a close theme
+- Then fine-tune details with quick config
+- Real-time preview, what you see is what you get
+
+---
+
+## 📚 Practical Examples
+
+### Scenario 1: Technical Documentation
+
+```markdown
+> @concept
+> REST API is an architectural style for designing networked applications.
+
+> @example
+> GET /api/users/123
+> Returns user information with ID 123
+
+> @best-practice
+> Recommend using HTTPS protocol to ensure data transmission security
+
+> @pitfall
+> ⚠️ Don't pass sensitive information in URLs, use request body or headers
+```
+
+### Scenario 2: Study Notes
 
 ```markdown
 > @info
-> This is an information callout
+> Chapter 3: Memory and Cognition
+
+> @concept
+> Ebbinghaus Forgetting Curve: People quickly forget after learning, need timely review
 
 > @tip
-> This is a tip callout
+> Use Spaced Repetition to improve memory efficiency
 
-> @warning
-> This is a warning callout
+> @summary
+> Key Points:
+> 1. Understand memory formation mechanisms
+> 2. Master scientific review methods
+> 3. Apply memory techniques to enhance learning
 ```
 
-### Available Callout Types
+### Scenario 3: Project Documentation
 
-| Command | Chinese | Type | Description |
-|---------|---------|------|-------------|
-| `@info` | `@信息` | 信息说明 | General information |
-| `@concept` | `@概念` | 概念解释 | Concept explanation |
-| `@example` | `@示例` | 示例演示 | Example demonstration |
-| `@tip` | `@技巧` | 使用技巧 | Usage tips |
-| `@best-practice` | `@最佳实践` | 最佳实践 | Best practices |
-| `@tradeoff` | `@权衡取舍` | 权衡取舍 | Tradeoffs |
-| `@deep-dive` | `@深水区` | 深水区 | Deep dive |
-| `@comparison` | `@对比` | 对比分析 | Comparison |
-| `@summary` | `@总结` | 章节总结 | Summary |
-| `@pitfall` | `@陷阱` | 常见陷阱 | Common pitfalls |
-| `@highlight` | `@亮点` | 重要亮点 | Important highlights |
+```markdown
+> @info
+> Project built with TypeScript + Svelte + Vite
 
-### Interactive Features
+> @tradeoff
+> Choosing Vite over Webpack:
+> ✅ Pros: Faster hot updates, cleaner configuration
+> ❌ Cons: Some legacy libraries may not be compatible
 
-- **Switch Type**: Click the icon area (left side) of a callout title to switch types
-- **Collapse/Expand**: Click the title text area (right side) to collapse or expand the content
-- **Quick Access**: Use the command menu for easy callout type selection
-
-## Get started
-
-1. Use the <kbd>Use this template</kbd> button to make a copy of this repo as a template. Note that the repository name should match the plugin name, and the default branch must be `main`.
-2. Clone your repository to the local development folder.
-    * Note: Unlike `plugin-sample`, this example does not recommend directly downloading the code to `{workspace}/data/plugins/`.
-3. Install [NodeJS](https://nodejs.org/en/download) and [pnpm](https://pnpm.io/installation), then run `pnpm i` in the development folder to install the required dependencies.
-4. Run the `pnpm run make-link` command to create a symbolic link (Windows developers, please refer to the "make-link on Windows" section below).
-5. Execute `pnpm run dev` for real-time compilation.
-6. Open the marketplace in SiYuan and enable the plugin in the download tab.
-
-> [!TIP]
-> You can also use our maintained [siyuan-plugin-cli](https://www.npmjs.com/package/siyuan-plugin-cli) command-line tool to directly build plugins in your local terminal.
->
-> Additionally, for the `make-link` related commands mentioned in this plugin, all future updates will be made in [siyuan-plugin-cli](https://www.npmjs.com/package/siyuan-plugin-cli).
->
-> The built-in `make-link` scripts may also be removed in a future version, in favor of using the `siyuan-plugin-cli` tool, aiming to simplify the workload of maintaining multiple plugin templates.
-
-### Setting the Target Directory for the make-link Command
-
-The `make-link` command creates a symbolic link that binds your `dev` directory to the SiYuan plugin directory. You can configure the target SiYuan workspace and create the symbolic link in three ways:
-
-1. **Select Workspace**
-    - Open SiYuan, ensure the SiYuan kernel is running.
-    - Run `pnpm run make-link`, the script will automatically detect all SiYuan workspaces, please manually enter the number to select the workspace.
-        ```bash
-        >>> pnpm run make-link
-        > plugin-sample-vite-svelte@0.0.3 make-link H:\SrcCode\开源项目\plugin-sample-vite-svelte
-        > node  --no-warnings ./scripts/make_dev_link.js
-
-        "targetDir" is empty, try to get SiYuan directory automatically....
-        Got 2 SiYuan workspaces
-        [0] H:\Media\SiYuan
-        [1] H:\临时文件夹\SiYuanDevSpace
-        Please select a workspace[0-1]: 0
-        Got target directory: H:\Media\SiYuan/data/plugins
-        Done! Created symlink H:\Media\SiYuan/data/plugins/plugin-sample-vite-svelte
-        ```
-2. **Manually Configure Target Directory**
-    - Open the `./scripts/make_dev_link.js` file, change `targetDir` to the SiYuan plugin directory `<siyuan workspace>/data/plugins`.
-    - Run the `pnpm run make-link` command. If you see a message similar to the one below, it indicates successful creation:
-
-3. **Set Environment Variable to Create Symbolic Link**
-    - Set the system environment variable `SIYUAN_PLUGIN_DIR` to the path `workspace/data/plugins`.
-
-### make-link on Windows
-
-Due to SiYuan upgrading to Go 1.23, the old version of junction links cannot be recognized normally on Windows, so it has been changed to create `dir` symbolic links.
-
-> https://github.com/siyuan-note/siyuan/issues/12399
-
-However, creating directory symbolic links on Windows using NodeJs may require administrator privileges. You have the following options:
-
-1. Run `pnpm run make-link` in a command line with administrator privileges.
-2. Configure Windows settings, enable developer mode in [System Settings - Update & Security - Developer Mode] then run `pnpm run make-link`.
-3. Run `pnpm run make-link-win`, this command will use a PowerShell script to request administrator privileges, requiring the system to enable PowerShell script execution permissions.
-
-## I18n
-
-In terms of internationalization, our main consideration is to support multiple languages. Specifically, we need to
-complete the following tasks:
-
-* Meta information about the plugin itself, such as plugin description and readme
-    * `description` and `readme` fields in plugin.json, and the corresponding README*.md file
-* Text used in the plugin, such as button text and tooltips
-    * public/i18n/*.json language configuration files
-    * Use `this.i18.key` to get the text in the code
-* YAML Support
-  * This template specifically supports I18n based on YAML syntax, see `public/i18n/zh_CN.yaml`
-  * During compilation, the defined YAML files will be automatically translated into JSON files and placed in the dist or dev directory.
-
-It is recommended that the plugin supports at least English and Simplified Chinese, so that more people can use it more
-conveniently.
-
-## plugin.json
-
-```json
-{
-  "name": "plugin-sample-vite-svelte",
-  "author": "frostime",
-  "url": "https://github.com/siyuan-note/plugin-sample-vite-svelte",
-  "version": "0.1.3",
-  "minAppVersion": "2.8.8",
-  "backends": ["windows", "linux", "darwin"],
-  "frontends": ["desktop"],
-  "displayName": {
-    "en_US": "Plugin sample with vite and svelte",
-    "zh_CN": "插件样例 vite + svelte 版"
-  },
-  "description": {
-    "en_US": "SiYuan plugin sample with vite and svelte",
-    "zh_CN": "使用 vite 和 svelte 开发的思源插件样例"
-  },
-  "readme": {
-    "en_US": "README_en_US.md",
-    "zh_CN": "README.md"
-  },
-  "funding": {
-    "openCollective": "",
-    "patreon": "",
-    "github": "",
-    "custom": [
-      "https://ld246.com/sponsor"
-    ]
-  },
-  "keywords": [
-    "sample", "示例"
-  ]
-}
+> @deep-dive
+> In-depth analysis of build optimization:
+> - Use Tree Shaking to reduce bundle size
+> - Enable code splitting to improve load speed
+> - Optimize static resource caching strategies
 ```
 
-* `name`: Plugin name, must be the same as the repo name, and must be unique globally (no duplicate plugin names in the
-  marketplace)
-* `author`: Plugin author name
-* `url`: Plugin repo URL
-* `version`: Plugin version number, it is recommended to follow the [semver](https://semver.org/) specification
-* `minAppVersion`: Minimum version number of SiYuan required to use this plugin
-* `backends`: Backend environment required by the plugin, optional values are `windows`, `linux`, `darwin`, `docker`, `android`, `ios` and `all`
-  * `windows`: Windows desktop
-  * `linux`: Linux desktop
-  * `darwin`: macOS desktop
-  * `docker`: Docker
-  * `android`: Android APP
-  * `ios`: iOS APP
-  * `all`: All environments
-* `frontends`: Frontend environment required by the plugin, optional values are `desktop`, `desktop-window`, `mobile`, `browser-desktop`, `browser-mobile` and `all`
-  * `desktop`: Desktop
-  * `desktop-window`: Desktop window converted from tab
-  * `mobile`: Mobile APP
-  * `browser-desktop`: Desktop browser
-  * `browser-mobile`: Mobile browser
-  * `all`: All environments
-* `displayName`: Template display name, mainly used for display in the marketplace list, supports multiple languages
-    * `default`: Default language, must exist
-    * `zh_CN`, `en_US` and other languages: optional, it is recommended to provide at least Chinese and English
-* `description`: Plugin description, mainly used for display in the marketplace list, supports multiple languages
-    * `default`: Default language, must exist
-    * `zh_CN`, `en_US` and other languages: optional, it is recommended to provide at least Chinese and English
-* `readme`: readme file name, mainly used to display in the marketplace details page, supports multiple languages
-    * `default`: Default language, must exist
-    * `zh_CN`, `en_US` and other languages: optional, it is recommended to provide at least Chinese and English
-* `funding`: Plugin sponsorship information
-    * `openCollective`: Open Collective name
-    * `patreon`: Patreon name
-    * `github`: GitHub login name
-    * `custom`: Custom sponsorship link list
-* `keywords`: Search keyword list, used for marketplace search function
+### Scenario 4: Resize for Layout Optimization
 
-## Package
+After creating Callouts, you can drag resize handles to adjust width and height for different content and layout needs.
 
-No matter which method is used to compile and package, we finally need to generate a package.zip, which contains at
-least the following files:
-
-* i18n/*
-* icon.png (160*160)
-* index.css
-* index.js
-* plugin.json
-* preview.png (1024*768)
-* README*.md
-
-## List on the marketplace
-
-* `pnpm run build` to generate package.zip
-* Create a new GitHub release using your new version number as the "Tag version". See here for an
-  example: https://github.com/siyuan-note/plugin-sample/releases
-* Upload the file package.zip as binary attachments
-* Publish the release
-
-If it is the first release, please create a pull request to
-the [Community Bazaar](https://github.com/siyuan-note/bazaar) repository and modify the plugins.json file in it. This
-file is the index of all community plugin repositories, the format is:
-
-```json
-{
-  "repos": [
-    "username/reponame"
-  ]
-}
+```markdown
+> @info
+> 💡 This is a resizable info block
+> 
+> - Drag right edge to adjust width
+> - Drag bottom edge to adjust height
+> - Dimensions are saved automatically
 ```
 
-After the PR is merged, the bazaar will automatically update the index and deploy through GitHub Actions. When releasing
-a new version of the plugin in the future, you only need to follow the above steps to create a new release, and you
-don't need to PR the community bazaar repo.
+---
 
-Under normal circumstances, the community bazaar repo will automatically update the index and deploy every hour,
-and you can check the deployment status at https://github.com/siyuan-note/bazaar/actions.
+## ⌨️ Keyboard Shortcuts
 
-## Use Github Action
+### In Command Menu
 
-The github action is included in this sample, you can use it to publish your new realse to marketplace automatically:
+| Key | Function |
+|-----|----------|
+| `↑` `↓` `←` `→` | Navigate menu items |
+| `Enter` | Confirm selection |
+| `ESC` | Close menu |
+| Letter/Number keys | Activate filter mode |
 
-1. In your repo setting page `https://github.com/OWNER/REPO/settings/actions`, down to **Workflow Permissions** and open the configuration like this:
+### In Filter Mode
 
-    ![](asset/action.png)
-
-2. Push a tag in the format `v*` and github will automatically create a new release with new bulit package.zip
-
-3. By default, it will only publish a pre-release, if you don't think this is necessary, change the settings in release.yml
-
-    ```yaml
-    - name: Release
-        uses: ncipollo/release-action@v1
-        with.
-            allowUpdates: true
-            artifactErrorsFailBuild: true
-            artifacts: 'package.zip'
-            token: ${{ secrets.GITHUB_TOKEN }}
-            prerelease: true # change this to false
-    ```
+| Key | Function |
+|-----|----------|
+| Letter/Number keys | Add filter character |
+| `Backspace` | Delete last character |
+| `ESC` | Exit filter mode |
+| `↑` `↓` | Navigate filtered results |
+| `Enter` | Confirm selection |
 
 
-## How to remove svelte dependencies
+---
 
-> Pure vite without svelte: https://github.com/frostime/plugin-sample-vite
+## 💡 Usage Tips
 
-This plugin is packaged in vite and provides a dependency on the svelte framework. However, in practice some developers may not want to use svelte and only want to use the vite package.
+### Tip 1: Quick Keyboard Flow
 
-In fact you can use this template without using svelte without any modifications at all. The compilation-related parts of the svelte compilation are loaded into the vite workflow as plugins, so even if you don't have svelte in your project, it won't matter much.
+1. Type `>` + `space` to create blockquote
+2. Wait for menu (or type `@` to trigger autocomplete)
+3. Type first letter to filter (e.g., `i` matches info)
+4. `Enter` to confirm
+5. Start typing content
 
-If you insist on removing all svelte dependencies so that they do not pollute your workspace, you can perform the following steps. 1.
+No mouse needed, extremely efficient!
 
-1. delete the
-    ```json
-    {
-      "@sveltejs/vite-plugin-svelte": "^2.0.3",
-      "@tsconfig/svelte": "^4.0.1",
-      "svelte": "^3.57.0"
-    }
-    ```
-2. delete the `svelte.config.js` file
-3. delete the following line from the `vite.config.js` file
-    - Line 6: `import { svelte } from "@sveltejs/vite-plugin-svelte"`
-    - Line 20: `svelte(),`
-4. delete line 37 of `tsconfig.json` from `"svelte"` 5.
-5. re-run `pnpm i`
+### Tip 2: Batch Modify Existing Content
 
-## Developer's Guide
+If you have many regular blockquotes to convert:
 
-Developers of SiYuan need to pay attention to the following specifications.
+1. Add command at the beginning of each blockquote (e.g., `@info`)
+2. Press `Enter`, styles apply automatically
+3. Or use "Find and Replace" to batch add commands
 
-### 1. File Reading and Writing Specifications
+### Tip 3: Combine Different Types
 
-If plugins or external extensions require direct reading or writing of files under the `data` directory, please use the kernel API to achieve this. **Do not call `fs` or other electron or nodejs APIs directly**, as it may result in data loss during synchronization and cause damage to cloud data.
+Use multiple types in the same document for clear hierarchy:
 
-Related APIs can be found at: `/api/file/*` (e.g., `/api/file/getFile`).
+```markdown
+> @info
+> Basic information...
 
-### 2. Daily Note Attribute Specifications
+> @concept
+> Core concepts...
 
-When creating a daily note in SiYuan, a custom-dailynote-yyyymmdd attribute will be automatically added to the document to distinguish it from regular documents.
+> @example
+> Practical examples...
 
-> For more details, please refer to [Github Issue #9807](https://github.com/siyuan-note/siyuan/issues/9807).
+> @tip
+> Useful tips...
 
-Developers should pay attention to the following when developing the functionality to manually create Daily Notes:
+> @pitfall
+> Cautions...
 
-* If `/api/filetree/createDailyNote` is called to create a daily note, the attribute will be automatically added to the document, and developers do not need to handle it separately
-* If a document is created manually by developer's code (e.g., using the `createDocWithMd` API to create a daily note), please manually add this attribute to the document
+> @summary
+> Summary...
+```
 
+### Tip 4: Resize for Layout Optimization
+
+Adjust Callout dimensions based on content length:
+
+```markdown
+> @info
+> 💭 My thoughts:
+> This viewpoint is enlightening...
+> (Drag right or bottom edge to resize)
+
+> @highlight
+> ⭐ Key point
+> Need to review this
+> (Can fix width or height)
+```
+
+### Tip 5: Create Custom Types for Specific Uses
+
+Create dedicated types for specific purposes:
+
+- `@todo` - Todo items (clipboard icon + orange)
+- `@question` - Questions (question icon + purple)
+- `@inspiration` - Inspirations (bulb icon + yellow)
+- `@reference` - References (bookmark icon + blue)
+
+### Tip 6: Use Themes to Set the Mood
+
+- Daytime work: "Modern" or "Flat"
+- Evening reading: "Minimal" or "Classic"
+- Presentations: "Card" or "Glassmorphism"
+- Emphasis: "Neon"
+
+One-click switch, entire style changes instantly!
+
+---
+
+## ❓ FAQ
+
+### Q1: Why doesn't the command menu appear automatically?
+
+**A**: Please check:
+- ✅ Is the blockquote empty (no content)?
+- ✅ Did you wait 1-2 seconds (plugin initialization time)?
+- ✅ Is the plugin enabled?
+- ✅ Are you in edit mode (not preview mode)?
+
+### Q2: How to remove callout style and restore regular blockquote?
+
+**A**: Two methods:
+1. Click the icon on the left of title, select "Native Style"
+2. Directly delete the command text (e.g., delete `@info`)
+
+### Q3: Will custom types and settings be lost?
+
+**A**: No! All configurations are saved in plugin data, including:
+- Custom types
+- Modifications to preset types
+- Hidden types
+- Display order
+- Theme selection
+- Quick config
+
+Backup plugin data before uninstalling.
+
+### Q4: Can I export notes with callouts?
+
+**A**: Yes! Callout styles are preserved when exporting:
+- ✅ Export as PDF - Perfect style preservation
+- ✅ Export as HTML - Style preserved
+- ✅ Export as Markdown - Command format preserved
+
+### Q5: How does drag-to-resize work on mobile?
+
+**A**: Mobile adapts automatically:
+- On small screens, resize handles are automatically hidden (prevent accidental touches)
+- Callouts maintain responsive width
+- All other features work normally
+
+### Q6: How to backup custom configurations?
+
+**A**: 
+1. Go to `workspace/data/storage/petal/siyuan-custom-callout/`
+2. Copy config files (`callout-custom-config`)
+3. Restore by placing back in original location
+
+### Q7: What if commands conflict?
+
+**A**: When creating custom types, the system checks automatically:
+- ❌ Type IDs cannot duplicate
+- ❌ Commands cannot duplicate (including English and Chinese)
+- ✅ If conflict exists, error message appears
+
+### Q8: Can I nest other blocks inside callouts?
+
+**A**: Yes! Callouts can contain:
+- ✅ Lists (ordered, unordered, task lists)
+- ✅ Code blocks
+- ✅ Tables
+- ✅ Images
+- ✅ Other block elements
+
+### Q9: Do theme styles affect all callouts?
+
+**A**: Yes!
+- Theme style: Controls overall visual style (corners, shadows, spacing, etc.)
+- Type settings: Controls colors and icons for each type
+- Quick config: Fine-tunes details based on theme
+
+Switch theme, all callouts instantly apply new style.
+
+### Q10: How to get more icons or colors?
+
+**A**: Current version provides:
+- 70+ selected icons (Heroicons style)
+- 18 preset color schemes
+- Custom color support
+
+For more options, feel free to request on GitHub!
+
+---
+
+## 🔄 Changelog
+
+### v0.4.1 (Latest)
+- ✨ Added 8 theme style system
+- ✨ Added theme quick config feature
+- ✨ Added drag-to-resize width and height
+- ✨ Added keyboard filter feature
+- 🎨 Optimized command menu layout and styles
+- 🐛 Fixed multiple known issues
+
+### v0.4.0
+- ✨ Added complete customization features (create, edit, delete types)
+- ✨ Added 70+ icon library and 18 color schemes
+- ✨ Added drag-to-reorder feature
+- ✨ Added hide/show types feature
+- 🎨 New settings panel UI
+
+### v0.3.0
+- ✨ Added keyboard filter search feature
+- 🎨 Optimized command menu display
+
+### v0.2.0
+- ✨ Added collapse/expand feature
+- ✨ Added type switching feature
+- ✨ Added drag-to-resize feature
+
+### v0.1.0
+- 🎉 Initial release
+- ✨ 11 preset callout types
+- ✨ Automatic command menu
+- ✨ Manual command input
+
+---
+
+## 🤝 Feedback & Support
+
+### Having Issues?
+
+1. **Check Documentation**: Review this README and project documentation
+2. **Submit Issue**: [GitHub Issues](https://github.com/zongqir/siyuan-custom-callout/issues)
+3. **Feature Requests**: We welcome new ideas!
+
+### Support the Project
+
+If this plugin helps you:
+
+- ⭐ Star on GitHub
+- 📢 Share with other SiYuan users
+- 💬 Share your experience in the community
+
+### Contribute
+
+Contributions of code or documentation are welcome! Check [Contributing Guide](CONTRIBUTING.md) (if available)
+
+---
+
+## 📄 License
+
+MIT License - See [LICENSE](LICENSE) file
+
+---
+
+## 🙏 Credits
+
+- Thanks to [SiYuan Notes](https://github.com/siyuan-note/siyuan) for the powerful platform
+- Icons from [Heroicons](https://heroicons.com/)
+
+---
+
+**Make your notes more beautiful and practical!** 🎉
+
+For questions or suggestions, please provide feedback on [GitHub](https://github.com/zongqir/siyuan-custom-callout)!
