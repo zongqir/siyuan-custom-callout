@@ -6,6 +6,8 @@
 export class CalloutGutterHighlight {
     private observer: MutationObserver | null = null;
     private trackedCallouts: Set<string> = new Set();
+    private periodicCheckInterval: number | null = null;
+    private eventHandlers: Map<string, () => void> = new Map(); // 保存事件处理器，用于清理
 
     constructor() {
         this.init();
@@ -33,7 +35,7 @@ export class CalloutGutterHighlight {
         }, 500);
 
         // 定期添加监听器（处理新创建的 callout）
-        setInterval(() => {
+        this.periodicCheckInterval = window.setInterval(() => {
             this.addHoverListeners();
         }, 2000);
     }
@@ -61,6 +63,9 @@ export class CalloutGutterHighlight {
             const handler = () => {
                 this.activateAndHighlightGutter(callout as HTMLElement);
             };
+
+            // 保存处理器引用
+            this.eventHandlers.set(nodeId, handler);
 
             // 整个 callout 上添加
             callout.addEventListener('mouseenter', handler);
@@ -150,10 +155,30 @@ export class CalloutGutterHighlight {
      * 销毁功能
      */
     destroy() {
+        // 停止定期检查
+        if (this.periodicCheckInterval !== null) {
+            clearInterval(this.periodicCheckInterval);
+            this.periodicCheckInterval = null;
+        }
+
         if (this.observer) {
             this.observer.disconnect();
             this.observer = null;
         }
+
+        // 移除所有事件监听器
+        this.eventHandlers.forEach((handler, nodeId) => {
+            const callout = document.querySelector(`[data-node-id="${nodeId}"][custom-callout]`);
+            if (callout) {
+                callout.removeEventListener('mouseenter', handler);
+                
+                const titleDiv = callout.querySelector('[data-callout-title="true"]') as HTMLElement;
+                if (titleDiv) {
+                    titleDiv.removeEventListener('mouseenter', handler);
+                }
+            }
+        });
+        this.eventHandlers.clear();
 
         // 清空跟踪集合
         this.trackedCallouts.clear();

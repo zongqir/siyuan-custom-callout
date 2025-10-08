@@ -18,6 +18,11 @@ export class CalloutManager {
     private styleElement: HTMLStyleElement | null = null;
     private currentConfig: CalloutConfig | null = null;
     private plugin: any;
+    
+    // 保存事件监听器引用，以便在销毁时移除
+    private inputEventHandler: ((e: Event) => void) | null = null;
+    private clickEventHandler: ((e: Event) => void) | null = null;
+    private focusinEventHandler: ((e: Event) => void) | null = null;
 
     constructor(plugin?: any) {
         this.plugin = plugin;
@@ -163,23 +168,26 @@ export class CalloutManager {
     private setupEventListeners() {
         // 输入事件监听（防抖）
         let inputTimeout: number;
+        this.inputEventHandler = (e) => {
+            const target = e.target as HTMLElement;
+            if (target.contentEditable === 'true') {
+                clearTimeout(inputTimeout);
+                const eventType = e.type;
+                inputTimeout = window.setTimeout(() => {
+                    const blockquote = target.closest('[data-type="NodeBlockquote"], .bq') as HTMLElement;
+                    if (blockquote) {
+                        this.processor.processBlockquote(blockquote);
+                    }
+                }, eventType === 'paste' ? 100 : 300);
+            }
+        };
+        
         ['input', 'keyup', 'paste'].forEach(eventType => {
-            document.addEventListener(eventType, (e) => {
-                const target = e.target as HTMLElement;
-                if (target.contentEditable === 'true') {
-                    clearTimeout(inputTimeout);
-                    inputTimeout = window.setTimeout(() => {
-                        const blockquote = target.closest('[data-type="NodeBlockquote"], .bq') as HTMLElement;
-                        if (blockquote) {
-                            this.processor.processBlockquote(blockquote);
-                        }
-                    }, eventType === 'paste' ? 100 : 300);
-                }
-            }, true);
+            document.addEventListener(eventType, this.inputEventHandler!, true);
         });
 
         // 点击callout标题图标区域切换类型
-        document.addEventListener('click', (e) => {
+        this.clickEventHandler = (e) => {
             const target = e.target as HTMLElement;
 
             if (target.contentEditable === 'true' &&
@@ -188,7 +196,7 @@ export class CalloutManager {
 
                 if (blockquote && blockquote.hasAttribute('custom-callout')) {
                     const rect = target.getBoundingClientRect();
-                    const clickX = e.clientX - rect.left;
+                    const clickX = (e as MouseEvent).clientX - rect.left;
 
                     // 点击图标区域（0-40px），显示/隐藏切换主题菜单（toggle）
                     if (clickX >= 0 && clickX <= 40) {
@@ -200,10 +208,12 @@ export class CalloutManager {
                     }
                 }
             }
-        }, true);
+        };
+        
+        document.addEventListener('click', this.clickEventHandler, true);
 
         // 焦点事件监听
-        document.addEventListener('focusin', (e) => {
+        this.focusinEventHandler = (e) => {
             if (this.processor.isInInitialLoad()) return;
 
             const target = e.target as HTMLElement;
@@ -218,7 +228,9 @@ export class CalloutManager {
                     }
                 }
             }
-        });
+        };
+        
+        document.addEventListener('focusin', this.focusinEventHandler);
     }
 
     /**
@@ -245,6 +257,24 @@ export class CalloutManager {
             this.observer = null;
         }
 
+        // 移除事件监听器
+        if (this.inputEventHandler) {
+            ['input', 'keyup', 'paste'].forEach(eventType => {
+                document.removeEventListener(eventType, this.inputEventHandler!, true);
+            });
+            this.inputEventHandler = null;
+        }
+        
+        if (this.clickEventHandler) {
+            document.removeEventListener('click', this.clickEventHandler, true);
+            this.clickEventHandler = null;
+        }
+        
+        if (this.focusinEventHandler) {
+            document.removeEventListener('focusin', this.focusinEventHandler);
+            this.focusinEventHandler = null;
+        }
+
         // 销毁拖拽调整功能
         if (this.dragResizer) {
             this.dragResizer.destroy();
@@ -257,14 +287,14 @@ export class CalloutManager {
             this.gutterHighlight = null;
         }
 
+        // 销毁菜单（包括清理菜单的事件监听器）
+        this.menu.destroy();
+
         // 移除样式
         if (this.styleElement) {
             this.styleElement.remove();
             this.styleElement = null;
         }
-
-        // 隐藏菜单
-        this.menu.hideMenu(true);
     }
 
     /**

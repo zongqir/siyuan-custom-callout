@@ -15,6 +15,17 @@ export class CalloutDragResizer {
     private startHeight: number = 0;
     private startX: number = 0;
     private startY: number = 0;
+    
+    // 保存需要清理的资源
+    private mutationObserver: MutationObserver | null = null;
+    private periodicCheckInterval: number | null = null;
+    private resizeObservers: ResizeObserver[] = [];
+    private eventListeners: Array<{
+        target: EventTarget;
+        type: string;
+        listener: EventListener;
+        options?: boolean | AddEventListenerOptions;
+    }> = [];
 
     constructor(processor: CalloutProcessor) {
         this._processor = processor;
@@ -24,6 +35,19 @@ export class CalloutDragResizer {
         CalloutDragResizer.setupGlobalDebug(this);
         
         // 拖拽调整器初始化完成
+    }
+
+    /**
+     * 添加事件监听器并记录，以便后续清理
+     */
+    private addTrackedEventListener(
+        target: EventTarget,
+        type: string,
+        listener: EventListener,
+        options?: boolean | AddEventListenerOptions
+    ) {
+        target.addEventListener(type, listener, options);
+        this.eventListeners.push({ target, type, listener, options });
     }
 
     /**
@@ -91,7 +115,7 @@ export class CalloutDragResizer {
             this.addResizeHandlesToExistingCallouts();
             
             // 监听DOM变化，为新的callout添加拖拽手柄
-            const observer = new MutationObserver((mutations) => {
+            this.mutationObserver = new MutationObserver((mutations) => {
                 mutations.forEach((mutation) => {
                     mutation.addedNodes.forEach((node) => {
                         if (node.nodeType === Node.ELEMENT_NODE) {
@@ -111,7 +135,7 @@ export class CalloutDragResizer {
                 });
             });
 
-            observer.observe(document.body, {
+            this.mutationObserver.observe(document.body, {
                 childList: true,
                 subtree: true,
                 attributes: true,
@@ -137,7 +161,7 @@ export class CalloutDragResizer {
      * 定期检查并添加遗漏的拖拽手柄
      */
     private startPeriodicCheck() {
-        setInterval(() => {
+        this.periodicCheckInterval = window.setInterval(() => {
             const allCallouts = document.querySelectorAll('.bq[custom-callout]');
             const calloutsNeedingHandles: HTMLElement[] = [];
             
@@ -364,9 +388,10 @@ export class CalloutDragResizer {
         // 监听callout尺寸变化
         const resizeObserver = new ResizeObserver(updateHandleSize);
         resizeObserver.observe(blockquote);
+        this.resizeObservers.push(resizeObserver);
 
         // 监听窗口变化
-        window.addEventListener('resize', updateHandleSize);
+        this.addTrackedEventListener(window, 'resize', updateHandleSize as EventListener);
 
         blockquote.appendChild(handle);
         this.bindHandleEvents(handle, blockquote);
@@ -459,9 +484,10 @@ export class CalloutDragResizer {
         // 监听窗口大小变化以更新位置
         const resizeObserver = new ResizeObserver(updatePosition);
         resizeObserver.observe(blockquote);
+        this.resizeObservers.push(resizeObserver);
         
         // 监听窗口resize事件
-        window.addEventListener('resize', updatePosition);
+        this.addTrackedEventListener(window, 'resize', updatePosition as EventListener);
 
         blockquote.appendChild(handle);
         this.bindHandleEvents(handle, blockquote);
@@ -711,16 +737,16 @@ export class CalloutDragResizer {
         };
 
         // 多重绑定策略
-        document.addEventListener('mousemove', mousemoveHandler, true);
-        document.addEventListener('mousemove', mousemoveHandler, false);
-        document.addEventListener('mouseup', mouseupHandler, true);  
-        document.addEventListener('mouseup', mouseupHandler, false);
+        this.addTrackedEventListener(document, 'mousemove', mousemoveHandler as EventListener, true);
+        this.addTrackedEventListener(document, 'mousemove', mousemoveHandler as EventListener, false);
+        this.addTrackedEventListener(document, 'mouseup', mouseupHandler as EventListener, true);
+        this.addTrackedEventListener(document, 'mouseup', mouseupHandler as EventListener, false);
 
-        window.addEventListener('mousemove', mousemoveHandler, true);
-        window.addEventListener('mouseup', mouseupHandler, true);
+        this.addTrackedEventListener(window, 'mousemove', mousemoveHandler as EventListener, true);
+        this.addTrackedEventListener(window, 'mouseup', mouseupHandler as EventListener, true);
 
-        document.body.addEventListener('mousemove', mousemoveHandler, true);
-        document.body.addEventListener('mouseup', mouseupHandler, true);
+        this.addTrackedEventListener(document.body, 'mousemove', mousemoveHandler as EventListener, true);
+        this.addTrackedEventListener(document.body, 'mouseup', mouseupHandler as EventListener, true);
 
         // 触摸事件支持
         const touchmoveHandler = (e: TouchEvent) => {
@@ -749,10 +775,10 @@ export class CalloutDragResizer {
             }
         };
 
-        document.addEventListener('touchmove', touchmoveHandler, true);
-        document.addEventListener('touchend', touchendHandler, true);
-        window.addEventListener('touchmove', touchmoveHandler, true);
-        window.addEventListener('touchend', touchendHandler, true);
+        this.addTrackedEventListener(document, 'touchmove', touchmoveHandler as EventListener, true);
+        this.addTrackedEventListener(document, 'touchend', touchendHandler as EventListener, true);
+        this.addTrackedEventListener(window, 'touchmove', touchmoveHandler as EventListener, true);
+        this.addTrackedEventListener(window, 'touchend', touchendHandler as EventListener, true);
     }
 
     /**
@@ -1153,6 +1179,30 @@ export class CalloutDragResizer {
      * 销毁拖拽调整器
      */
     destroy() {
+        // 停止定期检查
+        if (this.periodicCheckInterval !== null) {
+            clearInterval(this.periodicCheckInterval);
+            this.periodicCheckInterval = null;
+        }
+
+        // 断开 MutationObserver
+        if (this.mutationObserver) {
+            this.mutationObserver.disconnect();
+            this.mutationObserver = null;
+        }
+
+        // 断开所有 ResizeObserver
+        this.resizeObservers.forEach(observer => {
+            observer.disconnect();
+        });
+        this.resizeObservers = [];
+
+        // 移除所有事件监听器
+        this.eventListeners.forEach(({ target, type, listener, options }) => {
+            target.removeEventListener(type, listener, options);
+        });
+        this.eventListeners = [];
+
         // 移除所有拖拽手柄
         const handles = document.querySelectorAll('.callout-resize-handle');
         handles.forEach(handle => handle.remove());

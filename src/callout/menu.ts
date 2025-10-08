@@ -28,6 +28,10 @@ export class CalloutMenu {
     
     // 主题辅助类
     private themeHelper: MenuThemeHelper;
+    
+    // 保存事件监听器引用
+    private globalKeydownHandler: ((e: KeyboardEvent) => void) | null = null;
+    private globalClickHandler: ((e: MouseEvent) => void) | null = null;
 
     constructor(processor: CalloutProcessor) {
         this.processor = processor;
@@ -858,21 +862,23 @@ export class CalloutMenu {
      */
     private setupGlobalEventListeners() {
         // ESC关闭菜单
-        document.addEventListener('keydown', (e) => {
+        this.globalKeydownHandler = (e: KeyboardEvent) => {
             if (e.key === 'Escape' && this.isMenuVisible) {
                 e.preventDefault();
                 this.hideMenu(true);
             }
-        });
+        };
+        document.addEventListener('keydown', this.globalKeydownHandler);
 
         // 点击外部关闭菜单
-        document.addEventListener('click', (e) => {
+        this.globalClickHandler = (e: MouseEvent) => {
             if (this.commandMenu && !this.commandMenu.contains(e.target as Node) && this.isMenuVisible) {
                 setTimeout(() => {
                     if (this.isMenuVisible) this.hideMenu(true);
                 }, 100);
             }
-        });
+        };
+        document.addEventListener('click', this.globalClickHandler);
     }
 
     /**
@@ -880,6 +886,28 @@ export class CalloutMenu {
      */
     isVisible(): boolean {
         return this.isMenuVisible;
+    }
+
+    /**
+     * 销毁菜单，清理所有资源
+     */
+    destroy() {
+        // 隐藏并移除菜单
+        this.hideMenu(true);
+        
+        // 移除全局事件监听器
+        if (this.globalKeydownHandler) {
+            document.removeEventListener('keydown', this.globalKeydownHandler);
+            this.globalKeydownHandler = null;
+        }
+        
+        if (this.globalClickHandler) {
+            document.removeEventListener('click', this.globalClickHandler);
+            this.globalClickHandler = null;
+        }
+        
+        // 销毁主题辅助类
+        this.themeHelper.destroy();
     }
 }
 
