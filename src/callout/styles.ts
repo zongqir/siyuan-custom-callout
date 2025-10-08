@@ -220,6 +220,12 @@ export function generateCalloutStyles(customTypes?: CalloutTypeConfig[], themeId
     padding-left: 0px !important;
 }
 
+/* 核心修复：NodeListItem内的NodeParagraph间距 */
+.protyle-wysiwyg .bq[custom-callout] div[data-type="NodeListItem"] > div[data-type="NodeParagraph"] {
+    margin-left: 0px !important;
+    padding-left: 0px !important;
+}
+
 
 /* 有序列表的NodeList */
 .protyle-wysiwyg .bq[custom-callout] div[data-type="NodeList"][data-subtype="o"] div[data-type="NodeListItem"] {
@@ -262,6 +268,11 @@ export function generateCalloutStyles(customTypes?: CalloutTypeConfig[], themeId
     display: list-item !important;
     list-style-type: disc !important;
     margin: 2px 0 2px 12px !important;
+    padding-left: 0px !important;
+}
+
+.protyle-wysiwyg .bq[custom-callout] [data-callout-title="true"] div[data-type="NodeListItem"] > div[data-type="NodeParagraph"] {
+    margin-left: 0px !important;
     padding-left: 0px !important;
 }
 
