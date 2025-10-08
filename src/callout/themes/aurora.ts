@@ -24,6 +24,7 @@ export const auroraTheme: ThemeStyle = {
     // 标题样式
     titleFontSize: '1em',
     titleFontWeight: '700',
+    titleHeight: 'auto',
     titlePadding: '0',
     iconSize: '22px',
     

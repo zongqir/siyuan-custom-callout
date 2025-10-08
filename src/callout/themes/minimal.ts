@@ -26,6 +26,7 @@ export const minimalTheme: ThemeStyle = {
     // 标题样式
     titleFontSize: '14px',
     titleFontWeight: '500',
+    titleHeight: 'auto',
     titlePadding: '0 0 8px 0',
     iconSize: '16px',
     

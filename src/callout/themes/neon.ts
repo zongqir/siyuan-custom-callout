@@ -26,6 +26,7 @@ export const neonTheme: ThemeStyle = {
     // 标题样式
     titleFontSize: '15px',
     titleFontWeight: '700',
+    titleHeight: 'auto',
     titlePadding: '0 0 12px 0',
     iconSize: '20px',
     

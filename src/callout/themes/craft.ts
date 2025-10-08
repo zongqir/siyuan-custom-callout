@@ -27,6 +27,7 @@ export const craftTheme: ThemeStyle = {
     // 标题样式
     titleFontSize: '15px',
     titleFontWeight: '600',
+    titleHeight: 'auto',
     titlePadding: '0 0 10px 0',
     iconSize: '20px',
     

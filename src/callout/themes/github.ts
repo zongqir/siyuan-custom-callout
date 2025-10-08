@@ -28,6 +28,7 @@ export const githubTheme: ThemeStyle = {
     // 标题样式
     titleFontSize: '14px',
     titleFontWeight: '600',
+    titleHeight: 'auto',
     titlePadding: '0 0 8px 0',
     iconSize: '18px',
     

@@ -33,6 +33,7 @@
     let borderWidth: string = 'default';
     let titleFontSize: string = 'default';
     let titleFontWeight: string = 'default';
+    let titleHeight: string = 'default';
     let iconSize: string = 'default';
     let hideIcon: boolean = false;
     let hideTitle: boolean = false;
@@ -61,6 +62,7 @@
         boxShadow: currentTheme.boxShadow,
         titleFontSize: titleFontSize !== 'default' ? titleFontSize : currentTheme.titleFontSize,
         titleFontWeight: titleFontWeight !== 'default' ? titleFontWeight : currentTheme.titleFontWeight,
+        titleHeight: titleHeight !== 'default' ? titleHeight : currentTheme.titleHeight,
         iconSize: iconSize !== 'default' ? iconSize : currentTheme.iconSize,
     };
 
@@ -82,6 +84,7 @@
         borderWidth = overrides.borderWidth || 'default';
         titleFontSize = overrides.titleFontSize || 'default';
         titleFontWeight = overrides.titleFontWeight || 'default';
+        titleHeight = overrides.titleHeight || 'default';
         iconSize = overrides.iconSize || 'default';
         hideIcon = overrides.hideIcon || false;
         hideTitle = overrides.hideTitle || false;
@@ -111,6 +114,7 @@
         if (borderWidth !== 'default') overrides.borderWidth = borderWidth;
         if (titleFontSize !== 'default') overrides.titleFontSize = titleFontSize;
         if (titleFontWeight !== 'default') overrides.titleFontWeight = titleFontWeight;
+        if (titleHeight !== 'default') overrides.titleHeight = titleHeight;
         if (iconSize !== 'default') overrides.iconSize = iconSize;
         if (hideIcon) overrides.hideIcon = hideIcon;
         if (hideTitle) overrides.hideTitle = hideTitle;
@@ -212,6 +216,7 @@
             borderWidth = 'default';
             titleFontSize = 'default';
             titleFontWeight = 'default';
+            titleHeight = 'default';
             iconSize = 'default';
             hideIcon = false;
             hideTitle = false;
@@ -429,6 +434,7 @@
                                     style="
                                         font-size: {theme.titleFontSize};
                                         font-weight: {theme.titleFontWeight};
+                                        min-height: {theme.titleHeight};
                                         padding: {theme.titlePadding};
                                         color: #4493f8;
                                         display: flex;
@@ -594,6 +600,29 @@
                             <option value="800">▰ 特粗 (800)</option>
                         </select>
                     </div>
+
+                    <!-- 标题栏高度 -->
+                    <div class="override-item">
+                        <label>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="vertical-align: -2px; margin-right: 6px;">
+                                <rect x="4" y="6" width="16" height="12" stroke="currentColor" stroke-width="2" fill="none"/>
+                                <path d="M4 10h16M4 14h16" stroke="currentColor" stroke-width="1"/>
+                            </svg>
+                            标题栏高度
+                        </label>
+                        <select bind:value={titleHeight} on:change={handleOverrideChange}>
+                            <option value="default">⚙️ 默认</option>
+                            <option value="auto">📏 自适应 (auto)</option>
+                            <option value="20px">🔹 绝对紧凑 (20px)</option>
+                            <option value="24px">🔸 超级紧凑 (24px)</option>
+                            <option value="28px">📐 紧凑 (28px)</option>
+                            <option value="32px">📐 标准 (32px)</option>
+                            <option value="36px">📐 适中 (36px)</option>
+                            <option value="40px">📐 宽松 (40px)</option>
+                            <option value="44px">📐 超大 (44px)</option>
+                            <option value="48px">📐 特大 (48px)</option>
+                        </select>
+                    </div>
                     
                     <!-- 图标大小 -->
                     <div class="override-item">
@@ -653,6 +682,7 @@
                                 style="
                                     font-size: {previewStyles.titleFontSize};
                                     font-weight: {previewStyles.titleFontWeight};
+                                    min-height: {previewStyles.titleHeight};
                                     color: #4493f8;
                                     display: flex;
                                     align-items: center;

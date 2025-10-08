@@ -171,6 +171,7 @@ export function generateCalloutStyles(customTypes?: CalloutTypeConfig[], themeId
 .protyle-wysiwyg .bq[custom-callout] [data-callout-title="true"] {
     font-weight: var(--callout-title-font-weight) !important;
     font-size: var(--callout-title-font-size) !important;
+    min-height: var(--callout-title-height) !important;
     margin-bottom: 12px !important;
     padding-left: calc(var(--callout-icon-size) + 12px) !important;
     position: relative !important;

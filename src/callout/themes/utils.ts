@@ -11,6 +11,7 @@ export function generateThemeCSS(theme: ThemeStyle): string {
         --callout-padding: ${theme.padding};
         --callout-title-font-size: ${theme.titleFontSize};
         --callout-title-font-weight: ${theme.titleFontWeight};
+        --callout-title-height: ${theme.titleHeight};
         --callout-title-padding: ${theme.titlePadding};
         --callout-icon-size: ${theme.iconSize};
         --callout-content-font-size: ${theme.contentFontSize};
@@ -75,7 +76,7 @@ export function validateTheme(theme: Partial<ThemeStyle>): theme is ThemeStyle {
     const requiredFields: (keyof ThemeStyle)[] = [
         'id', 'name', 'description', 'preview',
         'borderRadius', 'borderWidth', 'leftBorderWidth', 'padding',
-        'titleFontSize', 'titleFontWeight', 'titlePadding', 'iconSize',
+        'titleFontSize', 'titleFontWeight', 'titleHeight', 'titlePadding', 'iconSize',
         'contentFontSize', 'contentLineHeight', 'contentPadding',
         'boxShadow', 'backgroundOpacity', 'hoverTransform', 'transition'
     ];

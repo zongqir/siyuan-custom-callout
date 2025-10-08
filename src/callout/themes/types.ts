@@ -16,6 +16,7 @@ export interface ThemeStyle {
     // 标题样式
     titleFontSize: string;         // 标题字体大小
     titleFontWeight: string;       // 标题字体粗细
+    titleHeight: string;           // 标题栏高度
     titlePadding: string;          // 标题内边距
     iconSize: string;              // 图标大小
     
