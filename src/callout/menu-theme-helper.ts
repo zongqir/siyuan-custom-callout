@@ -92,40 +92,13 @@ export class MenuThemeHelper {
             if (cmdText) cmdText.style.color = MenuStyles.getMenuItemCommandColor(isDark);
         });
 
-        // 6. 更新紧凑菜单项
-        const compactItems = menu.querySelectorAll('[data-compact-item]') as NodeListOf<HTMLElement>;
-        compactItems.forEach(item => {
-            const position = item.getAttribute('data-margin-position') || 'normal';
-            item.style.cssText = MenuStyles.getCompactMenuItemStyle(isDark, position);
-
-            const text = item.querySelector('.compact-item-text') as HTMLElement;
-            if (text) text.style.color = MenuStyles.getCompactMenuItemTextColor(isDark);
-        });
-
-        // 7. 更新边注工具栏
-        const toolbar = menu.querySelector('[data-margin-toolbar]') as HTMLElement;
-        if (toolbar) {
-            toolbar.style.cssText = MenuStyles.getMarginToolbarStyle(isDark);
-
-            const label = toolbar.querySelector('[data-toolbar-label]') as HTMLElement;
-            if (label) {
-                label.style.cssText = MenuStyles.getMarginToolbarLabelStyle(isDark);
-            }
-
-            const buttons = toolbar.querySelectorAll('[data-toolbar-btn]') as NodeListOf<HTMLElement>;
-            buttons.forEach(btn => {
-                const position = btn.getAttribute('data-position') || 'normal';
-                btn.style.cssText = MenuStyles.getMarginToolbarButtonStyle(isDark, position);
-            });
-        }
-
-        // 8. 更新底部提示
+        // 6. 更新底部提示
         const footer = menu.querySelector('[data-menu-footer]') as HTMLElement;
         if (footer) {
             footer.style.cssText = MenuStyles.getFooterStyle(isDark);
         }
 
-        // 9. 更新筛选行
+        // 7. 更新筛选行
         const filterRows = menu.querySelectorAll('[data-filter-row]') as NodeListOf<HTMLElement>;
         filterRows.forEach(row => {
             row.style.cssText = MenuStyles.getFilterRowStyle(isDark);

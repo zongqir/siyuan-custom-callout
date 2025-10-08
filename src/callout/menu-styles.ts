@@ -163,102 +163,15 @@ export function getMenuGridStyleNoMargin(columns: number): string {
     `;
 }
 
-/**
- * 边注工具栏标签样式
- */
-export function getMarginToolbarLabelStyle(isDark: boolean): string {
-    return `
-        font-size: 11px;
-        color: ${isDark ? '#9ca3af' : '#6b7280'};
-        font-weight: 500;
-        margin-right: 4px;
-    `;
-}
 
-/**
- * 边注工具栏样式
- */
-export function getMarginToolbarStyle(isDark: boolean): string {
-    return `
-        border-top: 1px solid ${isDark ? '#374151' : '#e5e7eb'};
-        padding: 6px 8px 4px;
-        background: ${isDark ? '#111827' : '#fafbfc'};
-        display: flex;
-        align-items: center;
-        gap: 6px;
-    `;
-}
 
-/**
- * 边注工具栏按钮样式
- */
-export function getMarginToolbarButtonStyle(isDark: boolean, position: string): string {
-    let backgroundColor = isDark ? '#374151' : '#ffffff';
-    let borderColor = isDark ? '#4b5563' : '#d1d5db';
-    let textColor = isDark ? '#d1d5db' : '#374151';
-    
-    if (position === 'left') {
-        backgroundColor = isDark ? '#064e3b' : '#d1fae5';
-        borderColor = isDark ? '#10b981' : '#10b981';
-        textColor = isDark ? '#6ee7b7' : '#047857';
-    } else if (position === 'right') {
-        backgroundColor = isDark ? '#7c2d12' : '#fef3c7';
-        borderColor = isDark ? '#f59e0b' : '#f59e0b';
-        textColor = isDark ? '#fbbf24' : '#d97706';
-    }
-    
-    return `
-        flex: 1;
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        padding: 6px 8px;
-        border: 1.5px solid ${borderColor};
-        border-radius: 6px;
-        background: ${backgroundColor};
-        cursor: pointer;
-        font-size: 12px;
-        font-weight: 600;
-        color: ${textColor};
-        transition: all 0.2s ease;
-        justify-content: center;
-    `;
-}
 
-/**
- * 边注工具栏按钮悬停边框颜色
- */
-export function getMarginToolbarButtonHoverBorderColor(isDark: boolean): string {
-    return isDark ? '#6b7280' : '#9ca3af';
-}
 
-/**
- * 边注工具栏按钮正常边框颜色
- */
-export function getMarginToolbarButtonNormalBorderColor(isDark: boolean): string {
-    return isDark ? '#4b5563' : '#d1d5db';
-}
 
 /**
  * 菜单项样式
  */
 export function getMenuItemStyle(isDark: boolean, options: any): string {
-    const isMarginNote = options.command && (options.command.includes('-left') || options.command.includes('-right'));
-    let marginNoteStyle = '';
-    
-    if (isMarginNote) {
-        const isLeft = options.command.includes('-left');
-        const borderColor = isLeft ? (isDark ? '#10b981' : '#059669') : (isDark ? '#f59e0b' : '#d97706');
-        const bgGradient = isLeft 
-            ? (isDark ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.05))' : 'linear-gradient(135deg, #ecfdf5, #ffffff)')
-            : (isDark ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(245, 158, 11, 0.05))' : 'linear-gradient(135deg, #fffbeb, #ffffff)');
-        
-        marginNoteStyle = `
-            border-left: 3px solid ${borderColor};
-            background: ${bgGradient};
-        `;
-    }
-    
     return `
         padding: 10px 12px;
         cursor: pointer;
@@ -269,7 +182,6 @@ export function getMenuItemStyle(isDark: boolean, options: any): string {
         gap: 10px;
         transition: all 0.2s ease;
         background: ${isDark ? 'rgba(31, 41, 55, 0.6)' : '#ffffff'};
-        ${marginNoteStyle}
     `;
 }
 
@@ -315,44 +227,7 @@ export function getMenuItemCommandStyle(): string {
     return `font-size: 10px; font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;`;
 }
 
-/**
- * 紧凑菜单项样式
- */
-export function getCompactMenuItemStyle(isDark: boolean, marginPosition: string): string {
-    let backgroundColor = isDark ? 'rgba(31, 41, 55, 0.6)' : '#ffffff';
-    let borderColor = isDark ? 'rgba(75, 85, 99, 0.3)' : '#f3f4f6';
-    
-    if (marginPosition === 'left') {
-        backgroundColor = isDark ? 'rgba(16, 185, 129, 0.18)' : '#ecfdf5';
-        borderColor = isDark ? 'rgba(16, 185, 129, 0.4)' : '#d1fae5';
-    } else if (marginPosition === 'right') {
-        backgroundColor = isDark ? 'rgba(245, 158, 11, 0.18)' : '#fffbeb';
-        borderColor = isDark ? 'rgba(245, 158, 11, 0.4)' : '#fde68a';
-    }
-    
-    return `
-        padding: 8px 10px;
-        cursor: pointer;
-        border: 1px solid ${borderColor};
-        border-radius: 6px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 6px;
-        transition: all 0.2s ease;
-        font-size: 12px;
-        min-height: 36px;
-        background: ${backgroundColor};
-        font-weight: 600;
-    `;
-}
 
-/**
- * 紧凑菜单项文字颜色
- */
-export function getCompactMenuItemTextColor(isDark: boolean): string {
-    return isDark ? '#f9fafb' : '#1f2937';
-}
 
 /**
  * 底部提示样式

@@ -652,9 +652,7 @@ export class CalloutMenu {
                 
                 // 先清除所有 callout 相关的属性，避免状态不一致
                 blockQuoteElement.removeAttribute('custom-callout');
-                blockQuoteElement.removeAttribute('data-margin-position');
                 blockQuoteElement.removeAttribute('data-margin-width');
-                blockQuoteElement.removeAttribute('data-margin-spacing');
                 blockQuoteElement.removeAttribute('data-collapsed');
                 
                 console.log('[Callout Menu] 🧹 已清除所有 callout 属性');

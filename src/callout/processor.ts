@@ -71,9 +71,9 @@ export class CalloutProcessor {
         console.log('[Callout] processBlockquote 被调用', {
             text: text,
             hasCustomCallout: blockquote.hasAttribute('custom-callout'),
-            hasMarginPosition: blockquote.hasAttribute('data-margin-position'),
+            hasMarginWidth: blockquote.hasAttribute('data-margin-width'),
             customCallout: blockquote.getAttribute('custom-callout'),
-            marginPosition: blockquote.getAttribute('data-margin-position'),
+            marginWidth: blockquote.getAttribute('data-margin-width'),
             hasTitleDiv: !!titleDiv
         });
 
