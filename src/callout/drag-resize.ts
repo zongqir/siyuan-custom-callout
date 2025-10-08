@@ -176,8 +176,14 @@ export class CalloutDragResizer {
         blockquote.style.setProperty('position', 'relative', 'important');
         blockquote.setAttribute('data-drag-container', 'true');
         
-        // 🔧 确保容器不被其他样式干扰
+        // 🔧 确保容器不被其他样式干扰 - overflow必须为visible才能显示底部手柄
         blockquote.style.setProperty('overflow', 'visible', 'important');
+        
+        // 🎯 特别处理：超级块中也要确保overflow可见
+        const parentSuperBlock = blockquote.closest('.sb');
+        if (parentSuperBlock) {
+            (parentSuperBlock as HTMLElement).style.setProperty('overflow', 'visible', 'important');
+        }
 
         let needsHoverBinding = false;
 
@@ -429,18 +435,17 @@ export class CalloutDragResizer {
             
             // 计算父元素内部可用区域
             const parentWidth = blockquote.offsetWidth - parseFloat(parentStyle.paddingLeft || '0') - parseFloat(parentStyle.paddingRight || '0');
-            const parentHeight = blockquote.offsetHeight;
             
-            // 计算手柄位置：水平居中，垂直在底部
+            // 计算手柄位置：水平居中
             const handleWidth = parentWidth / 2; // 宽度为callout宽度的一半
             const handleLeft = (parentWidth - handleWidth) / 2;
-            const handleTop = parentHeight - 5; // 距离底部5px
             
+            // 🎯 使用bottom定位确保手柄完全在容器内部可见
             // 直接设置像素位置 - 使用!important强制应用
             handle.style.setProperty('left', `${handleLeft}px`, 'important');
-            handle.style.setProperty('top', `${handleTop}px`, 'important');
             handle.style.setProperty('width', `${handleWidth}px`, 'important');
-            handle.style.setProperty('bottom', 'auto', 'important'); // 清除bottom
+            handle.style.setProperty('bottom', '-6px', 'important'); // 距离底部-6px，让手柄一半露在外面
+            handle.style.setProperty('top', 'auto', 'important'); // 清除top
             handle.style.setProperty('transform', 'none', 'important'); // 清除transform
             
           
