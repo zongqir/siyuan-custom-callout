@@ -307,9 +307,15 @@ export class CalloutProcessor {
         if ((titleDiv as any)._titleCollapseHandler) {
             titleDiv.removeEventListener('click', (titleDiv as any)._titleCollapseHandler, true);
         }
+        if ((titleDiv as any)._titleDblClickHandler) {
+            titleDiv.removeEventListener('dblclick', (titleDiv as any)._titleDblClickHandler, true);
+        }
 
-        // 创建点击处理器
-        const handler = (e: MouseEvent) => {
+        let clickTimeout: NodeJS.Timeout | null = null;
+        let clickCount = 0;
+
+        // 创建点击处理器（延迟执行，等待可能的双击）
+        const clickHandler = (e: MouseEvent) => {
             const rect = titleDiv.getBoundingClientRect();
             const clickX = e.clientX - rect.left;
 
@@ -318,18 +324,71 @@ export class CalloutProcessor {
                 return;
             }
 
-            // 点击其他区域切换折叠状态
-            e.preventDefault();
-            e.stopPropagation();
-            this.toggleCollapse(blockquote);
+            clickCount++;
+            
+            // 如果已经有定时器在运行，取消它
+            if (clickTimeout) {
+                clearTimeout(clickTimeout);
+            }
+
+            // 设置延迟执行，等待可能的双击
+            clickTimeout = setTimeout(() => {
+                if (clickCount === 1) {
+                    // 单击：折叠功能
+                    console.log('[Callout] 单击标题，执行折叠操作');
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.toggleCollapse(blockquote);
+                }
+                clickCount = 0;
+                clickTimeout = null;
+            }, 300); // 300ms内如果没有第二次点击，则认为是单击
+        };
+
+        // 创建双击处理器（用于编辑）
+        const dblClickHandler = (e: MouseEvent) => {
+            const rect = titleDiv.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+
+            // 点击图标区域（0-40px）不处理编辑
+            if (clickX >= 0 && clickX <= 40) {
+                return;
+            }
+
+            // 取消单击的定时器
+            if (clickTimeout) {
+                clearTimeout(clickTimeout);
+                clickTimeout = null;
+            }
+            clickCount = 0;
+
+            console.log('[Callout] 双击标题，进入编辑模式');
+            
+            // 双击：进入编辑模式
+            // 不阻止默认行为，让contenteditable正常工作
+            titleDiv.focus();
+            
+            // 选中所有文本以便编辑
+            setTimeout(() => {
+                const selection = window.getSelection();
+                const range = document.createRange();
+                range.selectNodeContents(titleDiv);
+                selection?.removeAllRanges();
+                selection?.addRange(range);
+            }, 10);
         };
 
         // 保存引用
-        (titleDiv as any)._titleCollapseHandler = handler;
+        (titleDiv as any)._titleCollapseHandler = clickHandler;
+        (titleDiv as any)._titleDblClickHandler = dblClickHandler;
 
         // 添加监听器
-        titleDiv.addEventListener('click', handler, true);
+        titleDiv.addEventListener('click', clickHandler, true);
+        titleDiv.addEventListener('dblclick', dblClickHandler, true);
+        
+        // 设置光标样式提示用户可以双击编辑
         titleDiv.style.cursor = 'pointer';
+        titleDiv.title = '单击折叠/展开，双击编辑';
     }
 
     /**
@@ -340,7 +399,12 @@ export class CalloutProcessor {
             titleDiv.removeEventListener('click', (titleDiv as any)._titleCollapseHandler, true);
             (titleDiv as any)._titleCollapseHandler = null;
         }
+        if ((titleDiv as any)._titleDblClickHandler) {
+            titleDiv.removeEventListener('dblclick', (titleDiv as any)._titleDblClickHandler, true);
+            (titleDiv as any)._titleDblClickHandler = null;
+        }
         titleDiv.style.cursor = '';
+        titleDiv.title = '';
     }
 
     /**
