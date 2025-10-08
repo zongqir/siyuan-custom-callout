@@ -28,8 +28,8 @@ export interface ParsedCalloutCommand {
     type: string;
     /** 原始配置 */
     config: CalloutTypeConfig;
-    /** 边注位置 */
-    position: 'normal' | 'left' | 'right';
+    /** 边注位置 - 只保留normal */
+    position: 'normal';
     /** 边注宽度 */
     width?: string;
     /** 边注间距 */

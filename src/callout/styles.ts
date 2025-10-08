@@ -229,101 +229,25 @@ export function generateCalloutStyles(customTypes?: CalloutTypeConfig[], themeId
 }
 
 /**
- * 生成边注功能CSS
+ * 生成宽度设置功能CSS - 只保留宽度调整功能
  */
 function generateMarginNoteCSS(): string {
     return `
-/* ==================== 边注功能样式 ==================== */
+/* ==================== 宽度设置功能样式 ==================== */
 
-/* 左侧边注 - 使用相对定位 + transform */
-.protyle-wysiwyg .bq[custom-callout][data-margin-position="left"] {
-    position: relative !important;
-    float: left !important;
-    clear: left !important;
-    width: var(--margin-width, 20%) !important;
-    max-width: 300px !important;
-    margin: 0 !important;
-    
-    /* 字体和排版 */
-    font-size: 0.85em !important;
-    line-height: 1.4 !important;
-    
-    /* 防止内容溢出 */
-    word-wrap: break-word !important;
-    overflow-wrap: break-word !important;
-    hyphens: auto !important;
-    
-    /* 视觉样式 */
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1) !important;
-    padding: 10px 12px !important;
-    z-index: 10 !important;
+/* 宽度设置 - 只在设置了宽度后生效 */
+.protyle-wysiwyg .bq[custom-callout][data-margin-width] {
+    width: var(--margin-width, 100%) !important;
+    max-width: var(--margin-width, 100%) !important;
+    margin: 16px auto !important;
+    display: block !important;
 }
 
-/* 右侧边注 - 使用相对定位 + transform */
-.protyle-wysiwyg .bq[custom-callout][data-margin-position="right"] {
-    position: relative !important;
-    float: right !important;
-    clear: right !important;
-    width: var(--margin-width, 20%) !important;
-    max-width: 300px !important;
-    margin: 0 !important;
-    
-    /* 字体和排版 */
-    font-size: 0.85em !important;
-    line-height: 1.4 !important;
-    
-    /* 防止内容溢出 */
-    word-wrap: break-word !important;
-    overflow-wrap: break-word !important;
-    hyphens: auto !important;
-    
-    /* 视觉样式 */
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1) !important;
-    padding: 10px 12px !important;
-    z-index: 10 !important;
-}
-
-/* 边注标题优化 */
-.protyle-wysiwyg .bq[custom-callout][data-margin-position] [data-callout-title="true"] {
-    font-size: 0.85em !important;
-    margin-bottom: 8px !important;
-    padding-left: calc(var(--callout-icon-size) + 8px) !important;
-}
-
-/* 边注图标大小调整 */
-.protyle-wysiwyg .bq[custom-callout][data-margin-position] [data-callout-title="true"]::before {
-    width: calc(var(--callout-icon-size) * 0.8) !important;
-    height: calc(var(--callout-icon-size) * 0.8) !important;
-}
-
-/* 避免后续元素与边注重叠 */
-.protyle-wysiwyg .bq[custom-callout][data-margin-position] + * {
-    clear: both !important;
-}
-
-/* 响应式处理 - 小屏幕禁用边注 */
+/* 响应式处理 - 小屏幕时恢复全宽 */
 @media (max-width: 768px) {
-    .protyle-wysiwyg .bq[custom-callout][data-margin-position] {
-        position: relative !important;
-        float: none !important;
-        clear: none !important;
-        transform: none !important;
+    .protyle-wysiwyg .bq[custom-callout][data-margin-width] {
         width: 100% !important;
         max-width: none !important;
-        margin: 12px 0 !important;
-        font-size: inherit !important;
-        line-height: inherit !important;
-        padding: var(--callout-padding) !important;
-    }
-    
-    .protyle-wysiwyg .bq[custom-callout][data-margin-position] [data-callout-title="true"] {
-        font-size: var(--callout-title-font-size) !important;
-        padding-left: calc(var(--callout-icon-size) + 12px) !important;
-    }
-    
-    .protyle-wysiwyg .bq[custom-callout][data-margin-position] [data-callout-title="true"]::before {
-        width: var(--callout-icon-size) !important;
-        height: var(--callout-icon-size) !important;
     }
 }
 `;
