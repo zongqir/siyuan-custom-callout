@@ -50,26 +50,70 @@ export class CalloutProcessor {
      * 处理单个引述块
      */
     processBlockquote(blockquote: HTMLElement): boolean {
-        if (!blockquote) return false;
+        if (!blockquote) {
+            console.log('[Callout Debug] ❌ processBlockquote: blockquote is null/undefined');
+            return false;
+        }
 
-        // 确保是blockquote元素
-        if (!blockquote.classList.contains('bq')) {
+        // 🔧 修复：更灵活的blockquote识别
+        const isValidBlockquote = blockquote.classList.contains('bq') || 
+                                 blockquote.getAttribute('data-type') === 'NodeBlockquote';
+        
+        if (!isValidBlockquote) {
+            console.log('[Callout Debug] ❌ processBlockquote: element is neither .bq nor NodeBlockquote', {
+                element: blockquote,
+                classes: blockquote.className,
+                dataType: blockquote.getAttribute('data-type'),
+                tagName: blockquote.tagName
+            });
+            
+            // 🔧 如果传入的是gutter按钮，尝试找到真正的blockquote
+            if (blockquote.classList.contains('callout-gutter-highlight') && 
+                blockquote.getAttribute('data-type') === 'NodeBlockquote') {
+                const nodeId = blockquote.getAttribute('data-node-id');
+                if (nodeId) {
+                    const realBlockquote = document.querySelector(`[data-node-id="${nodeId}"].bq, [data-node-id="${nodeId}"][data-type="NodeBlockquote"]:not(.callout-gutter-highlight)`) as HTMLElement;
+                    if (realBlockquote) {
+                        console.log('[Callout Debug] 🔧 Found real blockquote from gutter button:', realBlockquote);
+                        return this.processBlockquote(realBlockquote);
+                    }
+                }
+            }
+            
             return false;
         }
 
         const titleDiv = blockquote.querySelector('div[contenteditable="true"]') as HTMLElement;
         const text = titleDiv?.textContent?.trim() || '';
 
-        // 处理所有涉及边注位置清理的逻辑 - 简化版
+        console.log('[Callout Debug] Processing text:', `"${text}"`, {
+            looksLikeCallout: text.startsWith('[!') && text.includes(']'),
+            hasCustomCallout: blockquote.hasAttribute('custom-callout')
+        });
+
+        // 处理所有涉及边注位置清理的逻辑 - 修复版
+        // 🔧 修复：如果text看起来像callout命令，不要执行清理逻辑
+        const isCalloutCommand = text.startsWith('[!') && text.includes(']');
+        
         if (text === '' && !blockquote.hasAttribute('custom-callout') && !blockquote.hasAttribute('data-margin-width') && !blockquote.hasAttribute('data-margin-height')) {
+            console.log('[Callout Debug] 🧹 Empty text detected, checking for margin note styles...');
             if (this.hasMarginNoteStyles(blockquote)) {
+                console.log('[Callout Debug] 🧹 Clearing margin note styles and returning false');
                 this.clearMarginNoteStyles(blockquote);
                 return false;
+            }
+        } else if (text !== '' && !isCalloutCommand && !blockquote.hasAttribute('custom-callout') && !blockquote.hasAttribute('data-margin-width') && !blockquote.hasAttribute('data-margin-height')) {
+            // 🔧 如果有非callout文本，但没有callout属性，也清理margin样式
+            console.log('[Callout Debug] 🧹 Non-callout text detected, checking for margin note styles...');
+            if (this.hasMarginNoteStyles(blockquote)) {
+                console.log('[Callout Debug] 🧹 Clearing margin note styles for non-callout text');
+                this.clearMarginNoteStyles(blockquote);
             }
         }
 
         // 跳过已有自定义样式的引述块  
         if (this.hasCustomStyle(blockquote)) {
+            console.log('[Callout Debug] ⏭️ Skipping blockquote with existing custom style');
             return false;
         }
 
@@ -84,7 +128,10 @@ export class CalloutProcessor {
         }
 
         // 尝试解析参数化命令
+        console.log('[Callout Debug] 🔍 Trying to parse callout command:', text);
         const parsedCommand = this.parseCalloutCommand(text);
+        console.log('[Callout Debug] 📋 Parse result:', parsedCommand);
+        
         if (parsedCommand) {
             
             // 设置基础 callout 类型
@@ -140,9 +187,11 @@ export class CalloutProcessor {
         }
 
         // 回退到旧的匹配方式（向后兼容）
-        //console.log('[Callout] 尝试旧的匹配方式');
+        console.log('[Callout Debug] Trying fallback matching for:', text);
+        
         for (const [trigger, config] of this.calloutTypes.entries()) {
             if (text.startsWith(trigger)) {
+                console.log('[Callout Debug] ✅ Fallback match found:', trigger);
                 logger.log('[Callout] 📝 匹配旧格式成功:', trigger);
                 // 设置 callout 类型
                 blockquote.setAttribute('custom-callout', config.type);
@@ -168,12 +217,19 @@ export class CalloutProcessor {
         }
 
         // 简化的清理逻辑  
-        //console.log('[Callout] 🔍 没有匹配任何callout类型，进入清理逻辑');
+        console.log('[Callout Debug] 🔍 No callout match found, entering cleanup logic');
+        console.log('[Callout Debug] 🔍 Text content:', `"${text}"`);
+        
+        // 🔧 修复：如果text看起来像正在输入的callout命令，不要清理
+        const isPartialCallout = text.startsWith('[!') || text.startsWith('[') || text.includes('!');
         
         // 如果不匹配任何 callout 类型，谨慎清除属性（保留宽度设置）
-        if (blockquote.hasAttribute('custom-callout')) {
+        if (blockquote.hasAttribute('custom-callout') && !isPartialCallout) {
+            console.log('[Callout Debug] 🧹 Clearing callout attributes (text does not look like callout)');
             logger.log('[Callout] ========== 谨慎清除 callout 属性（保留宽度）==========');
             this.clearCalloutAttributesConservatively(blockquote, titleDiv);
+        } else if (isPartialCallout) {
+            console.log('[Callout Debug] ⏸️ Skipping cleanup - text looks like partial callout command');
         }
 
         return false;
@@ -875,10 +931,13 @@ export class CalloutProcessor {
      * 组合格式: [!info|30%|120px]- (带宽高的折叠状态)
      */
     parseCalloutCommand(text: string): ParsedCalloutCommand | null {
+        console.log('[Callout Debug] Parsing command:', text);
         
         // 匹配 [!type] 或 [!type|params] 格式，支持可选的折叠标记 +/-
         const match = text.match(/^\[!([^|\]]+)(\|.*?)?\]([+-])?$/);
+        
         if (!match) {
+            console.log('[Callout Debug] ❌ No regex match');
             return null;
         }
 
@@ -898,11 +957,15 @@ export class CalloutProcessor {
         
         // 查找匹配的配置
         const config = this.calloutTypes.get(searchKey);
+        
         if (!config) {
+            console.log('[Callout Debug] ❌ Config not found for:', searchKey);
             logger.log('[Callout] ❌ 找不到配置，searchKey:', searchKey);
             logger.log('[Callout] 可用的配置键:', Array.from(this.calloutTypes.keys()));
             return null;
         }
+        
+        console.log('[Callout Debug] ✅ Config found for:', searchKey);
 
 
         // 解析参数 - 支持宽度和高度

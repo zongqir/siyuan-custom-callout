@@ -23,6 +23,10 @@ export class CalloutManager {
     private inputEventHandler: ((e: Event) => void) | null = null;
     private clickEventHandler: ((e: Event) => void) | null = null;
     private focusinEventHandler: ((e: Event) => void) | null = null;
+    private keydownHandler: ((e: Event) => void) | null = null;
+    
+    // 简单的删除检测
+    private lastDeleteTime: number = 0;
 
     constructor(plugin?: any) {
         this.plugin = plugin;
@@ -175,19 +179,42 @@ export class CalloutManager {
             const target = e.target as HTMLElement;
             if (target.contentEditable === 'true') {
                 clearTimeout(inputTimeout);
-                const eventType = e.type;
+                
+                // 1. 检查是否在第一行 + 刚删除过
+                const isInFirstLine = this.isCaretInFirstLine(target);
+                const isAfterDelete = (Date.now() - this.lastDeleteTime) < 1000; // 1秒内有删除操作
+                
+                // 2. 决定延迟时间：删除+第一行=3秒，其他=300ms
+                const delay = (isInFirstLine && isAfterDelete) ? 3000 : 300;
+                
+                console.log('[Callout Debug] Input event:', {
+                    isInFirstLine,
+                    isAfterDelete,
+                    delay: delay + 'ms'
+                });
+                
                 inputTimeout = window.setTimeout(() => {
-                    const blockquote = target.closest('[data-type="NodeBlockquote"], .bq') as HTMLElement;
+                    const blockquote = this.findTargetBlockquote(target);
                     if (blockquote) {
                         this.processor.processBlockquote(blockquote);
                     }
-                }, eventType === 'paste' ? 100 : 300);
+                }, delay);
             }
         };
         
         ['input', 'keyup', 'paste'].forEach(eventType => {
             document.addEventListener(eventType, this.inputEventHandler!, true);
         });
+
+        // 检测删除操作
+        this.keydownHandler = (e) => {
+            const keyEvent = e as KeyboardEvent;
+            if ((keyEvent.key === 'Backspace' || keyEvent.key === 'Delete') &&
+                keyEvent.target && (keyEvent.target as HTMLElement).contentEditable === 'true') {
+                this.lastDeleteTime = Date.now();
+            }
+        };
+        document.addEventListener('keydown', this.keydownHandler, true);
 
         // 点击callout标题图标区域切换类型
         this.clickEventHandler = (e) => {
@@ -237,6 +264,85 @@ export class CalloutManager {
     }
 
     /**
+     * 检查光标是否在第一行
+     */
+    private isCaretInFirstLine(target: HTMLElement): boolean {
+        try {
+            const selection = window.getSelection();
+            if (!selection || selection.rangeCount === 0) {
+                console.log('[Callout Debug] 光标检测: 没有选区');
+                return false;
+            }
+            
+            const range = selection.getRangeAt(0);
+            
+            // 🔧 修复：直接从选区查找blockquote，不依赖target
+            let container = range.commonAncestorContainer;
+            if (container.nodeType === Node.TEXT_NODE) {
+                container = container.parentElement!;
+            }
+            
+            const blockquote = (container as HTMLElement).closest('[data-type="NodeBlockquote"], .bq');
+            if (!blockquote) {
+                console.log('[Callout Debug] 光标检测: 选区中找不到blockquote');
+                return false;
+            }
+            
+            // 获取blockquote的第一个可编辑div
+            const firstDiv = blockquote.querySelector('div[contenteditable="true"]');
+            if (!firstDiv) {
+                console.log('[Callout Debug] 光标检测: blockquote中找不到第一个可编辑div');
+                return false;
+            }
+            
+            // 检查光标是否在第一个div内
+            const isInFirstLine = firstDiv.contains(range.commonAncestorContainer) || 
+                                 firstDiv === range.commonAncestorContainer ||
+                                 range.commonAncestorContainer === firstDiv ||
+                                 firstDiv.contains(container as Node) ||
+                                 firstDiv === container;
+            
+            console.log('[Callout Debug] 光标检测详情:', {
+                targetTag: target.tagName,
+                blockquoteFound: !!blockquote,
+                firstDiv: firstDiv,
+                container: container,
+                rangeContainer: range.commonAncestorContainer,
+                isInFirstLine: isInFirstLine,
+                firstDivText: firstDiv.textContent?.substring(0, 20),
+                containerText: (container as HTMLElement)?.textContent?.substring(0, 20)
+            });
+            
+            return isInFirstLine;
+        } catch (e) {
+            console.log('[Callout Debug] 光标检测出错:', e);
+            return false;
+        }
+    }
+
+    /**
+     * 查找目标blockquote
+     */
+    private findTargetBlockquote(target: HTMLElement): HTMLElement | null {
+        let blockquote = target.closest('[data-type="NodeBlockquote"], .bq') as HTMLElement;
+        
+        // 如果找不到，尝试通过选区查找
+        if (!blockquote) {
+            const selection = window.getSelection();
+            if (selection && selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                const container = range.commonAncestorContainer;
+                const containerElement = container.nodeType === Node.TEXT_NODE ? 
+                    container.parentElement : container as HTMLElement;
+                blockquote = containerElement?.closest('[data-type="NodeBlockquote"], .bq') as HTMLElement;
+            }
+        }
+        
+        return blockquote;
+    }
+
+
+    /**
      * 初始化拖拽调整功能
      */
     private initializeDragResize() {
@@ -276,6 +382,11 @@ export class CalloutManager {
         if (this.focusinEventHandler) {
             document.removeEventListener('focusin', this.focusinEventHandler);
             this.focusinEventHandler = null;
+        }
+        
+        if (this.keydownHandler) {
+            document.removeEventListener('keydown', this.keydownHandler, true);
+            this.keydownHandler = null;
         }
 
         // 销毁处理器（包括清理 callout 元素上的事件监听器）
