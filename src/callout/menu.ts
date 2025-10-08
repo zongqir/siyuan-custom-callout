@@ -650,12 +650,26 @@ export class CalloutMenu {
                 console.log('[Callout Menu] ✏️ 编辑模式 - 修改命令:', command);
                 console.log('[Callout Menu] 📄 修改前文本:', editableDiv.textContent);
                 
-                // 先清除所有 callout 相关的属性，避免状态不一致
+                // 保存用户设置的宽度和高度（如果有的话）
+                const existingWidth = blockQuoteElement.getAttribute('data-margin-width');
+                const existingHeight = blockQuoteElement.getAttribute('data-margin-height');
+                const existingWidthCSS = blockQuoteElement.style.getPropertyValue('--margin-width');
+                const existingHeightCSS = blockQuoteElement.style.getPropertyValue('--margin-height');
+                const existingMinHeight = blockQuoteElement.style.getPropertyValue('min-height');
+                
+                console.log('[Callout Menu] 💾 保存现有尺寸设置:', {
+                    width: existingWidth,
+                    height: existingHeight,
+                    widthCSS: existingWidthCSS,
+                    heightCSS: existingHeightCSS,
+                    minHeight: existingMinHeight
+                });
+                
+                // 先清除callout类型相关的属性（但保留尺寸设置）
                 blockQuoteElement.removeAttribute('custom-callout');
-                blockQuoteElement.removeAttribute('data-margin-width');
                 blockQuoteElement.removeAttribute('data-collapsed');
                 
-                console.log('[Callout Menu] 🧹 已清除所有 callout 属性');
+                console.log('[Callout Menu] 🧹 已清除callout类型属性（保留尺寸设置）');
                 
                 // 使用统一的文本更新函数
                 this.updateEditableText(editableDiv, command);
@@ -663,6 +677,30 @@ export class CalloutMenu {
                 // 处理 callout
                 setTimeout(() => {
                     this.processor.processBlockquote(blockQuoteElement);
+                    
+                    // 恢复用户设置的尺寸（如果有的话）
+                    setTimeout(() => {
+                        if (existingWidth) {
+                            console.log('[Callout Menu] 🔄 恢复宽度设置:', existingWidth);
+                            blockQuoteElement.setAttribute('data-margin-width', existingWidth);
+                            if (existingWidthCSS) {
+                                blockQuoteElement.style.setProperty('--margin-width', existingWidthCSS);
+                            }
+                        }
+                        
+                        if (existingHeight) {
+                            console.log('[Callout Menu] 🔄 恢复高度设置:', existingHeight);
+                            blockQuoteElement.setAttribute('data-margin-height', existingHeight);
+                            if (existingHeightCSS) {
+                                blockQuoteElement.style.setProperty('--margin-height', existingHeightCSS);
+                            }
+                            if (existingMinHeight) {
+                                blockQuoteElement.style.setProperty('min-height', existingMinHeight);
+                            }
+                        }
+                        
+                        console.log('[Callout Menu] ✅ 尺寸设置恢复完成');
+                    }, 50);
                 }, 100);
             } else {
                 // 新建模式：插入命令并自动换行
