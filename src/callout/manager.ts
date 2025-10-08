@@ -1,6 +1,7 @@
 import { CalloutProcessor } from './processor';
 import { CalloutMenu } from './menu';
 import { CalloutDragResizer } from './drag-resize';
+import { CalloutGutterHighlight } from './proxy-button';
 import { generateCalloutStyles } from './styles';
 import type { CalloutConfig } from './config';
 import { ConfigManager } from './config';
@@ -12,6 +13,7 @@ export class CalloutManager {
     private processor: CalloutProcessor;
     private menu: CalloutMenu;
     private dragResizer: CalloutDragResizer | null = null;
+    private gutterHighlight: CalloutGutterHighlight | null = null;
     private observer: MutationObserver | null = null;
     private styleElement: HTMLStyleElement | null = null;
     private currentConfig: CalloutConfig | null = null;
@@ -52,6 +54,9 @@ export class CalloutManager {
 
         // 初始化拖拽调整功能
         this.initializeDragResize();
+
+        // 初始化块标高亮功能
+        this.initializeGutterHighlight();
 
         // 处理现有的blockquote
         this.processor.processAllBlockquotes();
@@ -224,6 +229,13 @@ export class CalloutManager {
     }
 
     /**
+     * 初始化块标高亮功能
+     */
+    private initializeGutterHighlight() {
+        this.gutterHighlight = new CalloutGutterHighlight();
+    }
+
+    /**
      * 销毁Callout功能
      */
     destroy() {
@@ -237,6 +249,12 @@ export class CalloutManager {
         if (this.dragResizer) {
             this.dragResizer.destroy();
             this.dragResizer = null;
+        }
+
+        // 销毁块标高亮功能
+        if (this.gutterHighlight) {
+            this.gutterHighlight.destroy();
+            this.gutterHighlight = null;
         }
 
         // 移除样式

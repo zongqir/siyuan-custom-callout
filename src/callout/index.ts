@@ -11,5 +11,7 @@ export * from './config';
 export * from './icons';
 export * from './colors';
 export * from './themes/index';
+export * from './proxy-button';
 export * from './drag-resize';
+
 

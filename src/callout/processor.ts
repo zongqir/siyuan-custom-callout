@@ -571,22 +571,16 @@ export class CalloutProcessor {
      * 解析高度参数
      */
     private parseHeight(param: string): string | null {
-        console.log('[Callout] 🔍 parseHeight接收参数:', param);
-        
         const normalized = param.trim();
-        console.log('[Callout] 📏 标准化后的参数:', normalized);
         
         // 验证高度格式 (支持 px, 支持小数)
         if (/^[\d.]+px$/.test(normalized)) {
             const num = parseFloat(normalized);
-            console.log('[Callout] 🔢 解析出数字:', num);
             
             // 限制高度范围（50px - 1000px）
             if (num >= 50 && num <= 1000) {
-                console.log('[Callout] ✅ 高度范围有效，返回:', normalized);
                 return normalized;
             } else {
-                console.log('[Callout] ⚠️ 高度超出范围，忽略:', num);
                 return null;
             }
         }

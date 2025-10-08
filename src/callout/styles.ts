@@ -228,6 +228,9 @@ export function generateCalloutStyles(customTypes?: CalloutTypeConfig[], themeId
     // 添加拖拽调整功能CSS
     styles.push(generateDragResizeCSS());
 
+    // 添加代理按钮CSS
+    styles.push(generateProxyButtonCSS());
+
     return styles.join('\n');
 }
 
@@ -348,6 +351,46 @@ body.dragging-callout {
 
 .callout-resize-handle.active .resize-handle-inner {
     background: #4299e1 !important;
+}
+`;
+}
+
+/**
+ * 生成块标高亮CSS
+ */
+function generateProxyButtonCSS(): string {
+    return `
+/* ==================== Callout 块标高亮样式 ==================== */
+
+/* 高亮 callout 的块标按钮 */
+.protyle-gutters button.callout-gutter-highlight {
+    position: relative !important;
+    background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%) !important;
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.35) !important;
+    border: none !important;
+    border-radius: 6px !important;
+    cursor: grab !important;
+    transition: all 0.25s ease !important;
+    overflow: visible !important;
+}
+
+/* 拖动时的光标 */
+.protyle-gutters button.callout-gutter-highlight:active {
+    cursor: grabbing !important;
+    transform: scale(0.95) !important;
+}
+
+/* 高亮按钮的 SVG 图标 */
+.protyle-gutters button.callout-gutter-highlight svg {
+    filter: brightness(0) invert(1) !important;
+    opacity: 1 !important;
+}
+
+/* 悬停时加强效果 */
+.protyle-gutters button.callout-gutter-highlight:hover {
+    background: linear-gradient(135deg, #f59e0b 0%, #dc2626 100%) !important;
+    box-shadow: 0 4px 14px rgba(245, 158, 11, 0.45) !important;
+    transform: translateY(-2px) !important;
 }
 `;
 }
