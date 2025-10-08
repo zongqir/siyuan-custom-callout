@@ -165,6 +165,7 @@ export function generateCalloutStyles(customTypes?: CalloutTypeConfig[], themeId
 
 .protyle-wysiwyg .bq[custom-callout] {
     border-left: none !important;
+    overflow: visible !important;
 }
 
 /* 标题行样式 */
@@ -180,10 +181,105 @@ export function generateCalloutStyles(customTypes?: CalloutTypeConfig[], themeId
     line-height: 1.5 !important;
 }
 
-/* 隐藏原始命令文本 */
-.protyle-wysiwyg .bq[custom-callout] [data-callout-title="true"] * {
-    display: none !important;
-    visibility: hidden !important;
+/* 修复Callout内列表样式 - 针对思源笔记的NodeList结构 */
+
+/* 传统HTML列表样式 */
+.protyle-wysiwyg .bq[custom-callout] ul {
+    list-style-type: disc !important;
+    list-style-position: outside !important;
+    margin-left: 0 !important;
+    padding-left: 12px !important;
+}
+
+.protyle-wysiwyg .bq[custom-callout] ol {
+    list-style-type: decimal !important;
+    list-style-position: outside !important;
+    margin-left: 0 !important;
+    padding-left: 12px !important;
+}
+
+.protyle-wysiwyg .bq[custom-callout] li {
+    display: list-item !important;
+    margin: 4px 0 !important;
+    padding-left: 0px !important;
+    list-style-type: inherit !important;
+}
+
+/* 思源笔记的NodeList结构样式 */
+.protyle-wysiwyg .bq[custom-callout] div[data-type="NodeList"] {
+    margin: 8px 0 !important;
+    padding-left: 0 !important;
+    overflow: visible !important;
+}
+
+.protyle-wysiwyg .bq[custom-callout] div[data-type="NodeListItem"] {
+    display: list-item !important;
+    list-style-type: disc !important;
+    list-style-position: outside !important;
+    margin: 4px 0 4px 12px !important;
+    padding-left: 0px !important;
+}
+
+
+/* 有序列表的NodeList */
+.protyle-wysiwyg .bq[custom-callout] div[data-type="NodeList"][data-subtype="o"] div[data-type="NodeListItem"] {
+    list-style-type: decimal !important;
+}
+
+/* 任务列表的NodeList */
+.protyle-wysiwyg .bq[custom-callout] div[data-type="NodeList"][data-subtype="t"] div[data-type="NodeListItem"] {
+    list-style-type: none !important;
+}
+
+/* 确保容器不会裁剪列表项目符号 */
+.protyle-wysiwyg .bq[custom-callout] div[data-type="NodeList"],
+.protyle-wysiwyg .bq[custom-callout] div[data-type="NodeListItem"] {
+    overflow: visible !important;
+}
+
+/* 嵌套列表样式 */
+.protyle-wysiwyg .bq[custom-callout] ul ul {
+    list-style-type: circle !important;
+    margin: 4px 0 4px 16px !important;
+}
+
+.protyle-wysiwyg .bq[custom-callout] ul ul ul {
+    list-style-type: square !important;
+}
+
+/* 特别针对标题行中的列表 - 确保项目符号可见 */
+.protyle-wysiwyg .bq[custom-callout] [data-callout-title="true"] ul {
+    margin: 8px 0 !important;
+    padding-left: 12px !important;
+}
+
+.protyle-wysiwyg .bq[custom-callout] [data-callout-title="true"] li {
+    margin: 2px 0 !important;
+    padding-left: 0px !important;
+}
+
+.protyle-wysiwyg .bq[custom-callout] [data-callout-title="true"] div[data-type="NodeListItem"] {
+    display: list-item !important;
+    list-style-type: disc !important;
+    margin: 2px 0 2px 12px !important;
+    padding-left: 0px !important;
+}
+
+/* 隐藏原始命令文本 - 只针对文本节点，不影响用户添加的HTML元素 */
+.protyle-wysiwyg .bq[custom-callout] [data-callout-title="true"] {
+    color: transparent !important;
+}
+
+/* 确保用户添加的内容（如列表）在标题行能够正常显示 */
+.protyle-wysiwyg .bq[custom-callout] [data-callout-title="true"] ul,
+.protyle-wysiwyg .bq[custom-callout] [data-callout-title="true"] ol,
+.protyle-wysiwyg .bq[custom-callout] [data-callout-title="true"] li,
+.protyle-wysiwyg .bq[custom-callout] [data-callout-title="true"] p,
+.protyle-wysiwyg .bq[custom-callout] [data-callout-title="true"] span,
+.protyle-wysiwyg .bq[custom-callout] [data-callout-title="true"] div {
+    display: initial !important;
+    visibility: visible !important;
+    color: var(--b3-theme-on-background) !important;
 }
 
 /* 显示友好的标题名称 */
@@ -220,11 +316,13 @@ export function generateCalloutStyles(customTypes?: CalloutTypeConfig[], themeId
     margin: 12px 0 !important;
     box-shadow: var(--callout-box-shadow) !important;
     transition: var(--callout-transition) !important;
+    overflow: visible !important;
 }
 
-/* 确保没有内边框 */
+/* 确保没有内边框，并且不裁剪列表项目符号 */
 .protyle-wysiwyg .bq[custom-callout="${config.type}"] > div {
     border: none !important;
+    overflow: visible !important;
 }
 
 .protyle-wysiwyg .bq[custom-callout="${config.type}"] > div::before {
