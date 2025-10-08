@@ -8,6 +8,12 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    
+    # ------------------- VVV 我在这里添加了代码 VVV -------------------
+    permissions:
+      contents: write
+    # ------------------- ^^^ 我在这里添加了代码 ^^^ -------------------
+
     steps:
       # Checkout
       - name: Checkout
@@ -20,7 +26,7 @@ jobs:
           node-version: 20
           registry-url: "https://registry.npmjs.org"
 
-        # Install pnpm
+      # Install pnpm
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         id: pnpm-install

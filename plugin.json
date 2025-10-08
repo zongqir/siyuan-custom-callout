@@ -2,7 +2,7 @@
   "name": "siyuan-custom-callout",
   "author": "zongqir",
   "url": "https://github.com/zongqir/siyuan-custom-callout",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "minAppVersion": "3.2.1",
   "disabledInPublish": false,
   "backends": [
