@@ -3,31 +3,17 @@
   "author": "zongqir",
   "url": "https://github.com/zongqir/siyuan-custom-callout",
   "version": "1.2.0",
-  "minAppVersion": "3.2.1",
+  "minAppVersion": "3.3.0",
   "disabledInPublish": false,
-  "backends": [
-    "windows",
-    "linux",
-    "darwin",
-    "ios",
-    "android",
-    "harmony",
-    "docker"
-  ],
-  "frontends": [
-    "desktop",
-    "mobile",
-    "browser-desktop",
-    "browser-mobile",
-    "desktop-window"
-  ],
+  "backends":  ["all"],
+  "frontends":  ["all"],
   "displayName": {
     "en_US": "SiYuan Custom Callout",
-    "zh_CN": "思源自定义引用块"
+    "zh_CN": "思源自定义引述块"
   },
   "description": {
     "en_US": "Transform blockquotes into beautiful, customizable callout blocks with rich features",
-    "zh_CN": "将引用块转换为美观、可自定义的 Callout 提示块，功能丰富"
+    "zh_CN": "将引述块转换为美观、可自定义的 Callout 提示块，功能丰富"
   },
   "readme": {
     "en_US": "README.md",
@@ -39,8 +25,6 @@
     ]
   },
   "keywords": [
-    "callout",
-    "blockquote",
-    "引用块"
+   
   ]
 }

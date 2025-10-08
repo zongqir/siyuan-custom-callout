@@ -1,11 +1,11 @@
 {
-    "name": "思源自定义引用块",
-    "description": "将引用块转换为美观、可自定义的 Callout 提示块，功能丰富",
+    "name": "思源自定义引述块",
+    "description": "将引述块转换为美观、可自定义的 Callout 提示块，功能丰富",
     "cancel": "取消",
     "save": "保存",
     "settings": "设置",
-    "enableCallout": "启用自定义引用块",
-    "calloutTypes": "引用块类型",
+    "enableCallout": "启用自定义引述块",
+    "calloutTypes": "引述块类型",
     "addCalloutType": "添加类型",
     "typeName": "类型名称",
     "typeIcon": "图标",
@@ -13,5 +13,5 @@
     "edit": "编辑",
     "delete": "删除",
     "hintTitle": "关于",
-    "hintDesc": "<a href='https://github.com/siyuan-note/siyuan-custom-callout'>🔗 思源自定义引用块</a><br>💻 @frostime"
+    "hintDesc": "<a href='https://github.com/siyuan-note/siyuan-custom-callout'>🔗 思源自定义引述块</a><br>💻 @frostime"
 }

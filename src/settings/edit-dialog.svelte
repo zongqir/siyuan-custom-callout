@@ -134,7 +134,7 @@
             <div class="form-group">
                 <label>
                     显示名称 *
-                    <span class="label-hint">（会显示在引用块标题上）</span>
+                    <span class="label-hint">（会显示在引述块标题上）</span>
                 </label>
                 <input
                     type="text"
@@ -172,7 +172,7 @@
                         class:error={errors.zhCommand}
                     />
                     {#if errors.zhCommand}<span class="error-msg">{errors.zhCommand}</span>{/if}
-                    <div class="field-hint">💡 填了之后，输入 [!my-note] 或 [!我的笔记] 都能创建引用块</div>
+                    <div class="field-hint">💡 填了之后，输入 [!my-note] 或 [!我的笔记] 都能创建引述块</div>
                 </div>
             </div>
 

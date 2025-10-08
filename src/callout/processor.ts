@@ -1,7 +1,7 @@
 import { DEFAULT_CALLOUT_TYPES, CalloutTypeConfig, ParsedCalloutCommand } from './types';
 
 /**
- * Callout处理器 - 负责检测和转换引用块为Callout样式
+ * Callout处理器 - 负责检测和转换引述块为Callout样式
  */
 export class CalloutProcessor {
     private calloutTypes: Map<string, CalloutTypeConfig> = new Map();
@@ -46,7 +46,7 @@ export class CalloutProcessor {
     }
 
     /**
-     * 处理单个引用块
+     * 处理单个引述块
      */
     processBlockquote(blockquote: HTMLElement): boolean {
         if (!blockquote) return false;
@@ -67,7 +67,7 @@ export class CalloutProcessor {
             }
         }
 
-        // 跳过已有自定义样式的引用块  
+        // 跳过已有自定义样式的引述块  
         if (this.hasCustomStyle(blockquote)) {
             return false;
         }
@@ -161,7 +161,7 @@ export class CalloutProcessor {
     }
 
     /**
-     * 处理所有引用块
+     * 处理所有引述块
      */
     processAllBlockquotes() {
         const blockquotes = document.querySelectorAll('.bq');
@@ -392,7 +392,7 @@ export class CalloutProcessor {
     }
 
     /**
-     * 检查是否为新创建的引用块
+     * 检查是否为新创建的引述块
      */
     isBlockQuoteNewlyCreated(blockQuote: HTMLElement): boolean {
         const nodeId = blockQuote.getAttribute('data-node-id');
@@ -409,7 +409,7 @@ export class CalloutProcessor {
     }
 
     /**
-     * 检查引用块是否为空
+     * 检查引述块是否为空
      */
     isBlockQuoteEmpty(blockQuote: HTMLElement): boolean {
         const contentDiv = blockQuote.querySelector('[contenteditable="true"]') as HTMLElement;
@@ -420,14 +420,14 @@ export class CalloutProcessor {
     }
 
     /**
-     * 标记引用块为已跟踪
+     * 标记引述块为已跟踪
      */
     trackBlockQuote(nodeId: string) {
         this.trackedBlockQuotes.add(nodeId);
     }
 
     /**
-     * 标记引用块为最近创建
+     * 标记引述块为最近创建
      */
     markAsRecentlyCreated(nodeId: string, timeout: number = 3000) {
         this.recentlyCreatedBlockQuotes.add(nodeId);
@@ -435,7 +435,7 @@ export class CalloutProcessor {
     }
 
     /**
-     * 检查是否为最近创建的引用块
+     * 检查是否为最近创建的引述块
      */
     isRecentlyCreated(nodeId: string): boolean {
         return this.recentlyCreatedBlockQuotes.has(nodeId);

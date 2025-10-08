@@ -80,7 +80,7 @@ export function generateCalloutStyles(customTypes?: CalloutTypeConfig[], themeId
     display: none !important;
 }
 
-/* 覆盖思源原生引用块的边框样式 */
+/* 覆盖思源原生引述块的边框样式 */
 .protyle-wysiwyg .bq[custom-callout]::before {
     display: none !important;
 }

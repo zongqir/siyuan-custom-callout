@@ -616,7 +616,7 @@
 
     // ==================== Callout 处理功能 ====================
 
-    // 处理单个引用块的函数
+    // 处理单个引述块的函数
     function processBlockquote(blockquote) {
         console.log('Processing blockquote:', blockquote);
       
@@ -737,7 +737,7 @@
         }
     }
 
-    // 处理所有引用块
+    // 处理所有引述块
     function processAllBlockquotes() {
         console.log('=== Processing all blockquotes ===');
         const blockquotes = document.querySelectorAll('.bq');
@@ -935,7 +935,7 @@
                 if (e.target.contentEditable === 'true') {
                     clearTimeout(inputTimeout);
                     inputTimeout = setTimeout(() => {
-                        // 查找最近的引用块父元素
+                        // 查找最近的引述块父元素
                         const blockquote = e.target.closest('[data-type="NodeBlockquote"], .bq');
                         if (blockquote && !hasCustomStyle(blockquote)) {
                             processBlockquote(blockquote);

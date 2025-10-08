@@ -624,7 +624,7 @@ export class CalloutMenu {
     }
 
     /**
-     * 插入命令到引用块
+     * 插入命令到引述块
      */
     private insertCommand(command: string, blockQuoteElement: HTMLElement, isEdit: boolean) {
         let editableDiv: HTMLElement | null = null;
