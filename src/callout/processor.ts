@@ -96,14 +96,14 @@ export class CalloutProcessor {
                 // 设置CSS变量
                 blockquote.style.setProperty('--margin-width', parsedCommand.width);
             } else {
-                console.log('[Callout] ⚠️ 没有宽度参数，保持现有宽度设置不变');
+               // console.log('[Callout] ⚠️ 没有宽度参数，保持现有宽度设置不变');
                 // 不要清除已有的宽度属性！用户可能之前设置过宽度
                 // 只有在明确要设置新宽度时才修改
             }
 
             if (parsedCommand.height && parsedCommand.height !== null) {
                 // 只有明确指定高度参数才设置
-                console.log('[Callout] 📏 设置高度属性:', parsedCommand.height);
+                //console.log('[Callout] 📏 设置高度属性:', parsedCommand.height);
                 blockquote.setAttribute('data-margin-height', parsedCommand.height);
                 // 设置CSS变量
                 blockquote.style.setProperty('--margin-height', parsedCommand.height);
@@ -130,7 +130,7 @@ export class CalloutProcessor {
         }
 
         // 回退到旧的匹配方式（向后兼容）
-        console.log('[Callout] 尝试旧的匹配方式');
+        //console.log('[Callout] 尝试旧的匹配方式');
         for (const [trigger, config] of this.calloutTypes.entries()) {
             if (text.startsWith(trigger)) {
                 console.log('[Callout] 📝 匹配旧格式成功:', trigger);
@@ -543,14 +543,14 @@ export class CalloutProcessor {
      * 解析宽度参数
      */
     private parseWidth(param: string): string {
-        console.log('[Callout] 🔍 parseWidth接收参数:', param);
+        //console.log('[Callout] 🔍 parseWidth接收参数:', param);
         
         const normalized = param.trim();
-        console.log('[Callout] 📐 标准化后的参数:', normalized);
+        // console.log('[Callout] 📐 标准化后的参数:', normalized);
         
         // 验证宽度格式 (支持 % 和 px, em, rem 等，支持小数)
         if (/^[\d.]+(%|px|em|rem|vw)$/.test(normalized)) {
-            console.log('[Callout] ✅ 正则匹配成功，返回:', normalized);
+           // console.log('[Callout] ✅ 正则匹配成功，返回:', normalized);
             return normalized;
         }
         
@@ -563,8 +563,8 @@ export class CalloutProcessor {
             }
         }
         
-        console.log('[Callout] ❌ 参数无效，回退到默认20%');
-        return '20%'; // 回退到默认值
+       //console.log('[Callout] ❌ 参数无效，回退到默认20%');
+        return '10%'; // 回退到默认值
     }
 
     /**

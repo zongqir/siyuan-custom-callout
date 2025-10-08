@@ -410,7 +410,7 @@ export class CalloutDragResizer {
         
         // 🎯 确保拖拽的手柄在拖拽期间保持可见
         handle.style.opacity = '1';
-        console.log('[CalloutResize] 🎯 拖拽开始，强制显示手柄');
+        //console.log('[CalloutResize] 🎯 拖拽开始，强制显示手柄');
     }
 
     /**
