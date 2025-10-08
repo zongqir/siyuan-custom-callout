@@ -5,7 +5,8 @@
 import type { CalloutProcessor } from './processor';
 
 export class CalloutDragResizer {
-    private processor: CalloutProcessor;
+    /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
+    private _processor: CalloutProcessor; // 保留处理器引用，供未来扩展使用
     private isDragging: boolean = false;
     private currentBlockquote: HTMLElement | null = null;
     private currentHandle: HTMLElement | null = null;
@@ -16,8 +17,70 @@ export class CalloutDragResizer {
     private startY: number = 0;
 
     constructor(processor: CalloutProcessor) {
-        this.processor = processor;
+        this._processor = processor;
         this.initializeResizer();
+        
+        // 🎯 设置全局调试接口
+        CalloutDragResizer.setupGlobalDebug(this);
+        
+        // 拖拽调整器初始化完成
+    }
+
+    /**
+     * 🎯 检测是否处于超级块状态 - 增强版
+     */
+    private isSuperBlockActive(): boolean {
+        // 检测超级块的常见特征 - 扩展列表
+        const superBlockSelectors = [
+            '.protyle-wysiwyg--select', // 选中状态
+            '.protyle-wysiwyg .protyle-action', // 操作栏显示
+            '.protyle-gutters', // 侧边栏激活
+            '.protyle-breadcrumb', // 面包屑导航
+            '.protyle-wysiwyg[data-doc-type="NodeSuperBlock"]', // 超级块类型
+            '.layout-tab-container.layout-tab-container--active .protyle-wysiwyg', // 激活的标签页
+            '.protyle-wysiwyg .sb', // 超级块容器
+            '.protyle-wysiwyg .protyle-attr', // 属性面板
+            '.protyle-wysiwyg .protyle-toolbar', // 工具栏
+            '.protyle-wysiwyg .fn__flex-1.protyle-wysiwyg', // 编辑器主体
+            '.layout__wnd--active .protyle', // 激活的窗口
+            'body.body--win32 .protyle' // Windows环境下的protyle
+        ];
+
+        const activeElements: string[] = [];
+        for (const selector of superBlockSelectors) {
+            const elements = document.querySelectorAll(selector);
+            if (elements.length > 0) {
+                activeElements.push(selector);
+            }
+        }
+
+        if (activeElements.length > 0) {
+            return true;
+        }
+
+        // 额外检查：是否有任何protyle相关的class在body上
+        const bodyClasses = document.body.className;
+        if (bodyClasses.includes('protyle') || bodyClasses.includes('siyuan')) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * 🎯 检测blockquote是否在超级块容器内
+     */
+    private isInSuperBlock(blockquote: HTMLElement): boolean {
+        let parent = blockquote.parentElement;
+        while (parent) {
+            if (parent.classList.contains('sb') || // 超级块容器
+                parent.classList.contains('protyle-wysiwyg') && parent.hasAttribute('data-doc-type') ||
+                parent.classList.contains('layout-tab-container')) {
+                return true;
+            }
+            parent = parent.parentElement;
+        }
+        return false;
     }
 
     /**
@@ -97,45 +160,138 @@ export class CalloutDragResizer {
     }
 
     /**
-     * 为callout添加拖拽手柄
+     * 为callout添加拖拽手柄 - 强化版
      */
     private addResizeHandle(blockquote: HTMLElement) {
-        // console.log('[CalloutResize] 🎯 开始为callout添加拖拽手柄:', {
-        //     nodeId: blockquote.getAttribute('data-node-id'),
-        //     hasHorizontal: !!blockquote.querySelector('.callout-resize-handle-horizontal'),
-        //     hasVertical: !!blockquote.querySelector('.callout-resize-handle-vertical')
-        // });
+        const nodeId = blockquote.getAttribute('data-node-id');
+        console.log('[CalloutResize] 🎯 开始为callout添加拖拽手柄:', {
+            nodeId: nodeId,
+            hasHorizontal: !!blockquote.querySelector('.callout-resize-handle-horizontal'),
+            hasVertical: !!blockquote.querySelector('.callout-resize-handle-vertical'),
+            blockquoteRect: blockquote.getBoundingClientRect(),
+            inSuperBlock: this.isInSuperBlock(blockquote)
+        });
 
-        // 确保blockquote有相对定位
-        const computedStyle = window.getComputedStyle(blockquote);
-        if (computedStyle.position === 'static') {
-            blockquote.style.position = 'relative';
-        }
+        // 🔧 强化blockquote定位设置
+        blockquote.style.setProperty('position', 'relative', 'important');
+        blockquote.setAttribute('data-drag-container', 'true');
+        
+        // 🔧 确保容器不被其他样式干扰
+        blockquote.style.setProperty('overflow', 'visible', 'important');
 
         let needsHoverBinding = false;
 
         // 分别检查并创建水平和垂直手柄
         if (!blockquote.querySelector('.callout-resize-handle-horizontal')) {
-            // console.log('[CalloutResize] 🔧 创建水平拖拽手柄');
+            console.log('[CalloutResize] 🔧 创建水平拖拽手柄');
             this.createHorizontalHandle(blockquote);
             needsHoverBinding = true;
         }
         
         if (!blockquote.querySelector('.callout-resize-handle-vertical')) {
-            // console.log('[CalloutResize] 🔧 创建垂直拖拽手柄');
+            console.log('[CalloutResize] 🔧 创建垂直拖拽手柄');
             this.createVerticalHandle(blockquote);
             needsHoverBinding = true;
         }
 
         // 只在添加了新手柄时才绑定hover事件（避免重复绑定）
         if (needsHoverBinding && !blockquote.hasAttribute('data-hover-bound')) {
-            // console.log('[CalloutResize] 🔗 绑定hover事件');
+            console.log('[CalloutResize] 🔗 绑定hover事件');
             this.bindHoverEventsToBlockquote(blockquote);
             blockquote.setAttribute('data-hover-bound', 'true');
         }
 
-        // console.log('[CalloutResize] ✅ 手柄添加完成，当前手柄数量:', 
-        //     blockquote.querySelectorAll('.callout-resize-handle').length);
+        // 🚀 强制刷新手柄显示和事件
+        setTimeout(() => {
+            this.forceRefreshHandles(blockquote);
+        }, 100);
+
+        const handleCount = blockquote.querySelectorAll('.callout-resize-handle').length;
+        console.log('[CalloutResize] ✅ 手柄添加完成，当前手柄数量:', handleCount);
+        
+        if (handleCount === 0) {
+            console.warn('[CalloutResize] ⚠️ 手柄添加失败，尝试备用方案');
+            setTimeout(() => {
+                this.createFallbackHandles(blockquote);
+            }, 200);
+        }
+    }
+
+    /**
+     * 🚀 强制刷新手柄状态
+     */
+    private forceRefreshHandles(blockquote: HTMLElement) {
+        const handles = blockquote.querySelectorAll('.callout-resize-handle') as NodeListOf<HTMLElement>;
+        
+        handles.forEach((handle, index) => {
+            console.log(`[CalloutResize] 🚀 刷新手柄 ${index + 1}:`, {
+                className: handle.className,
+                visible: handle.offsetWidth > 0 && handle.offsetHeight > 0,
+                rect: handle.getBoundingClientRect(),
+                zIndex: handle.style.zIndex,
+                pointerEvents: handle.style.pointerEvents
+            });
+
+            // 强制重新应用样式
+            handle.style.setProperty('z-index', '999999', 'important');
+            handle.style.setProperty('pointer-events', 'auto', 'important');
+            handle.style.setProperty('position', 'absolute', 'important');
+            
+            // 强制重新绑定事件（清理后重新绑定）
+            const newHandle = handle.cloneNode(true) as HTMLElement;
+            handle.parentNode?.replaceChild(newHandle, handle);
+            this.bindHandleEvents(newHandle, blockquote);
+        });
+    }
+
+    /**
+     * 🆘 备用手柄创建方案
+     */
+    private createFallbackHandles(blockquote: HTMLElement) {
+        console.log('[CalloutResize] 🆘 创建备用拖拽手柄');
+        
+        // 清理现有手柄
+        const existingHandles = blockquote.querySelectorAll('.callout-resize-handle');
+        existingHandles.forEach(handle => handle.remove());
+        
+        // 创建超简单的备用手柄
+        const createSimpleHandle = (type: 'horizontal' | 'vertical') => {
+            const handle = document.createElement('div');
+            handle.className = `callout-resize-handle callout-resize-handle-${type} fallback-handle`;
+            handle.setAttribute('data-resize-type', type);
+            handle.textContent = type === 'horizontal' ? '⟷' : '⟷';
+            
+            // 极简样式，确保显示
+            Object.assign(handle.style, {
+                position: 'absolute',
+                zIndex: '999999',
+                background: 'red',
+                color: 'white',
+                padding: '2px',
+                fontSize: '12px',
+                cursor: type === 'horizontal' ? 'ew-resize' : 'ns-resize',
+                border: '1px solid white',
+                pointerEvents: 'auto'
+            });
+            
+            if (type === 'horizontal') {
+                handle.style.right = '0px';
+                handle.style.top = '50%';
+                handle.style.transform = 'translateY(-50%)';
+            } else {
+                handle.style.left = '50%';
+                handle.style.bottom = '0px';
+                handle.style.transform = 'translateX(-50%)';
+            }
+            
+            blockquote.appendChild(handle);
+            this.bindHandleEvents(handle, blockquote);
+            
+            console.log(`[CalloutResize] 🆘 备用${type}手柄创建完成`);
+        };
+        
+        createSimpleHandle('horizontal');
+        createSimpleHandle('vertical');
     }
 
     /**
@@ -183,7 +339,7 @@ export class CalloutDragResizer {
    
         };
 
-        // 设置水平手柄基础样式
+        // 设置水平手柄基础样式 - 🎯 提高z-index确保在超级块之上
         Object.assign(handle.style, {
             position: 'absolute',
             right: '-8px',
@@ -191,7 +347,7 @@ export class CalloutDragResizer {
             transform: 'translateY(-50%)',
             width: '16px',
             cursor: 'ew-resize',
-            zIndex: '1000',
+            zIndex: '999999', // 🎯 极高z-index确保在所有超级块UI之上
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -199,7 +355,8 @@ export class CalloutDragResizer {
             transition: 'opacity 0.2s ease',
             background: 'rgba(0, 0, 0, 0.3)',
             borderRadius: '8px',
-            backdropFilter: 'blur(4px)'
+            backdropFilter: 'blur(4px)',
+            pointerEvents: 'auto' // 🎯 确保可以接收鼠标事件
         });
 
         const handleInner = handle.querySelector('.resize-handle-inner') as HTMLElement;
@@ -293,7 +450,7 @@ export class CalloutDragResizer {
         handle.style.setProperty('position', 'absolute', 'important');
         handle.style.setProperty('height', '12px', 'important');      // 高度窄，形成水平椭圆
         handle.style.setProperty('cursor', 'ns-resize', 'important');
-        handle.style.setProperty('z-index', '1000', 'important');
+        handle.style.setProperty('z-index', '999999', 'important'); // 🎯 极高z-index确保在所有超级块UI之上
         handle.style.setProperty('display', 'flex', 'important');
         handle.style.setProperty('align-items', 'center', 'important');
         handle.style.setProperty('justify-content', 'center', 'important');
@@ -302,6 +459,7 @@ export class CalloutDragResizer {
         handle.style.setProperty('background', 'rgba(0, 0, 0, 0.3)', 'important');  // 与水平手柄相同的背景
         handle.style.setProperty('border-radius', '6px', 'important');               // 调整圆角适应新高度
         handle.style.setProperty('backdrop-filter', 'blur(4px)', 'important');       // 与水平手柄相同的模糊效果
+        handle.style.setProperty('pointer-events', 'auto', 'important'); // 🎯 确保可以接收鼠标事件
 
         // 设置内部结构样式
         const handleInner = handle.querySelector('.resize-handle-inner') as HTMLElement;
@@ -346,10 +504,47 @@ export class CalloutDragResizer {
      * 绑定拖拽手柄事件
      */
     private bindHandleEvents(handle: HTMLElement, blockquote: HTMLElement) {
-        handle.addEventListener('mousedown', (e) => {
+        // 确保手柄可以接收事件
+        handle.style.setProperty('pointer-events', 'auto', 'important');
+        handle.style.setProperty('user-select', 'none', 'important');
+        handle.setAttribute('data-drag-enabled', 'true');
+
+        const mousedownHandler = (e: MouseEvent) => {
             e.preventDefault();
             e.stopPropagation();
+            e.stopImmediatePropagation();
             this.startResize(e, handle, blockquote);
+        };
+
+        // 直接事件属性绑定（备用方案）
+        handle.onmousedown = mousedownHandler;
+
+        // 多种模式addEventListener
+        handle.addEventListener('mousedown', mousedownHandler, true); // 捕获阶段
+        handle.addEventListener('mousedown', mousedownHandler, false); // 冒泡阶段
+
+        // 触摸事件支持
+        const touchHandler = (e: TouchEvent) => {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent('mousedown', {
+                clientX: touch.clientX,
+                clientY: touch.clientY,
+                bubbles: false,
+                cancelable: true
+            });
+            this.startResize(mouseEvent, handle, blockquote);
+        };
+
+        handle.addEventListener('touchstart', touchHandler, true);
+        handle.addEventListener('touchstart', touchHandler, false);
+
+        // 防止右键菜单干扰
+        handle.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
         });
     }
 
@@ -381,9 +576,25 @@ export class CalloutDragResizer {
     }
 
     /**
-     * 开始调整尺寸
+     * 开始调整尺寸 - 超级块专用方案
      */
     private startResize(e: MouseEvent, handle: HTMLElement, blockquote: HTMLElement) {
+        // 🎯 检测超级块状态并应用特殊处理
+        const inSuperBlock = this.isSuperBlockActive() || this.isInSuperBlock(blockquote);
+        
+        if (inSuperBlock) {
+            this.startPollingDrag(e, handle, blockquote);
+            return;
+        }
+
+        // 普通拖拽方案 
+        this.startNormalDrag(e, handle, blockquote);
+    }
+
+    /**
+     * 🚀 轮询拖拽方案（专门应对超级块阻止mousemove的情况）
+     */
+    private startPollingDrag(e: MouseEvent, handle: HTMLElement, blockquote: HTMLElement) {
         this.isDragging = true;
         this.currentBlockquote = blockquote;
         this.currentHandle = handle;
@@ -407,27 +618,176 @@ export class CalloutDragResizer {
         document.body.classList.add('dragging-callout');
         blockquote.classList.add('callout-resizing');
         handle.classList.add('active');
-        
-        // 🎯 确保拖拽的手柄在拖拽期间保持可见
         handle.style.opacity = '1';
-        //console.log('[CalloutResize] 🎯 拖拽开始，强制显示手柄');
+
+        // 轮询检测鼠标位置变化
+        let lastX = e.clientX;
+        let lastY = e.clientY;
+        let isMouseDown = true;
+        
+        const pollInterval = setInterval(() => {
+            // 获取当前鼠标位置
+            const getMousePos = () => {
+                return new Promise<{x: number, y: number}>((resolve) => {
+                    const tempHandler = (event: MouseEvent) => {
+                        resolve({x: event.clientX, y: event.clientY});
+                        document.removeEventListener('mousemove', tempHandler);
+                        document.removeEventListener('mouseenter', tempHandler);
+                        document.removeEventListener('mouseover', tempHandler);
+                    };
+                    
+                    document.addEventListener('mousemove', tempHandler, {once: true, capture: true});
+                    document.addEventListener('mouseenter', tempHandler, {once: true, capture: true});
+                    document.addEventListener('mouseover', tempHandler, {once: true, capture: true});
+                    
+                    setTimeout(() => {
+                        document.removeEventListener('mousemove', tempHandler);
+                        document.removeEventListener('mouseenter', tempHandler); 
+                        document.removeEventListener('mouseover', tempHandler);
+                        resolve({x: lastX, y: lastY});
+                    }, 10);
+                });
+            };
+
+            if (!this.isDragging) {
+                clearInterval(pollInterval);
+                return;
+            }
+
+            getMousePos().then(pos => {
+                const deltaX = pos.x - lastX;
+                const deltaY = pos.y - lastY;
+                
+                if (Math.abs(deltaX) > 0 || Math.abs(deltaY) > 0) {
+                    lastX = pos.x;
+                    lastY = pos.y;
+                    
+                    const simulatedEvent = new MouseEvent('mousemove', {
+                        clientX: pos.x,
+                        clientY: pos.y,
+                        bubbles: false,
+                        cancelable: true
+                    });
+                    
+                    this.handleResize(simulatedEvent);
+                }
+            });
+
+            const checkMouseUp = () => {
+                const mouseupHandler = () => {
+                    isMouseDown = false;
+                    clearInterval(pollInterval);
+                    this.endResize();
+                    document.removeEventListener('mouseup', mouseupHandler);
+                };
+                
+                document.addEventListener('mouseup', mouseupHandler, {once: true, capture: true});
+            };
+            
+            if (isMouseDown) {
+                checkMouseUp();
+            }
+            
+        }, 16); // 60fps
+    }
+
+    /**
+     * 🎯 标准拖拽方案（非超级块状态）
+     */
+    private startNormalDrag(e: MouseEvent, handle: HTMLElement, blockquote: HTMLElement) {
+        this.isDragging = true;
+        this.currentBlockquote = blockquote;
+        this.currentHandle = handle;
+        
+        // 判断拖拽类型
+        const resizeType = handle.getAttribute('data-resize-type');
+        this.dragType = resizeType === 'vertical' ? 'vertical' : 'horizontal';
+        
+        if (this.dragType === 'horizontal') {
+            this.startX = e.clientX;
+            this.startWidth = this.getCurrentWidth(blockquote);
+            document.body.style.cursor = 'ew-resize';
+        } else {
+            this.startY = e.clientY;
+            this.startHeight = this.getCurrentHeight(blockquote);
+            document.body.style.cursor = 'ns-resize';
+        }
+
+        // 添加拖拽状态样式
+        document.body.style.userSelect = 'none';
+        document.body.classList.add('dragging-callout');
+        blockquote.classList.add('callout-resizing');
+        handle.classList.add('active');
+        handle.style.opacity = '1';
+        
     }
 
     /**
      * 绑定全局事件
      */
     private bindGlobalEvents() {
-        document.addEventListener('mousemove', (e) => {
+        // 标准事件监听
+        const mousemoveHandler = (e: MouseEvent) => {
             if (this.isDragging && this.currentBlockquote) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
                 this.handleResize(e);
             }
-        });
+        };
 
-        document.addEventListener('mouseup', () => {
+        const mouseupHandler = (e: MouseEvent) => {
             if (this.isDragging) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
                 this.endResize();
             }
-        });
+        };
+
+        // 多重绑定策略
+        document.addEventListener('mousemove', mousemoveHandler, true);
+        document.addEventListener('mousemove', mousemoveHandler, false);
+        document.addEventListener('mouseup', mouseupHandler, true);  
+        document.addEventListener('mouseup', mouseupHandler, false);
+
+        window.addEventListener('mousemove', mousemoveHandler, true);
+        window.addEventListener('mouseup', mouseupHandler, true);
+
+        document.body.addEventListener('mousemove', mousemoveHandler, true);
+        document.body.addEventListener('mouseup', mouseupHandler, true);
+
+        // 触摸事件支持
+        const touchmoveHandler = (e: TouchEvent) => {
+            if (this.isDragging && this.currentBlockquote) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                
+                const touch = e.touches[0];
+                const mouseEvent = new MouseEvent('mousemove', {
+                    clientX: touch.clientX,
+                    clientY: touch.clientY,
+                    bubbles: false,
+                    cancelable: true
+                });
+                this.handleResize(mouseEvent);
+            }
+        };
+
+        const touchendHandler = (e: TouchEvent) => {
+            if (this.isDragging) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                this.endResize();
+            }
+        };
+
+        document.addEventListener('touchmove', touchmoveHandler, true);
+        document.addEventListener('touchend', touchendHandler, true);
+        window.addEventListener('touchmove', touchmoveHandler, true);
+        window.addEventListener('touchend', touchendHandler, true);
     }
 
     /**
@@ -523,6 +883,17 @@ export class CalloutDragResizer {
             }
         }
         
+        // 🎯 恢复超级块的交互功能
+        document.body.style.removeProperty('pointer-events');
+        this.currentBlockquote.style.removeProperty('pointer-events');
+        
+        // 恢复被禁用的超级块元素
+        const disabledElements = document.querySelectorAll('[data-drag-disabled="true"]');
+        disabledElements.forEach(el => {
+            (el as HTMLElement).style.removeProperty('pointer-events');
+            (el as HTMLElement).removeAttribute('data-drag-disabled');
+        });
+        
         // 清理拖拽状态
         this.isDragging = false;
         document.body.style.cursor = '';
@@ -535,8 +906,7 @@ export class CalloutDragResizer {
             
             // 🎯 拖拽结束后，保持手柄显示让用户能看到
             setTimeout(() => {
-                console.log('[CalloutResize] 🎯 拖拽结束，保持手柄显示让用户能看到');
-                // 如果用户真的想隐藏，可以移开鼠标触发mouseleave
+                // 拖拽结束，恢复超级块交互功能
             }, 100);
         }
 
@@ -734,14 +1104,7 @@ export class CalloutDragResizer {
      * 获取当前高度（像素）
      */
     private getCurrentHeight(blockquote: HTMLElement): number {
-        const marginHeight = blockquote.getAttribute('data-margin-height');
-        if (marginHeight) {
-            const match = marginHeight.match(/^(\d*\.?\d+)px$/);
-            if (match) {
-                return parseFloat(match[1]);
-            }
-        }
-        // 返回当前实际高度或默认值
+        // 直接返回实际DOM高度，而不是CSS变量中的高度
         return blockquote.offsetHeight || 120;
     }
 
@@ -767,9 +1130,126 @@ export class CalloutDragResizer {
      */
     private applyHeight(blockquote: HTMLElement, heightPx: number) {
         const heightStr = Math.round(heightPx) + 'px';
+        
+        // 强制应用样式
         blockquote.setAttribute('data-margin-height', heightStr);
-        blockquote.style.setProperty('--margin-height', heightStr);
-        blockquote.style.setProperty('min-height', heightStr);
+        blockquote.style.setProperty('--margin-height', heightStr, 'important');
+        blockquote.style.setProperty('min-height', heightStr, 'important');
+        blockquote.style.setProperty('height', heightStr, 'important');
+        
+        // 额外的强制样式确保生效
+        blockquote.style.setProperty('max-height', 'none', 'important');
+        blockquote.style.setProperty('flex-shrink', '0', 'important');
+    }
+
+    /**
+     * 🔍 全局调试工具 - 诊断拖拽问题
+     */
+    debugDragIssues() {
+        console.log('\n🔍 ========== CalloutResize 调试报告 ==========');
+        console.log('🔧 处理器实例:', this._processor ? '已加载' : '未加载');
+        
+        const allCallouts = document.querySelectorAll('.bq[custom-callout]');
+        console.log(`📊 发现 ${allCallouts.length} 个Callout`);
+        
+        allCallouts.forEach((callout, index) => {
+            const nodeId = callout.getAttribute('data-node-id');
+            const handles = callout.querySelectorAll('.callout-resize-handle');
+            const rect = callout.getBoundingClientRect();
+            
+            console.log(`\n📋 Callout ${index + 1}:`, {
+                nodeId,
+                handleCount: handles.length,
+                rect: {
+                    width: rect.width,
+                    height: rect.height,
+                    visible: rect.width > 0 && rect.height > 0
+                },
+                inSuperBlock: this.isInSuperBlock(callout as HTMLElement),
+                superBlockActive: this.isSuperBlockActive()
+            });
+            
+            handles.forEach((handle, hIndex) => {
+                const hRect = handle.getBoundingClientRect();
+                const styles = window.getComputedStyle(handle as HTMLElement);
+                
+                console.log(`  🎯 手柄 ${hIndex + 1}:`, {
+                    type: handle.getAttribute('data-resize-type'),
+                    className: handle.className,
+                    rect: hRect,
+                    visible: hRect.width > 0 && hRect.height > 0,
+                    zIndex: styles.zIndex,
+                    pointerEvents: styles.pointerEvents,
+                    position: styles.position,
+                    opacity: styles.opacity
+                });
+            });
+        });
+        
+        // 检查超级块状态
+        console.log('\n🎯 超级块状态检查:');
+        console.log('- isSuperBlockActive():', this.isSuperBlockActive());
+        console.log('- body classes:', document.body.className);
+        
+        // 检查可能干扰的元素
+        const potentialBlockers = [
+            '.protyle-action',
+            '.protyle-gutters', 
+            '.protyle-breadcrumb',
+            '.layout-tab-container'
+        ];
+        
+        console.log('\n🚫 潜在干扰元素:');
+        potentialBlockers.forEach(selector => {
+            const elements = document.querySelectorAll(selector);
+            if (elements.length > 0) {
+                console.log(`- ${selector}: ${elements.length} 个`);
+            }
+        });
+        
+        console.log('\n🔧 建议操作:');
+        console.log('1. 如果手柄不可见，尝试悬停在Callout上');
+        console.log('2. 如果手柄可见但无法拖拽，检查控制台错误');
+        console.log('3. 如果在超级块中，尝试切换到普通编辑模式');
+        console.log('========================================\n');
+        
+        // 自动尝试修复
+        this.autoFixDragIssues();
+    }
+
+    /**
+     * 🛠️ 自动修复拖拽问题
+     */
+    private autoFixDragIssues() {
+        console.log('🛠️ 开始自动修复拖拽问题...');
+        
+        const brokenCallouts = document.querySelectorAll('.bq[custom-callout]');
+        
+        brokenCallouts.forEach((callout) => {
+            const handles = callout.querySelectorAll('.callout-resize-handle');
+            
+            // 如果没有手柄或手柄不可见，重新创建
+            if (handles.length === 0) {
+                console.log('🔧 重新创建缺失的拖拽手柄');
+                this.addResizeHandle(callout as HTMLElement);
+            } else {
+                // 检查现有手柄是否工作正常
+                let needsRefresh = false;
+                handles.forEach(handle => {
+                    const rect = handle.getBoundingClientRect();
+                    if (rect.width === 0 || rect.height === 0) {
+                        needsRefresh = true;
+                    }
+                });
+                
+                if (needsRefresh) {
+                    console.log('🔧 刷新现有拖拽手柄');
+                    this.forceRefreshHandles(callout as HTMLElement);
+                }
+            }
+        });
+        
+        console.log('🛠️ 自动修复完成');
     }
 
     /**
@@ -784,5 +1264,14 @@ export class CalloutDragResizer {
         this.isDragging = false;
         this.currentBlockquote = null;
         this.currentHandle = null;
+    }
+
+    /**
+     * 🎯 公开调试接口供外部调用
+     */
+    static setupGlobalDebug(instance: CalloutDragResizer) {
+        // 将调试功能暴露到全局
+        (window as any).debugCalloutDrag = () => instance.debugDragIssues();
+        console.log('🎯 全局调试已设置，使用 debugCalloutDrag() 来调试拖拽问题');
     }
 }
