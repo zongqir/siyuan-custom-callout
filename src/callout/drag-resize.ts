@@ -158,31 +158,58 @@ export class CalloutDragResizer {
             console.log('[CalloutResize] 🎯 设置blockquote为relative定位 (水平手柄)');
         }
 
-        // 设置水平手柄样式
+        // 🚀 JavaScript动态计算手柄高度为callout高度的70%
+        const updateHandleSize = () => {
+            const blockquoteHeight = blockquote.offsetHeight;
+            const handleHeight = Math.max(20, blockquoteHeight * 0.7); // 最小20px，最大70%高度
+            const innerHeight = Math.max(12, handleHeight * 0.6); // 内部高度为手柄高度的60%
+            const dotsHeight = Math.max(8, innerHeight * 0.8); // 点状区域高度
+            
+            // 设置手柄高度
+            handle.style.setProperty('height', `${handleHeight}px`, 'important');
+            
+            // 调整内部结构高度
+            const handleInner = handle.querySelector('.resize-handle-inner') as HTMLElement;
+            if (handleInner) {
+                handleInner.style.setProperty('height', `${innerHeight}px`, 'important');
+            }
+            
+            // 调整点状图案高度
+            const dots = handle.querySelector('.resize-handle-dots') as HTMLElement;
+            if (dots) {
+                dots.style.setProperty('height', `${dotsHeight}px`, 'important');
+            }
+            
+            console.log('[CalloutResize] 🎯 水平手柄尺寸更新:', {
+                块高度: blockquoteHeight,
+                手柄高度: handleHeight,
+                内部高度: innerHeight,
+                点高度: dotsHeight
+            });
+        };
+
+        // 设置水平手柄基础样式
         Object.assign(handle.style, {
             position: 'absolute',
             right: '-8px',
             top: '50%',
             transform: 'translateY(-50%)',
             width: '16px',
-            height: '40px',
             cursor: 'ew-resize',
-            zIndex: '1000',  // 修改：与垂直手柄保持一致
+            zIndex: '1000',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             opacity: '0',
             transition: 'opacity 0.2s ease',
-            background: 'rgba(0, 0, 0, 0.3)',  // 修改：增加不透明度
+            background: 'rgba(0, 0, 0, 0.3)',
             borderRadius: '8px',
-            backdropFilter: 'blur(4px)',
-            border: '2px solid rgba(0, 255, 0, 0.5)'  // 添加：绿色边框用于调试
+            backdropFilter: 'blur(4px)'
         });
 
         const handleInner = handle.querySelector('.resize-handle-inner') as HTMLElement;
         Object.assign(handleInner.style, {
             width: '6px',
-            height: '20px',
             background: '#666',
             borderRadius: '3px',
             display: 'flex',
@@ -193,10 +220,22 @@ export class CalloutDragResizer {
         const dots = handle.querySelector('.resize-handle-dots') as HTMLElement;
         Object.assign(dots.style, {
             width: '2px',
-            height: '12px',
             background: 'repeating-linear-gradient(to bottom, #fff 0, #fff 1px, transparent 1px, transparent 3px)',
             borderRadius: '1px'
         });
+
+        // 立即计算并设置尺寸
+        setTimeout(updateHandleSize, 10);
+        setTimeout(updateHandleSize, 50);
+        setTimeout(updateHandleSize, 100);
+        setTimeout(updateHandleSize, 200);
+
+        // 监听callout尺寸变化
+        const resizeObserver = new ResizeObserver(updateHandleSize);
+        resizeObserver.observe(blockquote);
+
+        // 监听窗口变化
+        window.addEventListener('resize', updateHandleSize);
 
         blockquote.appendChild(handle);
         this.bindHandleEvents(handle, blockquote);
