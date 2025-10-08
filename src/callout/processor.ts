@@ -127,6 +127,9 @@ export class CalloutProcessor {
             // 添加折叠功能
             this.addCollapseToggle(blockquote, titleDiv);
 
+            // 添加删除按钮
+            this.addDeleteButton(blockquote);
+
             return true;
         }
 
@@ -144,6 +147,9 @@ export class CalloutProcessor {
 
                 // 添加折叠功能
                 this.addCollapseToggle(blockquote, titleDiv);
+
+                // 添加删除按钮
+                this.addDeleteButton(blockquote);
 
                 return true;
             }
@@ -216,6 +222,7 @@ export class CalloutProcessor {
         titleDiv.removeAttribute('data-callout-title');
         titleDiv.removeAttribute('data-callout-display-name');
         this.removeCollapseToggle(titleDiv);
+        this.removeDeleteButton(blockquote);
     }
 
     /**
@@ -231,6 +238,7 @@ export class CalloutProcessor {
         titleDiv.removeAttribute('data-callout-title');
         titleDiv.removeAttribute('data-callout-display-name');
         this.removeCollapseToggle(titleDiv);
+        this.removeDeleteButton(blockquote);
     }
 
     /**
@@ -264,6 +272,9 @@ export class CalloutProcessor {
 
                 this.removeCollapseToggle(titleDiv);
             }
+
+            // 移除删除按钮
+            this.removeDeleteButton(blockquoteElement);
 
             return true;
         } catch (error) {
@@ -378,6 +389,165 @@ export class CalloutProcessor {
         }
         titleDiv.style.cursor = '';
         titleDiv.title = '';
+    }
+
+    /**
+     * 添加删除按钮
+     */
+    private addDeleteButton(blockquote: HTMLElement) {
+        // 检查是否已经存在删除按钮
+        const existingButton = blockquote.querySelector('.callout-delete-button');
+        if (existingButton) {
+            return; // 已存在，不重复添加
+        }
+
+        const deleteButton = document.createElement('div');
+        deleteButton.className = 'callout-delete-button';
+        deleteButton.innerHTML = '×';
+        deleteButton.title = '删除 Callout';
+        
+        // 应用样式（类似菜单关闭按钮的样式）
+        const isDark = this.isDarkMode();
+        deleteButton.style.cssText = this.getDeleteButtonStyle(isDark);
+
+        // 添加鼠标事件
+        deleteButton.addEventListener('mouseenter', () => {
+            deleteButton.style.background = '#ef4444';
+            deleteButton.style.color = 'white';
+        });
+
+        deleteButton.addEventListener('mouseleave', () => {
+            deleteButton.style.cssText = this.getDeleteButtonStyle(isDark);
+        });
+
+        // 添加点击事件
+        deleteButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.handleDeleteButtonClick(blockquote);
+        });
+
+        // 将按钮添加到blockquote
+        blockquote.style.position = 'relative'; // 确保relative定位
+        blockquote.appendChild(deleteButton);
+
+        // 保存按钮引用以便清理
+        (blockquote as any)._deleteButton = deleteButton;
+    }
+
+    /**
+     * 移除删除按钮
+     */
+    private removeDeleteButton(blockquote: HTMLElement) {
+        const deleteButton = (blockquote as any)._deleteButton;
+        if (deleteButton && deleteButton.parentNode) {
+            deleteButton.remove();
+            (blockquote as any)._deleteButton = null;
+        }
+    }
+
+    /**
+     * 获取删除按钮样式
+     */
+    private getDeleteButtonStyle(isDark: boolean): string {
+        return `
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: ${isDark ? '#374151' : '#f3f4f6'};
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 14px;
+            color: ${isDark ? '#d1d5db' : '#6b7280'};
+            transition: all 0.15s ease;
+            z-index: 100;
+        `;
+    }
+
+    /**
+     * 检查是否为暗色模式
+     */
+    private isDarkMode(): boolean {
+        // 检查body或html的data-theme-mode属性
+        const themeMode = document.body.getAttribute('data-theme-mode') || 
+                         document.documentElement.getAttribute('data-theme-mode') ||
+                         document.body.getAttribute('data-light-theme') ||
+                         document.documentElement.getAttribute('data-light-theme');
+        
+        // 如果找不到主题属性，检查body的类名
+        if (!themeMode) {
+            return document.body.classList.contains('theme--dark') || 
+                   document.documentElement.classList.contains('theme--dark');
+        }
+        
+        return themeMode === 'dark' || themeMode === '0';
+    }
+
+    /**
+     * 处理删除按钮点击
+     */
+    private handleDeleteButtonClick(blockquote: HTMLElement) {
+        try {
+            // 第一件事：模拟点击之前经过CSS处理的关闭按钮
+            // 清除callout样式
+            this.clearCalloutStyle(blockquote);
+            
+            // 第二件事：模拟键盘的backspace
+            const titleDiv = blockquote.querySelector('[contenteditable="true"]') as HTMLElement;
+            if (titleDiv) {
+                this.simulateBackspace(titleDiv);
+            }
+            
+            logger.log('[Callout] 🗑️ 删除按钮点击完成');
+        } catch (error) {
+            logger.error('[Callout] 删除按钮处理出错:', error);
+        }
+    }
+
+    /**
+     * 模拟backspace按键
+     */
+    private simulateBackspace(element: HTMLElement) {
+        // 聚焦到元素
+        element.focus();
+        
+        // 创建backspace键盘事件
+        const backspaceKeyDown = new KeyboardEvent('keydown', {
+            key: 'Backspace',
+            code: 'Backspace',
+            keyCode: 8,
+            which: 8,
+            bubbles: true,
+            cancelable: true
+        });
+        
+        const backspaceKeyUp = new KeyboardEvent('keyup', {
+            key: 'Backspace', 
+            code: 'Backspace',
+            keyCode: 8,
+            which: 8,
+            bubbles: true,
+            cancelable: true
+        });
+        
+        // 分发事件
+        element.dispatchEvent(backspaceKeyDown);
+        element.dispatchEvent(backspaceKeyUp);
+        
+        // 也触发input事件确保变化被检测到
+        const inputEvent = new InputEvent('input', {
+            bubbles: true,
+            cancelable: true,
+            inputType: 'deleteContentBackward'
+        });
+        element.dispatchEvent(inputEvent);
+        
+        logger.log('[Callout] ⌫ 模拟backspace完成');
     }
 
     /**
@@ -838,7 +1008,7 @@ export class CalloutProcessor {
      * 销毁处理器，清理所有资源
      */
     destroy() {
-        // 遍历所有已跟踪的 callout，移除事件监听器
+        // 遍历所有已跟踪的 callout，移除事件监听器和删除按钮
         this.trackedBlockQuotes.forEach(nodeId => {
             const callout = document.querySelector(`[data-node-id="${nodeId}"][custom-callout]`);
             if (callout) {
@@ -846,6 +1016,8 @@ export class CalloutProcessor {
                 if (titleDiv) {
                     this.removeCollapseToggle(titleDiv);
                 }
+                // 移除删除按钮
+                this.removeDeleteButton(callout as HTMLElement);
             }
         });
         

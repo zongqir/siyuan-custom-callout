@@ -80,6 +80,18 @@ export function generateCalloutStyles(customTypes?: CalloutTypeConfig[], themeId
     display: none !important;
 }
 
+/* 删除按钮样式 */
+.protyle-wysiwyg .bq[custom-callout] .callout-delete-button {
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transition: opacity 0.2s ease !important;
+}
+
+.protyle-wysiwyg .bq[custom-callout]:hover .callout-delete-button {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+}
+
 /* 覆盖思源原生引述块的边框样式 */
 .protyle-wysiwyg .bq[custom-callout]::before {
     display: none !important;
