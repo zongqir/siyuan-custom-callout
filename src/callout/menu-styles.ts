@@ -194,26 +194,33 @@ export function getMarginToolbarStyle(isDark: boolean): string {
  */
 export function getMarginToolbarButtonStyle(isDark: boolean, position: string): string {
     let backgroundColor = isDark ? '#374151' : '#ffffff';
+    let borderColor = isDark ? '#4b5563' : '#d1d5db';
+    let textColor = isDark ? '#d1d5db' : '#374151';
+    
     if (position === 'left') {
-        backgroundColor = isDark ? 'rgba(16, 185, 129, 0.15)' : '#d1fae5';
+        backgroundColor = isDark ? '#064e3b' : '#d1fae5';
+        borderColor = isDark ? '#10b981' : '#10b981';
+        textColor = isDark ? '#6ee7b7' : '#047857';
     } else if (position === 'right') {
-        backgroundColor = isDark ? 'rgba(245, 158, 11, 0.15)' : '#fef3c7';
+        backgroundColor = isDark ? '#7c2d12' : '#fef3c7';
+        borderColor = isDark ? '#f59e0b' : '#f59e0b';
+        textColor = isDark ? '#fbbf24' : '#d97706';
     }
     
     return `
         flex: 1;
         display: flex;
         align-items: center;
-        gap: 3px;
-        padding: 3px 4px;
-        border: 1px solid ${isDark ? '#4b5563' : '#d1d5db'};
-        border-radius: 4px;
+        gap: 4px;
+        padding: 6px 8px;
+        border: 1.5px solid ${borderColor};
+        border-radius: 6px;
         background: ${backgroundColor};
         cursor: pointer;
-        font-size: 11px;
-        font-weight: 500;
-        color: ${isDark ? '#e5e7eb' : '#374151'};
-        transition: all 0.15s ease;
+        font-size: 12px;
+        font-weight: 600;
+        color: ${textColor};
+        transition: all 0.2s ease;
         justify-content: center;
     `;
 }
@@ -243,8 +250,8 @@ export function getMenuItemStyle(isDark: boolean, options: any): string {
         const isLeft = options.command.includes('-left');
         const borderColor = isLeft ? (isDark ? '#10b981' : '#059669') : (isDark ? '#f59e0b' : '#d97706');
         const bgGradient = isLeft 
-            ? (isDark ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.1), #1f2937)' : 'linear-gradient(135deg, #ecfdf5, #ffffff)')
-            : (isDark ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.1), #1f2937)' : 'linear-gradient(135deg, #fffbeb, #ffffff)');
+            ? (isDark ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.05))' : 'linear-gradient(135deg, #ecfdf5, #ffffff)')
+            : (isDark ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(245, 158, 11, 0.05))' : 'linear-gradient(135deg, #fffbeb, #ffffff)');
         
         marginNoteStyle = `
             border-left: 3px solid ${borderColor};
@@ -255,13 +262,13 @@ export function getMenuItemStyle(isDark: boolean, options: any): string {
     return `
         padding: 10px 12px;
         cursor: pointer;
-        border: 1px solid ${isDark ? '#374151' : '#f3f4f6'};
+        border: 1px solid ${isDark ? 'rgba(75, 85, 99, 0.3)' : '#f3f4f6'};
         border-radius: 6px;
         display: flex;
         align-items: center;
         gap: 10px;
-        transition: background-color 0.1s ease, transform 0.1s ease, border-color 0.1s ease;
-        background: ${isDark ? '#1f2937' : '#ffffff'};
+        transition: all 0.2s ease;
+        background: ${isDark ? 'rgba(31, 41, 55, 0.6)' : '#ffffff'};
         ${marginNoteStyle}
     `;
 }
@@ -270,14 +277,14 @@ export function getMenuItemStyle(isDark: boolean, options: any): string {
  * 菜单项文字主标题颜色
  */
 export function getMenuItemTitleColor(isDark: boolean): string {
-    return isDark ? '#f3f4f6' : '#1f2937';
+    return isDark ? '#f9fafb' : '#1f2937';
 }
 
 /**
  * 菜单项文字副标题颜色
  */
 export function getMenuItemCommandColor(isDark: boolean): string {
-    return isDark ? '#9ca3af' : '#6b7280';
+    return isDark ? '#d1d5db' : '#6b7280';
 }
 
 /**
@@ -312,26 +319,31 @@ export function getMenuItemCommandStyle(): string {
  * 紧凑菜单项样式
  */
 export function getCompactMenuItemStyle(isDark: boolean, marginPosition: string): string {
-    let backgroundColor = isDark ? '#1f2937' : '#ffffff';
+    let backgroundColor = isDark ? 'rgba(31, 41, 55, 0.6)' : '#ffffff';
+    let borderColor = isDark ? 'rgba(75, 85, 99, 0.3)' : '#f3f4f6';
+    
     if (marginPosition === 'left') {
-        backgroundColor = isDark ? 'rgba(16, 185, 129, 0.1)' : '#ecfdf5';
+        backgroundColor = isDark ? 'rgba(16, 185, 129, 0.18)' : '#ecfdf5';
+        borderColor = isDark ? 'rgba(16, 185, 129, 0.4)' : '#d1fae5';
     } else if (marginPosition === 'right') {
-        backgroundColor = isDark ? 'rgba(245, 158, 11, 0.1)' : '#fffbeb';
+        backgroundColor = isDark ? 'rgba(245, 158, 11, 0.18)' : '#fffbeb';
+        borderColor = isDark ? 'rgba(245, 158, 11, 0.4)' : '#fde68a';
     }
     
     return `
-        padding: 6px 8px;
+        padding: 8px 10px;
         cursor: pointer;
-        border: 1px solid ${isDark ? '#374151' : '#f3f4f6'};
-        border-radius: 4px;
+        border: 1px solid ${borderColor};
+        border-radius: 6px;
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 4px;
-        transition: all 0.1s ease;
+        gap: 6px;
+        transition: all 0.2s ease;
         font-size: 12px;
-        min-height: 32px;
+        min-height: 36px;
         background: ${backgroundColor};
+        font-weight: 600;
     `;
 }
 
@@ -339,7 +351,7 @@ export function getCompactMenuItemStyle(isDark: boolean, marginPosition: string)
  * 紧凑菜单项文字颜色
  */
 export function getCompactMenuItemTextColor(isDark: boolean): string {
-    return isDark ? '#f3f4f6' : '#1f2937';
+    return isDark ? '#f9fafb' : '#1f2937';
 }
 
 /**
@@ -393,7 +405,13 @@ export function getPlaceholderStyle(isDark: boolean): string {
 /**
  * 菜单项点击后的高亮样式
  */
-export function getMenuItemClickStyle(): { backgroundColor: string; color: string } {
+export function getMenuItemClickStyle(isDark: boolean): { backgroundColor: string; color: string } {
+    if (isDark) {
+        return {
+            backgroundColor: 'rgba(59, 130, 246, 0.25)',
+            color: '#93c5fd'
+        };
+    }
     return {
         backgroundColor: '#dbeafe',
         color: '#1e40af'

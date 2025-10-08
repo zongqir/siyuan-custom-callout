@@ -288,10 +288,10 @@ export class CalloutMenu {
 
         toolbar.appendChild(label);
 
-        // 三个按钮
+        // 三个按钮 - 按照左、普通、右的顺序
         const buttons = [
-            { position: 'normal', icon: '📄', text: '普通', color: '#f3f4f6' },
             { position: 'left', icon: '⬅️', text: '左侧', color: '#dcfce7' },
+            { position: 'normal', icon: '📄', text: '普通', color: '#f3f4f6' },
             { position: 'right', icon: '➡️', text: '右侧', color: '#fef3c7' }
         ];
 
@@ -351,7 +351,7 @@ export class CalloutMenu {
         item.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            const clickStyle = MenuStyles.getMenuItemClickStyle();
+            const clickStyle = MenuStyles.getMenuItemClickStyle(this.isDarkMode());
             item.style.backgroundColor = clickStyle.backgroundColor;
             item.style.color = clickStyle.color;
 
@@ -415,27 +415,29 @@ export class CalloutMenu {
      * 更新边注工具栏状态
      */
     private updateMarginToolbarState(menu: HTMLElement, currentPosition: string) {
+        const isDark = this.isDarkMode();
         const marginButtons = menu.querySelectorAll('.margin-toolbar-btn');
         marginButtons.forEach(button => {
             const position = (button as HTMLElement).getAttribute('data-position');
             const element = button as HTMLElement;
             
             if (position === currentPosition) {
-                // 选中状态
-                element.style.borderColor = '#3b82f6';
+                // 选中状态 - 使用更醒目的高亮
+                element.style.borderColor = isDark ? '#60a5fa' : '#3b82f6';
                 element.style.borderWidth = '2px';
-                element.style.fontWeight = '600';
-                element.style.background = position === 'normal' ? '#f3f4f6' : 
-                                          position === 'left' ? '#dcfce7' : '#fef3c7';
-                element.style.transform = 'scale(1.02)';
+                element.style.fontWeight = '700';
+                element.style.transform = 'scale(1.05)';
+                // 选中时使用更亮的背景
+                if (position === 'normal') {
+                    element.style.background = isDark ? '#4b5563' : '#f3f4f6';
+                } else if (position === 'left') {
+                    element.style.background = isDark ? '#065f46' : '#a7f3d0';
+                } else {
+                    element.style.background = isDark ? '#92400e' : '#fcd34d';
+                }
             } else {
-                // 未选中状态
-                element.style.borderColor = '#d1d5db';
-                element.style.borderWidth = '1px';
-                element.style.fontWeight = '500';
-                element.style.background = position === 'normal' ? '#f9fafb' : 
-                                          position === 'left' ? '#f0fdf4' : '#fffbeb';
-                element.style.transform = 'scale(1)';
+                // 未选中状态 - 恢复默认样式
+                element.style.cssText = MenuStyles.getMarginToolbarButtonStyle(isDark, position || 'normal');
             }
         });
     }
@@ -560,16 +562,38 @@ export class CalloutMenu {
      * 更新菜单选中状态
      */
     private updateMenuSelection() {
+        const isDark = this.isDarkMode();
         requestAnimationFrame(() => {
             this.menuItems.forEach((item, index) => {
                 if (index === this.selectedMenuIndex) {
-                    item.style.backgroundColor = '#dbeafe';
-                    item.style.borderColor = '#60a5fa';
+                    // 选中状态 - 使用高对比度颜色
+                    item.style.backgroundColor = isDark ? 'rgba(59, 130, 246, 0.35)' : '#dbeafe';
+                    item.style.borderColor = isDark ? '#60a5fa' : '#60a5fa';
                     item.style.transform = 'scale(1.02)';
+                    // 确保文字清晰可见
+                    const title = item.querySelector('.menu-item-title, .compact-item-text') as HTMLElement;
+                    if (title) {
+                        title.style.color = isDark ? '#ffffff' : '#1e40af';
+                        title.style.fontWeight = '700';
+                    }
+                    const command = item.querySelector('.menu-item-command') as HTMLElement;
+                    if (command) {
+                        command.style.color = isDark ? '#e5e7eb' : '#3b82f6';
+                    }
                 } else {
+                    // 非选中状态 - 恢复默认
                     item.style.backgroundColor = '';
-                    item.style.borderColor = '#f3f4f6';
+                    item.style.borderColor = isDark ? 'rgba(75, 85, 99, 0.3)' : '#f3f4f6';
                     item.style.transform = 'scale(1)';
+                    const title = item.querySelector('.menu-item-title, .compact-item-text') as HTMLElement;
+                    if (title) {
+                        title.style.color = '';
+                        title.style.fontWeight = '';
+                    }
+                    const command = item.querySelector('.menu-item-command') as HTMLElement;
+                    if (command) {
+                        command.style.color = '';
+                    }
                 }
             });
         });
@@ -814,8 +838,9 @@ export class CalloutMenu {
         item.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            item.style.backgroundColor = '#dbeafe';
-            item.style.borderColor = '#60a5fa';
+            const clickStyle = MenuStyles.getMenuItemClickStyle(this.isDarkMode());
+            item.style.backgroundColor = clickStyle.backgroundColor;
+            item.style.borderColor = this.isDarkMode() ? '#60a5fa' : '#60a5fa';
 
             if (options.isNone) {
                 this.handleClearCallout();
