@@ -586,6 +586,12 @@ export class CalloutDragResizer {
      * 🚀 轮询拖拽方案（专门应对超级块阻止mousemove的情况）
      */
     private startPollingDrag(e: MouseEvent, handle: HTMLElement, blockquote: HTMLElement) {
+        // 🚫 如果菜单显示中，不允许开始拖拽，避免事件冲突
+        const menu = (window as any).siyuanCalloutMenu;
+        if (menu && menu.isVisible()) {
+            return;
+        }
+
         this.isDragging = true;
         this.currentBlockquote = blockquote;
         this.currentHandle = handle;
@@ -617,9 +623,22 @@ export class CalloutDragResizer {
         let isMouseDown = true;
         
         const pollInterval = setInterval(() => {
+            // 🚫 检查菜单状态，如果菜单显示则停止拖拽
+            const menu = (window as any).siyuanCalloutMenu;
+            if (menu && menu.isVisible()) {
+                // 菜单显示时，暂停拖拽但不清理状态
+                return;
+            }
+
             // 获取当前鼠标位置
             const getMousePos = () => {
                 return new Promise<{x: number, y: number}>((resolve) => {
+                    // 再次检查菜单状态，避免在添加监听器时菜单刚好显示
+                    if (menu && menu.isVisible()) {
+                        resolve({x: lastX, y: lastY});
+                        return;
+                    }
+
                     const tempHandler = (event: MouseEvent) => {
                         resolve({x: event.clientX, y: event.clientY});
                         document.removeEventListener('mousemove', tempHandler);
@@ -686,6 +705,12 @@ export class CalloutDragResizer {
      * 🎯 标准拖拽方案（非超级块状态）
      */
     private startNormalDrag(e: MouseEvent, handle: HTMLElement, blockquote: HTMLElement) {
+        // 🚫 如果菜单显示中，不允许开始拖拽，避免事件冲突
+        const menu = (window as any).siyuanCalloutMenu;
+        if (menu && menu.isVisible()) {
+            return;
+        }
+
         this.isDragging = true;
         this.currentBlockquote = blockquote;
         this.currentHandle = handle;
@@ -720,6 +745,12 @@ export class CalloutDragResizer {
         // 标准事件监听
         const mousemoveHandler = (e: MouseEvent) => {
             if (this.isDragging && this.currentBlockquote) {
+                // 🚫 如果菜单显示中，暂停拖拽处理
+                const menu = (window as any).siyuanCalloutMenu;
+                if (menu && menu.isVisible()) {
+                    return;
+                }
+
                 e.preventDefault();
                 e.stopPropagation();
                 e.stopImmediatePropagation();
@@ -751,6 +782,12 @@ export class CalloutDragResizer {
         // 触摸事件支持
         const touchmoveHandler = (e: TouchEvent) => {
             if (this.isDragging && this.currentBlockquote) {
+                // 🚫 如果菜单显示中，暂停拖拽处理
+                const menu = (window as any).siyuanCalloutMenu;
+                if (menu && menu.isVisible()) {
+                    return;
+                }
+
                 e.preventDefault();
                 e.stopPropagation();
                 e.stopImmediatePropagation();

@@ -28,6 +28,9 @@ export class CalloutManager {
         this.plugin = plugin;
         this.processor = new CalloutProcessor();
         this.menu = new CalloutMenu(this.processor);
+        
+        // 🌍 将菜单暴露到全局，供drag-resize检查状态
+        (window as any).siyuanCalloutMenu = this.menu;
     }
 
     /**
