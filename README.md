@@ -20,10 +20,7 @@ A powerful plugin for SiYuan Notes that transforms your blockquotes into beautif
 
 ### Install Plugin
 
-1. Open SiYuan Notes
-2. Go to `Settings` → `Marketplace` → `Plugins`
-3. Search for "Custom Callout"
-4. Download and enable
+Search for "Custom Callout" in SiYuan marketplace and install.
 
 ### Create Your First Callout
 
@@ -36,7 +33,6 @@ There are two ways to create callouts - choose your favorite:
 3. Use **arrow keys** (↑↓←→) to select a type
 4. Press `Enter` to confirm and start typing
 
-![Command Menu Example](https://via.placeholder.com/600x300?text=Command+Menu)
 
 #### Method 2: Quick Filter (Recommended for Power Users)
 
@@ -51,19 +47,7 @@ There are two ways to create callouts - choose your favorite:
 
 ## 🎯 11 Preset Types
 
-| Command | Chinese | Type Name | Use Case | Color |
-|---------|---------|-----------|----------|-------|
-| `@info` | `@信息` | Information | General information and explanations | 🔵 Blue |
-| `@concept` | `@概念` | Concept | Define terms and explain concepts | 🟣 Purple |
-| `@example` | `@示例` | Example | Code examples and use cases | 🟢 Green |
-| `@tip` | `@技巧` | Tip | Practical tips and tricks | 🟡 Yellow-Green |
-| `@best-practice` | `@最佳实践` | Best Practice | Recommended approaches and standards | 🌲 Dark Green |
-| `@tradeoff` | `@权衡取舍` | Tradeoff | Pros/cons analysis and comparisons | 🟠 Orange |
-| `@deep-dive` | `@深水区` | Deep Dive | In-depth exploration of advanced topics | 🔵 Dark Blue |
-| `@comparison` | `@对比` | Comparison | Compare different approaches | 🟣 Indigo |
-| `@summary` | `@总结` | Summary | Summarize key points | 🔷 Cyan |
-| `@pitfall` | `@陷阱` | Pitfall | Warnings and cautions | 🔴 Red |
-| `@highlight` | `@亮点` | Highlight | Emphasize important points | 🟡 Golden |
+Includes info, concept, example, tip, best-practice, tradeoff, deep-dive, comparison, summary, pitfall, and highlight types for various note-taking scenarios.
 
 ---
 
@@ -138,223 +122,8 @@ Callout supports **drag-to-resize width and height**:
 
 ## 🎨 8 Theme Styles
 
-Click the Callout icon in the top bar, open settings panel, and select a theme in the "🎨 Theme Style" section:
+Offers modern, card, flat, classic, minimal, glassmorphism, neumorphism, and neon themes to suit different aesthetic preferences.
 
-### 1. Modern (Default)
-**Features**: Clean and smooth, medium rounded corners, thin borders, no shadows  
-**Best for**: Daily use, clean and fresh style
-
-### 2. Card
-**Features**: Large rounded corners, shadows, hover lift effect  
-**Best for**: Notes requiring depth, prominent visual effect
-
-### 3. Flat
-**Features**: Solid flat colors, small rounded corners, thick left border  
-**Best for**: Simple and direct expression, focus on content
-
-### 4. Classic
-**Features**: No rounded corners, medium borders, stable and elegant  
-**Best for**: Formal documents, academic papers, serious notes
-
-### 5. Minimal
-**Features**: Extremely simple, thin borders, small icons, compact layout  
-**Best for**: Minimalism lovers, high information density
-
-### 6. Glassmorphism
-**Features**: Semi-transparent background, blur effect, modern tech feel  
-**Best for**: Modern design enthusiasts, glass texture lovers
-
-### 7. Neumorphism
-**Features**: Soft raised or depressed effects, dual shadows, 3D texture  
-**Best for**: Unique visual experience, artistic notes
-
-### 8. Neon
-**Features**: Vibrant glowing borders, hover zoom effect  
-**Best for**: Eye-catching alerts, important content emphasis
-
-**How to Switch**:
-1. Open settings panel
-2. Click any theme card
-3. All callouts instantly apply the new style!
-
----
-
-## 🛠️ Customization Features
-
-### Create Your Own Callout Types
-
-1. **Open Settings**: Click the Callout icon in the top bar
-2. **New Type**: Click "New Type" button in the top right
-3. **Fill Information**:
-   - **Type ID**: Unique identifier (e.g., `my-note`)
-   - **Display Name**: Name shown in the title (e.g., `My Note`)
-   - **Command**: Trigger command (e.g., `@my-note`)
-   - **Chinese Command** (optional): Chinese alias (e.g., `@我的笔记`)
-4. **Choose Icon**: Select from 70+ icons
-5. **Choose Color**: Select from 18 preset colors or customize
-6. **Save**: Click save, takes effect immediately!
-
-### Edit Preset Types
-
-Don't like the default icons or colors? You can modify them:
-
-1. Find the type to modify in settings panel
-2. Click the "Edit" button (pencil icon) on the right
-3. Modify icon or color
-4. Save
-
-Not satisfied? Click "Reset" button to restore defaults.
-
-### Hide Unused Types
-
-If you don't use certain preset types, you can hide them:
-
-1. Find the type to hide
-2. Click the "Hide" button (eye icon)
-3. The type no longer appears in the command menu
-
-**Note**:
-- Hidden types remain visible in settings panel (shown semi-transparent)
-- Can be restored anytime by clicking "Show" button
-- Hiding doesn't affect existing callouts
-
-### Drag to Reorder
-
-Want to adjust the display order in the menu? Just drag:
-
-1. In settings panel, click and hold any type card
-2. Drag to target position
-3. Release mouse
-4. Order is saved automatically, command menu updates instantly
-
-### Full Reset
-
-If you want to restore to initial state:
-
-1. Click "Reset All" button in top right
-2. Confirm the operation
-3. All custom configurations cleared, back to defaults
-
-**Reset Will Clear**:
-- All custom types
-- Modifications to preset types
-- Hidden type list
-- Custom display order
-
-**Reset Will Preserve**:
-- Theme style selection
-- Grid column settings
-
----
-
-## 🎯 Theme Quick Config
-
-In the "Theme Style" tab, you can fine-tune current theme styles:
-
-### Background Style
-- **Solid**: Single color background
-- **Gradient**: Gradient background (more depth)
-
-### Border Radius
-- No radius (0px) → Extra large (20px)
-- 7 levels available
-
-### Left Border Width
-- No border (0px) → Extra thick (6px)
-- Left accent border thickness
-
-### Border Width
-- No border (0px) → Extra thick (3px)
-
-### Title Font Size
-- Extra small (0.8em) → Extra large (1.2em)
-
-### Title Font Weight
-- Normal (400) → Extra bold (800)
-
-### Icon Size
-- Small (14px) → Extra large (24px)
-
-### Advanced Options
-- ☑️ **Hide Icon**: Show only text title
-- ☑️ **Hide Title Text**: Show only icon
-- ☑️ Both selected: Hide title completely, keep only content
-
-**Usage Suggestions**:
-- First select a close theme
-- Then fine-tune details with quick config
-- Real-time preview, what you see is what you get
-
----
-
-## 📚 Practical Examples
-
-### Scenario 1: Technical Documentation
-
-```markdown
-> @concept
-> REST API is an architectural style for designing networked applications.
-
-> @example
-> GET /api/users/123
-> Returns user information with ID 123
-
-> @best-practice
-> Recommend using HTTPS protocol to ensure data transmission security
-
-> @pitfall
-> ⚠️ Don't pass sensitive information in URLs, use request body or headers
-```
-
-### Scenario 2: Study Notes
-
-```markdown
-> @info
-> Chapter 3: Memory and Cognition
-
-> @concept
-> Ebbinghaus Forgetting Curve: People quickly forget after learning, need timely review
-
-> @tip
-> Use Spaced Repetition to improve memory efficiency
-
-> @summary
-> Key Points:
-> 1. Understand memory formation mechanisms
-> 2. Master scientific review methods
-> 3. Apply memory techniques to enhance learning
-```
-
-### Scenario 3: Project Documentation
-
-```markdown
-> @info
-> Project built with TypeScript + Svelte + Vite
-
-> @tradeoff
-> Choosing Vite over Webpack:
-> ✅ Pros: Faster hot updates, cleaner configuration
-> ❌ Cons: Some legacy libraries may not be compatible
-
-> @deep-dive
-> In-depth analysis of build optimization:
-> - Use Tree Shaking to reduce bundle size
-> - Enable code splitting to improve load speed
-> - Optimize static resource caching strategies
-```
-
-### Scenario 4: Resize for Layout Optimization
-
-After creating Callouts, you can drag resize handles to adjust width and height for different content and layout needs.
-
-```markdown
-> @info
-> 💡 This is a resizable info block
-> 
-> - Drag right edge to adjust width
-> - Drag bottom edge to adjust height
-> - Dimensions are saved automatically
-```
 
 ---
 
@@ -384,81 +153,16 @@ After creating Callouts, you can drag resize handles to adjust width and height 
 
 ## 💡 Usage Tips
 
-### Tip 1: Quick Keyboard Flow
-
+### Quick Keyboard Operations
 1. Type `>` + `space` to create blockquote
-2. Wait for menu (or type `@` to trigger autocomplete)
-3. Type first letter to filter (e.g., `i` matches info)
-4. `Enter` to confirm
-5. Start typing content
+2. Use arrow keys or type letters to filter and select
+3. Press `Enter` to confirm
 
-No mouse needed, extremely efficient!
+### Batch Conversion
+Add commands (like `info`) at the beginning of existing blockquotes to convert them to Callouts.
 
-### Tip 2: Batch Modify Existing Content
-
-If you have many regular blockquotes to convert:
-
-1. Add command at the beginning of each blockquote (e.g., `@info`)
-2. Press `Enter`, styles apply automatically
-3. Or use "Find and Replace" to batch add commands
-
-### Tip 3: Combine Different Types
-
-Use multiple types in the same document for clear hierarchy:
-
-```markdown
-> @info
-> Basic information...
-
-> @concept
-> Core concepts...
-
-> @example
-> Practical examples...
-
-> @tip
-> Useful tips...
-
-> @pitfall
-> Cautions...
-
-> @summary
-> Summary...
-```
-
-### Tip 4: Resize for Layout Optimization
-
-Adjust Callout dimensions based on content length:
-
-```markdown
-> @info
-> 💭 My thoughts:
-> This viewpoint is enlightening...
-> (Drag right or bottom edge to resize)
-
-> @highlight
-> ⭐ Key point
-> Need to review this
-> (Can fix width or height)
-```
-
-### Tip 5: Create Custom Types for Specific Uses
-
-Create dedicated types for specific purposes:
-
-- `@todo` - Todo items (clipboard icon + orange)
-- `@question` - Questions (question icon + purple)
-- `@inspiration` - Inspirations (bulb icon + yellow)
-- `@reference` - References (bookmark icon + blue)
-
-### Tip 6: Use Themes to Set the Mood
-
-- Daytime work: "Modern" or "Flat"
-- Evening reading: "Minimal" or "Classic"
-- Presentations: "Card" or "Glassmorphism"
-- Emphasis: "Neon"
-
-One-click switch, entire style changes instantly!
+### Size Adjustment
+Drag the right or bottom edge of Callouts to adjust width and height.
 
 ---
 

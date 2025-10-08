@@ -63,7 +63,6 @@ export class CalloutAutocomplete {
         this.selectedIndex = 0;
 
         if (!this.autocompleteMenu) {
-            console.log('[Autocomplete] 创建补全菜单');
             this.autocompleteMenu = this.createAutocompleteMenu();
             document.body.appendChild(this.autocompleteMenu);
         }
@@ -77,7 +76,6 @@ export class CalloutAutocomplete {
         this.autocompleteMenu.style.display = 'block';
         this.isMenuVisible = true;
 
-        console.log('[Autocomplete] 补全菜单已显示，位置:', x, y + 25);
 
         // 聚焦菜单
         setTimeout(() => {

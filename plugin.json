@@ -2,7 +2,7 @@
   "name": "siyuan-custom-callout",
   "author": "zongqir",
   "url": "https://github.com/zongqir/siyuan-custom-callout",
-  "version": "0.4.1",
+  "version": "1.0.0",
   "minAppVersion": "3.2.1",
   "disabledInPublish": false,
   "backends": [
@@ -41,8 +41,6 @@
   "keywords": [
     "callout",
     "blockquote",
-    "引用块",
-    "自定义样式",
-    "custom style"
+    "引用块"
   ]
 }

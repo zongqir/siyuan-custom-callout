@@ -51,37 +51,17 @@ export class CalloutProcessor {
     processBlockquote(blockquote: HTMLElement): boolean {
         if (!blockquote) return false;
 
-        console.log('[Callout] ⚡ processBlockquote接收到的元素:', {
-            tagName: blockquote.tagName,
-            className: blockquote.className,
-            classList: Array.from(blockquote.classList),
-            nodeId: blockquote.getAttribute('data-node-id'),
-            dataType: blockquote.getAttribute('data-type')
-        });
-
         // 确保是blockquote元素
         if (!blockquote.classList.contains('bq')) {
-            console.log('[Callout] ❌ 错误：传入的不是blockquote元素，而是:', blockquote.tagName);
             return false;
         }
 
         const titleDiv = blockquote.querySelector('div[contenteditable="true"]') as HTMLElement;
         const text = titleDiv?.textContent?.trim() || '';
-        
-        console.log('[Callout] processBlockquote 被调用', {
-            text: text,
-            hasCustomCallout: blockquote.hasAttribute('custom-callout'),
-            hasMarginWidth: blockquote.hasAttribute('data-margin-width'),
-            customCallout: blockquote.getAttribute('custom-callout'),
-            marginWidth: blockquote.getAttribute('data-margin-width'),
-            hasTitleDiv: !!titleDiv
-        });
 
         // 处理所有涉及边注位置清理的逻辑 - 简化版
         if (text === '' && !blockquote.hasAttribute('custom-callout') && !blockquote.hasAttribute('data-margin-width') && !blockquote.hasAttribute('data-margin-height')) {
-            console.log('[Callout] 🧹 文本为空且无属性，检查是否有遗留CSS...');
             if (this.hasMarginNoteStyles(blockquote)) {
-                console.log('[Callout] 🧹 发现遗留CSS，直接清理！');
                 this.clearMarginNoteStyles(blockquote);
                 return false;
             }
@@ -89,24 +69,20 @@ export class CalloutProcessor {
 
         // 跳过已有自定义样式的引用块  
         if (this.hasCustomStyle(blockquote)) {
-            console.log('[Callout] 跳过已有自定义样式的引用块');
             return false;
         }
 
         const firstParagraph = blockquote.querySelector('div[data-type="NodeParagraph"]:first-of-type');
         if (!firstParagraph) {
-            console.log('[Callout] ❌ 找不到firstParagraph，提前返回');
             return false;
         }
 
         // titleDiv 已在上面定义了
         if (!titleDiv) {
-            console.log('[Callout] ❌ 找不到titleDiv，提前返回');
             return false;
         }
 
         // 尝试解析参数化命令
-        console.log('[Callout] 尝试解析参数化命令:', text);
         const parsedCommand = this.parseCalloutCommand(text);
         if (parsedCommand) {
             console.log('[Callout] 📝 匹配参数化命令成功，解析结果:', {
@@ -204,7 +180,6 @@ export class CalloutProcessor {
             }
         });
 
-        console.log(`[Callout] Processed ${processed}/${blockquotes.length} blockquotes`);
     }
 
     /**
@@ -258,7 +233,6 @@ export class CalloutProcessor {
         
         // ⚠️ 保留宽度和高度属性！用户可能通过拖拽手动设置了宽度和高度
         // 不要清除 data-margin-width、--margin-width、data-margin-height、--margin-height
-        console.log('[Callout] 🛡️ 保留现有宽度和高度设置，避免用户设置丢失');
         
         titleDiv.removeAttribute('data-callout-title');
         titleDiv.removeAttribute('data-callout-display-name');
@@ -271,7 +245,6 @@ export class CalloutProcessor {
     clearCalloutStyle(blockquoteElement: HTMLElement): boolean {
         if (!blockquoteElement) return false;
 
-        console.log('[Callout] clearCalloutStyle 被调用');
 
         try {
             blockquoteElement.removeAttribute('custom-callout');

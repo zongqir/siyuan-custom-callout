@@ -220,7 +220,6 @@ export class CalloutManager {
      * 初始化拖拽调整功能
      */
     private initializeDragResize() {
-        console.log('[CalloutManager] 初始化拖拽调整功能');
         this.dragResizer = new CalloutDragResizer(this.processor);
     }
 

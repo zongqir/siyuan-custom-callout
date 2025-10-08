@@ -39,7 +39,6 @@ export class MenuThemeHelper {
         if (!menu) return;
 
         const isDark = this.isDark();
-        console.log('[MenuTheme] 刷新菜单主题:', isDark ? '黑夜' : '白天');
 
         // 1. 更新主容器
         menu.style.cssText = MenuStyles.getMenuContainerStyle(isDark);
