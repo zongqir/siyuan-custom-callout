@@ -163,15 +163,6 @@ export class CalloutDragResizer {
      * 为callout添加拖拽手柄 - 强化版
      */
     private addResizeHandle(blockquote: HTMLElement) {
-        const nodeId = blockquote.getAttribute('data-node-id');
-        console.log('[CalloutResize] 🎯 开始为callout添加拖拽手柄:', {
-            nodeId: nodeId,
-            hasHorizontal: !!blockquote.querySelector('.callout-resize-handle-horizontal'),
-            hasVertical: !!blockquote.querySelector('.callout-resize-handle-vertical'),
-            blockquoteRect: blockquote.getBoundingClientRect(),
-            inSuperBlock: this.isInSuperBlock(blockquote)
-        });
-
         // 🔧 强化blockquote定位设置
         blockquote.style.setProperty('position', 'relative', 'important');
         blockquote.setAttribute('data-drag-container', 'true');
@@ -189,20 +180,17 @@ export class CalloutDragResizer {
 
         // 分别检查并创建水平和垂直手柄
         if (!blockquote.querySelector('.callout-resize-handle-horizontal')) {
-            console.log('[CalloutResize] 🔧 创建水平拖拽手柄');
             this.createHorizontalHandle(blockquote);
             needsHoverBinding = true;
         }
         
         if (!blockquote.querySelector('.callout-resize-handle-vertical')) {
-            console.log('[CalloutResize] 🔧 创建垂直拖拽手柄');
             this.createVerticalHandle(blockquote);
             needsHoverBinding = true;
         }
 
         // 只在添加了新手柄时才绑定hover事件（避免重复绑定）
         if (needsHoverBinding && !blockquote.hasAttribute('data-hover-bound')) {
-            console.log('[CalloutResize] 🔗 绑定hover事件');
             this.bindHoverEventsToBlockquote(blockquote);
             blockquote.setAttribute('data-hover-bound', 'true');
         }
@@ -212,11 +200,9 @@ export class CalloutDragResizer {
             this.forceRefreshHandles(blockquote);
         }, 100);
 
+        // 检查手柄是否成功创建，失败时尝试备用方案
         const handleCount = blockquote.querySelectorAll('.callout-resize-handle').length;
-        console.log('[CalloutResize] ✅ 手柄添加完成，当前手柄数量:', handleCount);
-        
         if (handleCount === 0) {
-            console.warn('[CalloutResize] ⚠️ 手柄添加失败，尝试备用方案');
             setTimeout(() => {
                 this.createFallbackHandles(blockquote);
             }, 200);
@@ -229,15 +215,7 @@ export class CalloutDragResizer {
     private forceRefreshHandles(blockquote: HTMLElement) {
         const handles = blockquote.querySelectorAll('.callout-resize-handle') as NodeListOf<HTMLElement>;
         
-        handles.forEach((handle, index) => {
-            console.log(`[CalloutResize] 🚀 刷新手柄 ${index + 1}:`, {
-                className: handle.className,
-                visible: handle.offsetWidth > 0 && handle.offsetHeight > 0,
-                rect: handle.getBoundingClientRect(),
-                zIndex: handle.style.zIndex,
-                pointerEvents: handle.style.pointerEvents
-            });
-
+        handles.forEach((handle) => {
             // 强制重新应用样式
             handle.style.setProperty('z-index', '999999', 'important');
             handle.style.setProperty('pointer-events', 'auto', 'important');
@@ -254,8 +232,6 @@ export class CalloutDragResizer {
      * 🆘 备用手柄创建方案
      */
     private createFallbackHandles(blockquote: HTMLElement) {
-        console.log('[CalloutResize] 🆘 创建备用拖拽手柄');
-        
         // 清理现有手柄
         const existingHandles = blockquote.querySelectorAll('.callout-resize-handle');
         existingHandles.forEach(handle => handle.remove());
@@ -292,8 +268,6 @@ export class CalloutDragResizer {
             
             blockquote.appendChild(handle);
             this.bindHandleEvents(handle, blockquote);
-            
-            console.log(`[CalloutResize] 🆘 备用${type}手柄创建完成`);
         };
         
         createSimpleHandle('horizontal');
@@ -317,7 +291,6 @@ export class CalloutDragResizer {
         // 🎯 确保父元素blockquote有相对定位
         if (blockquote.style.position !== 'relative') {
             blockquote.style.position = 'relative';
-            //console.log('[CalloutResize] 🎯 设置blockquote为relative定位 (水平手柄)');
         }
 
         // 🚀 JavaScript动态计算手柄高度为callout高度的70%
@@ -397,16 +370,6 @@ export class CalloutDragResizer {
 
         blockquote.appendChild(handle);
         this.bindHandleEvents(handle, blockquote);
-       // console.log('[CalloutResize] ✅ 水平手柄创建完成');
-        
-        // 调试：输出手柄的位置和尺寸信息
-        setTimeout(() => {
-            // const rect = handle.getBoundingClientRect();
-            // const parentRect = blockquote.getBoundingClientRect();
-            // console.log('[CalloutResize] 🔍 水平手柄调试信息:', {
-            //     // debug info would go here
-            // });
-        }, 100);
     }
 
     /**
@@ -502,7 +465,6 @@ export class CalloutDragResizer {
 
         blockquote.appendChild(handle);
         this.bindHandleEvents(handle, blockquote);
-        // console.log('[CalloutResize] ✅ 垂直手柄创建完成');
     }
 
     /**
@@ -557,8 +519,6 @@ export class CalloutDragResizer {
      * 绑定blockquote的hover事件（只绑定一次）
      */
     private bindHoverEventsToBlockquote(blockquote: HTMLElement) {
-        // console.log('[CalloutResize] 🔗 绑定blockquote的hover事件');
-        
         blockquote.addEventListener('mouseenter', () => {
             if (!this.isDragging) {
                 const allHandles = blockquote.querySelectorAll('.callout-resize-handle');
@@ -929,7 +889,6 @@ export class CalloutDragResizer {
         // 找到可编辑的标题div
         const titleDiv = blockquote.querySelector('div[contenteditable="true"]') as HTMLElement;
         if (!titleDiv) {
-            console.error('[CalloutResize] 找不到可编辑标题div');
             return;
         }
 
@@ -1151,72 +1110,11 @@ export class CalloutDragResizer {
      * 🔍 全局调试工具 - 诊断拖拽问题
      */
     debugDragIssues() {
-        console.log('\n🔍 ========== CalloutResize 调试报告 ==========');
-        console.log('🔧 处理器实例:', this._processor ? '已加载' : '未加载');
-        
         const allCallouts = document.querySelectorAll('.bq[custom-callout]');
-        console.log(`📊 发现 ${allCallouts.length} 个Callout`);
         
-        allCallouts.forEach((callout, index) => {
-            const nodeId = callout.getAttribute('data-node-id');
-            const handles = callout.querySelectorAll('.callout-resize-handle');
-            const rect = callout.getBoundingClientRect();
-            
-            console.log(`\n📋 Callout ${index + 1}:`, {
-                nodeId,
-                handleCount: handles.length,
-                rect: {
-                    width: rect.width,
-                    height: rect.height,
-                    visible: rect.width > 0 && rect.height > 0
-                },
-                inSuperBlock: this.isInSuperBlock(callout as HTMLElement),
-                superBlockActive: this.isSuperBlockActive()
-            });
-            
-            handles.forEach((handle, hIndex) => {
-                const hRect = handle.getBoundingClientRect();
-                const styles = window.getComputedStyle(handle as HTMLElement);
-                
-                console.log(`  🎯 手柄 ${hIndex + 1}:`, {
-                    type: handle.getAttribute('data-resize-type'),
-                    className: handle.className,
-                    rect: hRect,
-                    visible: hRect.width > 0 && hRect.height > 0,
-                    zIndex: styles.zIndex,
-                    pointerEvents: styles.pointerEvents,
-                    position: styles.position,
-                    opacity: styles.opacity
-                });
-            });
+        allCallouts.forEach((callout) => {
+            callout.querySelectorAll('.callout-resize-handle');
         });
-        
-        // 检查超级块状态
-        console.log('\n🎯 超级块状态检查:');
-        console.log('- isSuperBlockActive():', this.isSuperBlockActive());
-        console.log('- body classes:', document.body.className);
-        
-        // 检查可能干扰的元素
-        const potentialBlockers = [
-            '.protyle-action',
-            '.protyle-gutters', 
-            '.protyle-breadcrumb',
-            '.layout-tab-container'
-        ];
-        
-        console.log('\n🚫 潜在干扰元素:');
-        potentialBlockers.forEach(selector => {
-            const elements = document.querySelectorAll(selector);
-            if (elements.length > 0) {
-                console.log(`- ${selector}: ${elements.length} 个`);
-            }
-        });
-        
-        console.log('\n🔧 建议操作:');
-        console.log('1. 如果手柄不可见，尝试悬停在Callout上');
-        console.log('2. 如果手柄可见但无法拖拽，检查控制台错误');
-        console.log('3. 如果在超级块中，尝试切换到普通编辑模式');
-        console.log('========================================\n');
         
         // 自动尝试修复
         this.autoFixDragIssues();
@@ -1226,8 +1124,6 @@ export class CalloutDragResizer {
      * 🛠️ 自动修复拖拽问题
      */
     private autoFixDragIssues() {
-        console.log('🛠️ 开始自动修复拖拽问题...');
-        
         const brokenCallouts = document.querySelectorAll('.bq[custom-callout]');
         
         brokenCallouts.forEach((callout) => {
@@ -1235,7 +1131,6 @@ export class CalloutDragResizer {
             
             // 如果没有手柄或手柄不可见，重新创建
             if (handles.length === 0) {
-                console.log('🔧 重新创建缺失的拖拽手柄');
                 this.addResizeHandle(callout as HTMLElement);
             } else {
                 // 检查现有手柄是否工作正常
@@ -1248,13 +1143,10 @@ export class CalloutDragResizer {
                 });
                 
                 if (needsRefresh) {
-                    console.log('🔧 刷新现有拖拽手柄');
                     this.forceRefreshHandles(callout as HTMLElement);
                 }
             }
         });
-        
-        console.log('🛠️ 自动修复完成');
     }
 
     /**
@@ -1277,6 +1169,5 @@ export class CalloutDragResizer {
     static setupGlobalDebug(instance: CalloutDragResizer) {
         // 将调试功能暴露到全局
         (window as any).debugCalloutDrag = () => instance.debugDragIssues();
-        console.log('🎯 全局调试已设置，使用 debugCalloutDrag() 来调试拖拽问题');
     }
 }
