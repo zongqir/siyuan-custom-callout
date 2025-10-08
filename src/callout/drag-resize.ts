@@ -594,6 +594,15 @@ export class CalloutDragResizer {
         // 解析现有的callout格式
         const parsed = this.parseCalloutTitle(originalContent);
         
+        // 🎯 保留当前的折叠状态（从DOM属性读取）
+        const currentCollapsed = blockquote.getAttribute('data-collapsed');
+        if (currentCollapsed === 'true') {
+            parsed.collapsed = true;
+        } else if (currentCollapsed === 'false') {
+            parsed.collapsed = false;
+        }
+        // 如果没有 data-collapsed 属性，保持 parsed.collapsed 原有值
+        
         // 更新宽度或高度
         if (finalWidth !== null) {
             parsed.width = finalWidth >= 99 ? null : finalWidth;
@@ -610,15 +619,23 @@ export class CalloutDragResizer {
     }
 
     /**
-     * 解析callout标题，提取类型、宽度、高度
+     * 解析callout标题，提取类型、宽度、高度、折叠状态
      */
-    private parseCalloutTitle(content: string): {type: string, width: number | null, height: number | null} {
-        const result = {type: 'info', width: null as number | null, height: null as number | null};
+    private parseCalloutTitle(content: string): {type: string, width: number | null, height: number | null, collapsed: boolean | null} {
+        const result = {type: 'info', width: null as number | null, height: null as number | null, collapsed: null as boolean | null};
         
-        // 匹配 [!type] 或 [!type|params]
-        const match = content.match(/^\[!([^|\]]+)(?:\|(.+?))?\]$/);
+        // 匹配 [!type] 或 [!type|params]，支持折叠标记 +/-
+        const match = content.match(/^\[!([^|\]]+)(?:\|(.+?))?\]([+-])?$/);
         if (match) {
             result.type = match[1];
+            const collapseMarker = match[3];
+            
+            // 解析折叠标记
+            if (collapseMarker === '-') {
+                result.collapsed = true;
+            } else if (collapseMarker === '+') {
+                result.collapsed = false;
+            }
             
             if (match[2]) {
                 // 解析参数：width%|heightpx 或 width% 或 heightpx
@@ -648,7 +665,7 @@ export class CalloutDragResizer {
     /**
      * 生成新的callout标题
      */
-    private generateCalloutTitle(parsed: {type: string, width: number | null, height: number | null}): string {
+    private generateCalloutTitle(parsed: {type: string, width: number | null, height: number | null, collapsed: boolean | null}): string {
         const params: string[] = [];
         
         if (parsed.width !== null) {
@@ -659,11 +676,23 @@ export class CalloutDragResizer {
             params.push(`${Math.round(parsed.height)}px`);
         }
         
+        // 构建基础标题
+        let title = '';
         if (params.length === 0) {
-            return `[!${parsed.type}]`;
+            title = `[!${parsed.type}]`;
         } else {
-            return `[!${parsed.type}|${params.join('|')}]`;
+            title = `[!${parsed.type}|${params.join('|')}]`;
         }
+        
+        // 添加折叠标记
+        if (parsed.collapsed === true) {
+            title += '-';
+        } else if (parsed.collapsed === false) {
+            title += '+';
+        }
+        // collapsed === null 时不添加标记
+        
+        return title;
     }
 
     /**

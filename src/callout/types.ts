@@ -36,6 +36,8 @@ export interface ParsedCalloutCommand {
     height?: string;
     /** 边注间距 */
     spacing?: string;
+    /** 折叠状态: true=折叠, false=展开, null=默认展开 */
+    collapsed?: boolean | null;
     /** 原始命令文本 */
     originalCommand: string;
 }

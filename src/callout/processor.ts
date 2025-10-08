@@ -148,6 +148,12 @@ export class CalloutProcessor {
             titleDiv.setAttribute('data-callout-title', 'true');
             titleDiv.setAttribute('data-callout-display-name', parsedCommand.config.displayName);
 
+            // 应用折叠状态
+            if (parsedCommand.collapsed !== null && parsedCommand.collapsed !== undefined) {
+                blockquote.setAttribute('data-collapsed', String(parsedCommand.collapsed));
+                console.log('[Callout] 🎯 应用折叠状态:', parsedCommand.collapsed);
+            }
+
             // 添加折叠功能
             this.addCollapseToggle(blockquote, titleDiv);
 
@@ -410,9 +416,13 @@ export class CalloutProcessor {
     /**
      * 切换折叠状态
      */
-    private toggleCollapse(blockquote: HTMLElement) {
+    private async toggleCollapse(blockquote: HTMLElement) {
         const isCollapsed = blockquote.getAttribute('data-collapsed') === 'true';
-        blockquote.setAttribute('data-collapsed', isCollapsed ? 'false' : 'true');
+        const newCollapsed = !isCollapsed;
+        blockquote.setAttribute('data-collapsed', String(newCollapsed));
+        
+        // 🎯 持久化折叠状态到标题
+        await this.persistCollapseState(blockquote);
     }
 
     /**
@@ -480,14 +490,16 @@ export class CalloutProcessor {
     }
 
     /**
-     * 解析参数化命令语法 - 支持宽度和高度参数
+     * 解析参数化命令语法 - 支持宽度、高度和折叠状态参数
      * 支持格式: [!info|30%] 或 [!info|30%|120px] 或 [!info|120px]
+     * 支持折叠: [!info]+ (展开) 或 [!info]- (折叠)
+     * 组合格式: [!info|30%|120px]- (带宽高的折叠状态)
      */
     parseCalloutCommand(text: string): ParsedCalloutCommand | null {
         console.log('[Callout] 🔍 开始解析命令:', text);
         
-        // 匹配 [!type] 或 [!type|params] 格式
-        const match = text.match(/^\[!([^|\]]+)(\|.*?)?\]$/);
+        // 匹配 [!type] 或 [!type|params] 格式，支持可选的折叠标记 +/-
+        const match = text.match(/^\[!([^|\]]+)(\|.*?)?\]([+-])?$/);
         if (!match) {
             console.log('[Callout] ❌ 正则匹配失败');
             return null;
@@ -495,10 +507,12 @@ export class CalloutProcessor {
 
         const calloutType = match[1]; // info
         const paramsString = match[2]; // |30%|120px
+        const collapseMarker = match[3]; // + 或 - 或 undefined
         
         console.log('[Callout] 📋 解析结果:', {
             calloutType,
             paramsString,
+            collapseMarker,
             fullMatch: match[0]
         });
         
@@ -546,7 +560,10 @@ export class CalloutProcessor {
             }
         }
         
-        console.log('[Callout] 🎯 解析结果:', { width, height, spacing });
+        // 解析折叠状态：- 表示折叠，+ 表示展开，undefined 表示默认展开
+        const collapsed = collapseMarker === '-' ? true : (collapseMarker === '+' ? false : null);
+        
+        console.log('[Callout] 🎯 解析结果:', { width, height, spacing, collapsed });
 
         return {
             type: config.type,
@@ -555,6 +572,7 @@ export class CalloutProcessor {
             width: width,
             height: height,
             spacing: spacing,
+            collapsed: collapsed,
             originalCommand: text
         };
     }
@@ -683,6 +701,185 @@ export class CalloutProcessor {
      */
     isInInitialLoad(): boolean {
         return this.isInitialLoad;
+    }
+
+    /**
+     * 持久化折叠状态到标题
+     */
+    private async persistCollapseState(blockquote: HTMLElement) {
+        // 找到可编辑的标题div
+        const titleDiv = blockquote.querySelector('div[contenteditable="true"]') as HTMLElement;
+        if (!titleDiv) {
+            console.error('[Callout] 找不到可编辑标题div');
+            return;
+        }
+
+        // 获取原本的标题内容
+        const originalContent = titleDiv.textContent?.trim() || '';
+
+        // 解析现有的callout格式
+        const parsed = this.parseCalloutTitleInternal(originalContent);
+        
+        // 🎯 更新折叠状态（从DOM属性读取）
+        const currentCollapsed = blockquote.getAttribute('data-collapsed');
+        if (currentCollapsed === 'true') {
+            parsed.collapsed = true;
+        } else if (currentCollapsed === 'false') {
+            parsed.collapsed = false;
+        } else {
+            parsed.collapsed = null;
+        }
+        
+        console.log('[Callout] 🎯 持久化折叠状态:', {
+            currentCollapsed,
+            parsedCollapsed: parsed.collapsed,
+            originalContent
+        });
+
+        // 生成新的标题内容
+        const newContent = this.generateCalloutTitleInternal(parsed);
+
+        // 模拟键盘输入替换
+        await this.simulateKeyboardInputInternal(titleDiv, newContent);
+    }
+
+    /**
+     * 解析callout标题（内部使用）
+     */
+    private parseCalloutTitleInternal(content: string): {
+        type: string, 
+        width: string | null, 
+        height: string | null, 
+        collapsed: boolean | null
+    } {
+        const result = {
+            type: 'info', 
+            width: null as string | null, 
+            height: null as string | null, 
+            collapsed: null as boolean | null
+        };
+        
+        // 匹配 [!type] 或 [!type|params]，支持折叠标记 +/-
+        const match = content.match(/^\[!([^|\]]+)(?:\|(.+?))?\]([+-])?$/);
+        if (match) {
+            result.type = match[1];
+            const collapseMarker = match[3];
+            
+            // 解析折叠标记
+            if (collapseMarker === '-') {
+                result.collapsed = true;
+            } else if (collapseMarker === '+') {
+                result.collapsed = false;
+            }
+            
+            if (match[2]) {
+                // 解析参数：width%|heightpx 或 width% 或 heightpx
+                const params = match[2].split('|');
+                for (const param of params) {
+                    const trimmed = param.trim();
+                    if (trimmed.endsWith('%')) {
+                        // 宽度参数
+                        result.width = trimmed;
+                    } else if (trimmed.endsWith('px')) {
+                        // 高度参数
+                        result.height = trimmed;
+                    }
+                }
+            }
+        }
+        
+        return result;
+    }
+
+    /**
+     * 生成新的callout标题（内部使用）
+     */
+    private generateCalloutTitleInternal(parsed: {
+        type: string, 
+        width: string | null, 
+        height: string | null, 
+        collapsed: boolean | null
+    }): string {
+        const params: string[] = [];
+        
+        if (parsed.width !== null) {
+            params.push(parsed.width);
+        }
+        
+        if (parsed.height !== null) {
+            params.push(parsed.height);
+        }
+        
+        // 构建基础标题
+        let title = '';
+        if (params.length === 0) {
+            title = `[!${parsed.type}]`;
+        } else {
+            title = `[!${parsed.type}|${params.join('|')}]`;
+        }
+        
+        // 添加折叠标记
+        if (parsed.collapsed === true) {
+            title += '-';
+        } else if (parsed.collapsed === false) {
+            title += '+';
+        }
+        // collapsed === null 时不添加标记
+        
+        return title;
+    }
+
+    /**
+     * 模拟键盘输入（内部使用）
+     */
+    private async simulateKeyboardInputInternal(titleDiv: HTMLElement, newContent: string) {
+        // 聚焦元素
+        titleDiv.focus();
+        await new Promise(resolve => setTimeout(resolve, 50));
+        
+        // 全选内容
+        const selection = window.getSelection();
+        const range = document.createRange();
+        range.selectNodeContents(titleDiv);
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+        
+        // 短暂等待选择生效
+        await new Promise(resolve => setTimeout(resolve, 50));
+        
+        // 一次性设置新内容（替换选中内容）
+        titleDiv.textContent = newContent;
+        
+        // 立即触发input事件
+        const inputEvent = new InputEvent('input', {
+            bubbles: true,
+            cancelable: true,
+            inputType: 'insertReplacementText',
+            data: newContent
+        });
+        titleDiv.dispatchEvent(inputEvent);
+        
+        // 等待内容更新
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // 触发compositionend（确保输入法兼容）
+        const compositionEndEvent = new CompositionEvent('compositionend', {
+            bubbles: true,
+            data: newContent
+        });
+        titleDiv.dispatchEvent(compositionEndEvent);
+        
+        // 等待处理
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // 触发change事件
+        const changeEvent = new Event('change', { bubbles: true, cancelable: true });
+        titleDiv.dispatchEvent(changeEvent);
+        
+        // 失焦确保保存
+        titleDiv.blur();
+        
+        console.log('[Callout] ✅ 标题已更新:', newContent);
     }
 }
 
