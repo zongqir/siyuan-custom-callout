@@ -417,9 +417,8 @@ export class CalloutProcessor {
         collapseButton.className = 'callout-collapse-button';
         collapseButton.title = '折叠/展开';
         
-        // 根据当前状态设置图标
-        const isCollapsed = blockquote.getAttribute('data-collapsed') === 'true';
-        this.updateCollapseButtonIcon(collapseButton, isCollapsed);
+        // 设置简单的减号图标
+        collapseButton.innerHTML = '−';
         
         // 应用样式
         const isDark = this.isDarkMode();
@@ -427,8 +426,9 @@ export class CalloutProcessor {
 
         // 添加鼠标事件
         collapseButton.addEventListener('mouseenter', () => {
-            collapseButton.style.background = isDark ? '#4b5563' : '#e5e7eb';
+            collapseButton.style.background = 'rgba(0, 122, 255, 1)';
             collapseButton.style.transform = 'scale(1.1)';
+            collapseButton.style.boxShadow = '0 2px 8px rgba(0, 122, 255, 0.3), 0 2px 4px rgba(0, 0, 0, 0.15)';
         });
 
         collapseButton.addEventListener('mouseleave', () => {
@@ -454,13 +454,8 @@ export class CalloutProcessor {
      * 更新折叠按钮图标
      */
     private updateCollapseButtonIcon(button: HTMLElement, isCollapsed: boolean) {
-        if (isCollapsed) {
-            // 折叠状态：显示向下箭头
-            button.innerHTML = '▼';
-        } else {
-            // 展开状态：显示向右箭头
-            button.innerHTML = '▶';
-        }
+        // 统一使用简单的减号图标，不区分状态
+        button.innerHTML = '−';
     }
 
     /**
@@ -469,20 +464,23 @@ export class CalloutProcessor {
     private getCollapseButtonStyle(isDark: boolean): string {
         return `
             position: absolute;
-            top: 8px;
-            right: 32px;
-            width: 20px;
-            height: 20px;
+            top: 6px;
+            right: 26px;
+            width: 16px;
+            height: 16px;
             border-radius: 50%;
-            background: ${isDark ? '#374151' : '#f3f4f6'};
+            background: ${isDark ? 'rgba(0, 122, 255, 0.85)' : 'rgba(0, 122, 255, 0.9)'};
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
             font-size: 10px;
-            color: ${isDark ? '#d1d5db' : '#6b7280'};
-            transition: all 0.15s ease;
+            color: white;
+            font-weight: 600;
+            transition: all 0.2s cubic-bezier(0.4, 0.0, 0.2, 1);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
             z-index: 100;
+            border: 0.5px solid rgba(255, 255, 255, 0.2);
         `;
     }
 
@@ -536,9 +534,9 @@ export class CalloutProcessor {
 
         // 添加鼠标事件
         insertButton.addEventListener('mouseenter', () => {
-            insertButton.style.background = isDark ? '#10b981' : '#22c55e';
-            insertButton.style.color = 'white';
+            insertButton.style.background = 'rgba(48, 176, 199, 1)';
             insertButton.style.transform = 'scale(1.1)';
+            insertButton.style.boxShadow = '0 2px 8px rgba(52, 199, 89, 0.3), 0 2px 4px rgba(0, 0, 0, 0.15)';
         });
 
         insertButton.addEventListener('mouseleave', () => {
@@ -565,20 +563,23 @@ export class CalloutProcessor {
     private getInsertButtonStyle(isDark: boolean): string {
         return `
             position: absolute;
-            top: 8px;
-            right: 56px;
-            width: 20px;
-            height: 20px;
+            top: 6px;
+            right: 46px;
+            width: 16px;
+            height: 16px;
             border-radius: 50%;
-            background: ${isDark ? '#374151' : '#f3f4f6'};
+            background: ${isDark ? 'rgba(52, 199, 89, 0.85)' : 'rgba(52, 199, 89, 0.9)'};
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            font-size: 12px;
-            color: ${isDark ? '#d1d5db' : '#6b7280'};
-            transition: all 0.15s ease;
+            font-size: 10px;
+            color: white;
+            font-weight: 600;
+            transition: all 0.2s cubic-bezier(0.4, 0.0, 0.2, 1);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
             z-index: 100;
+            border: 0.5px solid rgba(255, 255, 255, 0.2);
         `;
     }
 
@@ -710,8 +711,9 @@ export class CalloutProcessor {
 
         // 添加鼠标事件
         deleteButton.addEventListener('mouseenter', () => {
-            deleteButton.style.background = '#ef4444';
-            deleteButton.style.color = 'white';
+            deleteButton.style.background = 'rgba(255, 69, 58, 1)';
+            deleteButton.style.transform = 'scale(1.1)';
+            deleteButton.style.boxShadow = '0 2px 8px rgba(255, 69, 58, 0.3), 0 2px 4px rgba(0, 0, 0, 0.15)';
         });
 
         deleteButton.addEventListener('mouseleave', () => {
@@ -750,20 +752,23 @@ export class CalloutProcessor {
     private getDeleteButtonStyle(isDark: boolean): string {
         return `
             position: absolute;
-            top: 8px;
-            right: 8px;
-            width: 20px;
-            height: 20px;
+            top: 6px;
+            right: 6px;
+            width: 16px;
+            height: 16px;
             border-radius: 50%;
-            background: ${isDark ? '#374151' : '#f3f4f6'};
+            background: ${isDark ? 'rgba(255, 95, 87, 0.85)' : 'rgba(255, 95, 87, 0.9)'};
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            font-size: 14px;
-            color: ${isDark ? '#d1d5db' : '#6b7280'};
-            transition: all 0.15s ease;
+            font-size: 11px;
+            color: white;
+            font-weight: 500;
+            transition: all 0.2s cubic-bezier(0.4, 0.0, 0.2, 1);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
             z-index: 100;
+            border: 0.5px solid rgba(255, 255, 255, 0.2);
         `;
     }
 
