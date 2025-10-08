@@ -15,7 +15,15 @@ export class MenuThemeManager {
      * 检测当前主题
      */
     private detectTheme(): void {
-        // 检测思源笔记的主题
+        // 优先使用思源笔记官方 API
+        if (typeof window !== 'undefined' && (window as any).siyuan?.config?.appearance?.mode !== undefined) {
+            // mode === 0: 亮色模式
+            // mode === 1: 暗色模式
+            this.isDarkMode = (window as any).siyuan.config.appearance.mode === 1;
+            return;
+        }
+
+        // 备用检测：检测 DOM 属性
         const siyuanTheme = document.documentElement.getAttribute('data-theme-mode') ||
                           document.documentElement.getAttribute('data-light') ||
                           document.body.getAttribute('data-theme-mode');
@@ -25,7 +33,7 @@ export class MenuThemeManager {
             return;
         }
 
-        // 检测常见的黑夜模式标记
+        // 备用检测：常见的黑夜模式标记
         const bodyClasses = document.body.classList;
         const htmlClasses = document.documentElement.classList;
         
@@ -38,9 +46,8 @@ export class MenuThemeManager {
             htmlClasses.contains('dark-mode') ||
             document.documentElement.getAttribute('data-theme') === 'dark' ||
             document.body.getAttribute('data-theme') === 'dark' ||
-            // 检测思源笔记特有的类名
             bodyClasses.contains('body--dark') ||
-            // 系统偏好设置（最后检查）
+            // 最后回退到系统偏好
             window.matchMedia('(prefers-color-scheme: dark)').matches;
     }
 
