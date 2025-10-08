@@ -278,9 +278,9 @@ export class CalloutDragResizer {
             });
         };
 
-        // 设置垂直手柄基础样式（与水平手柄风格一致）- 使用!important确保样式生效
+        // 设置垂直手柄基础样式（与水平手柄风格一致，但尺寸相反）- 使用!important确保样式生效
         handle.style.setProperty('position', 'absolute', 'important');
-        handle.style.setProperty('height', '16px', 'important');      // 长度很窄（对应水平手柄的16px宽度）
+        handle.style.setProperty('height', '12px', 'important');      // 高度窄，形成水平椭圆
         handle.style.setProperty('cursor', 'ns-resize', 'important');
         handle.style.setProperty('z-index', '1000', 'important');
         handle.style.setProperty('display', 'flex', 'important');
@@ -289,28 +289,27 @@ export class CalloutDragResizer {
         handle.style.setProperty('opacity', '0', 'important');
         handle.style.setProperty('transition', 'opacity 0.2s ease', 'important');
         handle.style.setProperty('background', 'rgba(0, 0, 0, 0.3)', 'important');  // 与水平手柄相同的背景
-        handle.style.setProperty('border-radius', '8px', 'important');               // 与水平手柄相同的圆角
+        handle.style.setProperty('border-radius', '6px', 'important');               // 调整圆角适应新高度
         handle.style.setProperty('backdrop-filter', 'blur(4px)', 'important');       // 与水平手柄相同的模糊效果
 
         // 设置内部结构样式
         const handleInner = handle.querySelector('.resize-handle-inner') as HTMLElement;
         Object.assign(handleInner.style, {
-            height: '6px',          // 垂直手柄的内部高度对应水平手柄的宽度
-            width: '20px',          // 垂直手柄的内部宽度对应水平手柄的高度  
+            height: '4px',          // 内部高度更窄，适应12px的外部高度
+            width: '20px',          // 宽度保持较宽，形成水平椭圆内部
             background: '#666',
-            borderRadius: '3px',
+            borderRadius: '2px',    // 调整内部圆角
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center'
         });
 
         const dots = handle.querySelector('.resize-handle-dots') as HTMLElement;
-        Object.assign(dots.style, {
-            height: '2px',          // 垂直排列改为水平排列
-            width: '12px',
-            background: 'repeating-linear-gradient(to right, #fff 0, #fff 1px, transparent 1px, transparent 3px)', // 水平重复
-            borderRadius: '1px'
-        });
+        // 使用!important强制应用水平点状图案
+        dots.style.setProperty('width', '12px', 'important');
+        dots.style.setProperty('height', '2px', 'important');  
+        dots.style.setProperty('background', 'repeating-linear-gradient(to right, #fff 0, #fff 1px, transparent 1px, transparent 3px)', 'important');
+        dots.style.setProperty('border-radius', '1px', 'important');
 
         // 立即执行一次定位
         setTimeout(updatePosition, 10);
