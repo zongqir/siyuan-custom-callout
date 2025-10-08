@@ -3,9 +3,9 @@
   "version": "0.4.1",
   "type": "module",
   "description": "Transform SiYuan blockquotes into beautiful, customizable callout blocks with rich features",
-  "repository": "https://github.com/siyuan-note/siyuan-custom-callout",
-  "homepage": "https://github.com/siyuan-note/siyuan-custom-callout",
-  "author": "frostime",
+  "repository": "https://github.com/zongqir/siyuan-custom-callout",
+  "homepage": "https://github.com/zongqir/siyuan-custom-callout",
+  "author": "zongqir",
   "license": "MIT",
   "scripts": {
     "dev": "cross-env NODE_ENV=development VITE_SOURCEMAP=inline vite build --watch",
