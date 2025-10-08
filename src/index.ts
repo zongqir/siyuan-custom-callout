@@ -5,14 +5,17 @@ import "./index.scss";
 
 import { CalloutManager } from "./callout";
 import SettingPanel from "./settings/panel-v2.svelte";
+import CalloutOutlineDock from "./dock/callout-outline.svelte";
 import { Dialog } from "siyuan";
 import { logger } from "./libs/logger";
 
 const STORAGE_NAME = "callout-config";
+const DOCK_TYPE = "callout-outline-dock";
 
 export default class CustomCalloutPlugin extends Plugin {
     private calloutManager: CalloutManager | null = null;
     private isMobile: boolean;
+    private dockPanel: CalloutOutlineDock | null = null;
 
     async onload() {
         logger.log("Plugin loading...");
@@ -43,10 +46,49 @@ export default class CustomCalloutPlugin extends Plugin {
                 this.openSettings();
             }
         });
+
+        // 注册 Dock 面板
+        this.addDock({
+            config: {
+                position: "RightBottom",
+                size: { width: 320, height: 0 },
+                icon: "iconCallout",
+                title: this.i18n.calloutOutline || "Callout 大纲",
+            },
+            data: {
+                text: ""
+            },
+            type: DOCK_TYPE,
+            init: (dock) => {
+                const container = document.createElement('div');
+                container.style.height = '100%';
+                dock.element.appendChild(container);
+
+                // 创建 Svelte 组件
+                this.dockPanel = new CalloutOutlineDock({
+                    target: container,
+                    props: {
+                        plugin: this
+                    }
+                });
+            },
+            destroy: () => {
+                if (this.dockPanel) {
+                    this.dockPanel.$destroy();
+                    this.dockPanel = null;
+                }
+            }
+        });
     }
 
     async onunload() {
         logger.log("Plugin unloading...");
+
+        // 销毁 Dock 面板
+        if (this.dockPanel) {
+            this.dockPanel.$destroy();
+            this.dockPanel = null;
+        }
 
         // 销毁Callout管理器
         if (this.calloutManager) {

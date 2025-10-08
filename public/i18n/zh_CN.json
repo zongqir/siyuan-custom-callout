@@ -13,5 +13,7 @@
     "edit": "编辑",
     "delete": "删除",
     "hintTitle": "关于",
-    "hintDesc": "<a href='https://github.com/siyuan-note/siyuan-custom-callout'>🔗 思源自定义引述块</a><br>💻 @frostime"
+    "hintDesc": "<a href='https://github.com/siyuan-note/siyuan-custom-callout'>🔗 思源自定义引述块</a><br>💻 @frostime",
+    "calloutOutline": "Callout 大纲",
+    "noCallouts": "当前文档没有 Callout"
 }

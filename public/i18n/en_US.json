@@ -13,5 +13,7 @@
     "edit": "Edit",
     "delete": "Delete",
     "hintTitle": "About",
-    "hintDesc": "<a href='https://github.com/siyuan-note/siyuan-custom-callout'>🔗 SiYuan Custom Callout</a><br>💻 @frostime"
+    "hintDesc": "<a href='https://github.com/siyuan-note/siyuan-custom-callout'>🔗 SiYuan Custom Callout</a><br>💻 @frostime",
+    "calloutOutline": "Callout Outline",
+    "noCallouts": "No callouts in current document"
 }
