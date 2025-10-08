@@ -611,6 +611,20 @@ Callout 支持**拖拽调整宽度和高度**：
 
 ---
 
+## 💖 赞助支持
+
+如果这个插件让你的笔记体验更好，欢迎请我喝杯咖啡！你的支持是我持续更新和维护的动力 ☕
+
+<div align="center">
+<img src="https://i0.hdslb.com/bfs/openplatform/3b4d37a5285096d3493d09ca88280d9acf90129e.png@1e_1c.webp" width="200" alt="赞助二维码"/>
+
+**扫码支持 · 感谢有你！** 🙏
+
+每一份支持都是对开源项目最大的鼓励！
+</div>
+
+---
+
 ## 📄 许可证
 
 MIT License - 详见 [LICENSE](LICENSE) 文件

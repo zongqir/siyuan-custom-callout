@@ -603,6 +603,20 @@ Contributions of code or documentation are welcome! Check [Contributing Guide](C
 
 ---
 
+## 💖 Sponsor & Support
+
+If this plugin makes your note-taking experience better, consider buying me a coffee! Your support motivates me to keep improving and maintaining this project ☕
+
+<div align="center">
+<img src="https://i0.hdslb.com/bfs/openplatform/3b4d37a5285096d3493d09ca88280d9acf90129e.png@1e_1c.webp" width="200" alt="Support QR Code"/>
+
+**Scan to Support · Thank You!** 🙏
+
+Every contribution is the greatest encouragement for open source projects!
+</div>
+
+---
+
 ## 📄 License
 
 MIT License - See [LICENSE](LICENSE) file
