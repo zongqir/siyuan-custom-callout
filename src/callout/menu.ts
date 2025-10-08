@@ -1,5 +1,7 @@
 import { DEFAULT_CALLOUT_TYPES, CalloutTypeConfig } from './types';
 import { CalloutProcessor } from './processor';
+import { MenuThemeHelper } from './menu-theme-helper';
+import * as MenuStyles from './menu-styles';
 
 /**
  * Callout命令菜单管理器
@@ -22,10 +24,29 @@ export class CalloutMenu {
     
     // 保存当前菜单的编辑状态
     private currentIsEdit: boolean = false;
+    
+    // 主题辅助类
+    private themeHelper: MenuThemeHelper;
 
     constructor(processor: CalloutProcessor) {
         this.processor = processor;
+        this.themeHelper = new MenuThemeHelper();
         this.setupGlobalEventListeners();
+        
+        // 订阅主题变化
+        this.themeHelper.subscribe((isDark) => {
+            console.log('[Callout Menu] 🌙 主题已切换:', isDark ? '黑夜' : '白天');
+            if (this.isMenuVisible && this.commandMenu) {
+                this.themeHelper.refreshMenuTheme(this.commandMenu);
+            }
+        });
+    }
+
+    /**
+     * 获取当前是否为黑夜模式
+     */
+    private isDarkMode(): boolean {
+        return this.themeHelper.isDark();
     }
 
     /**
@@ -60,24 +81,8 @@ export class CalloutMenu {
         const menu = document.createElement('div');
         menu.className = 'custom-callout-menu';
         menu.setAttribute('tabindex', '0');
-        menu.style.cssText = `
-            position: fixed;
-            background: white;
-            border: 1px solid #d1d5db;
-            border-radius: 8px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-            max-height: 600px;
-            overflow-y: auto;
-            z-index: 10000;
-            font-size: 14px;
-            min-width: 620px;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            opacity: 0;
-            transform: translateY(-10px);
-            transition: opacity 0.15s cubic-bezier(0.4, 0, 0.2, 1), transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-            pointer-events: none;
-            outline: none;
-        `;
+        // 应用主题样式
+        menu.style.cssText = MenuStyles.getMenuContainerStyle(this.isDarkMode());
 
         // 关闭按钮
         const closeButton = this.createCloseButton();
@@ -121,23 +126,8 @@ export class CalloutMenu {
      */
     private createCloseButton(): HTMLElement {
         const closeButton = document.createElement('div');
-        closeButton.style.cssText = `
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            background: #f3f4f6;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 14px;
-            color: #6b7280;
-            transition: all 0.15s ease;
-            z-index: 1;
-        `;
+        closeButton.setAttribute('data-menu-close', '');
+        closeButton.style.cssText = MenuStyles.getCloseButtonStyle(this.isDarkMode());
         closeButton.innerHTML = '×';
 
         closeButton.addEventListener('mouseenter', () => {
@@ -146,8 +136,7 @@ export class CalloutMenu {
         });
 
         closeButton.addEventListener('mouseleave', () => {
-            closeButton.style.background = '#f3f4f6';
-            closeButton.style.color = '#6b7280';
+            closeButton.style.cssText = MenuStyles.getCloseButtonStyle(this.isDarkMode());
         });
 
         closeButton.addEventListener('click', (e) => {
@@ -164,14 +153,8 @@ export class CalloutMenu {
      */
     private createHeader(isEdit: boolean): HTMLElement {
         const header = document.createElement('div');
-        header.style.cssText = `
-            padding: 12px 40px 12px 16px;
-            background: #f9fafb;
-            border-bottom: 1px solid #e5e7eb;
-            font-size: 13px;
-            color: #6b7280;
-            font-weight: 600;
-        `;
+        header.setAttribute('data-menu-header', '');
+        header.style.cssText = MenuStyles.getHeaderStyle(this.isDarkMode());
         const headerText = isEdit ? '切换 Callout 类型' : 'Callout 命令菜单';
         header.innerHTML = `<div>${headerText}</div>`;
         return header;
@@ -182,25 +165,10 @@ export class CalloutMenu {
      */
     private createFilterInput(): HTMLElement {
         const container = document.createElement('div');
-        container.style.cssText = `
-            padding: 8px 16px 10px;
-            background: linear-gradient(to bottom, #fafbfc, #f6f8fa);
-            border-bottom: 1px solid #e1e4e8;
-            display: none;
-        `;
+        container.style.cssText = MenuStyles.getFilterInputContainerStyle(this.isDarkMode(), 'none');
 
         const inputWrapper = document.createElement('div');
-        inputWrapper.style.cssText = `
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 8px 12px;
-            background: white;
-            border-radius: 8px;
-            border: 1.5px solid #3b82f6;
-            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
-            transition: all 0.2s ease;
-        `;
+        inputWrapper.style.cssText = MenuStyles.getFilterInputWrapperStyle(this.isDarkMode());
 
         // 搜索图标 (SVG)
         const icon = document.createElement('span');
@@ -208,34 +176,16 @@ export class CalloutMenu {
             <circle cx="11" cy="11" r="7" stroke="#3b82f6" stroke-width="2"/>
             <path d="M20 20L16.65 16.65" stroke="#3b82f6" stroke-width="2" stroke-linecap="round"/>
         </svg>`;
-        icon.style.cssText = `
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        `;
+        icon.style.cssText = MenuStyles.getFilterInputIconStyle();
 
         // 过滤文本显示
         const text = document.createElement('span');
-        text.style.cssText = `
-            font-size: 14px;
-            font-weight: 500;
-            color: #1f2937;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace;
-            letter-spacing: 0.3px;
-        `;
+        text.style.cssText = MenuStyles.getFilterInputTextStyle(this.isDarkMode());
         text.textContent = '@';
 
         // 提示标签
         const hint = document.createElement('span');
-        hint.style.cssText = `
-            margin-left: auto;
-            font-size: 11px;
-            color: #9ca3af;
-            background: #f3f4f6;
-            padding: 2px 8px;
-            border-radius: 4px;
-        `;
+        hint.style.cssText = MenuStyles.getFilterInputHintStyle(this.isDarkMode());
         hint.textContent = 'ESC 退出';
 
         inputWrapper.appendChild(icon);
@@ -254,17 +204,12 @@ export class CalloutMenu {
      */
     private createMenuGrid(isEdit: boolean): HTMLElement {
         const container = document.createElement('div');
-        container.style.cssText = `padding: 8px;`;
+        container.style.cssText = MenuStyles.getMenuGridContainerStyle();
 
         // 如果是编辑模式，显示正常网格 + 底部边注工具栏
         if (isEdit) {
             const gridContainer = document.createElement('div');
-            gridContainer.style.cssText = `
-                display: grid;
-                grid-template-columns: repeat(${this.gridColumns}, 1fr);
-                gap: 4px;
-                margin-bottom: 8px;
-            `;
+            gridContainer.style.cssText = MenuStyles.getMenuGridStyle(this.gridColumns);
 
             // 添加"原生样式"选项
             const noneItem = this.createMenuItem({
@@ -297,11 +242,7 @@ export class CalloutMenu {
         } else {
             // 新建模式，使用原来的布局
             const gridContainer = document.createElement('div');
-            gridContainer.style.cssText = `
-                display: grid;
-                grid-template-columns: repeat(${this.gridColumns}, 1fr);
-                gap: 4px;
-            `;
+            gridContainer.style.cssText = MenuStyles.getMenuGridStyleNoMargin(this.gridColumns);
 
             // 添加"原生样式"选项
             const noneItem = this.createMenuItem({
@@ -336,23 +277,13 @@ export class CalloutMenu {
      */
     private createMarginToolbar(): HTMLElement {
         const toolbar = document.createElement('div');
-        toolbar.style.cssText = `
-            border-top: 1px solid #e5e7eb;
-            padding: 6px 8px 4px;
-            background: #fafbfc;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        `;
+        toolbar.setAttribute('data-margin-toolbar', '');
+        toolbar.style.cssText = MenuStyles.getMarginToolbarStyle(this.isDarkMode());
 
         // 标签
         const label = document.createElement('span');
-        label.style.cssText = `
-            font-size: 11px;
-            color: #6b7280;
-            font-weight: 500;
-            margin-right: 4px;
-        `;
+        label.setAttribute('data-toolbar-label', '');
+        label.style.cssText = MenuStyles.getMarginToolbarLabelStyle(this.isDarkMode());
         label.textContent = '边注:';
 
         toolbar.appendChild(label);
@@ -368,22 +299,8 @@ export class CalloutMenu {
             const button = document.createElement('button');
             button.className = 'margin-toolbar-btn';
             button.setAttribute('data-position', btn.position);
-            button.style.cssText = `
-                flex: 1;
-                display: flex;
-                align-items: center;
-                gap: 3px;
-                padding: 3px 4px;
-                border: 1px solid #d1d5db;
-                border-radius: 4px;
-                background: ${btn.color};
-                cursor: pointer;
-                font-size: 11px;
-                font-weight: 500;
-                color: #374151;
-                transition: all 0.15s ease;
-                justify-content: center;
-            `;
+            button.setAttribute('data-toolbar-btn', '');
+            button.style.cssText = MenuStyles.getMarginToolbarButtonStyle(this.isDarkMode(), btn.position);
 
             button.innerHTML = `
                 <span>${btn.icon}</span>
@@ -392,12 +309,12 @@ export class CalloutMenu {
 
             // 悬停效果
             button.addEventListener('mouseenter', () => {
-                button.style.borderColor = '#9ca3af';
+                button.style.borderColor = MenuStyles.getMarginToolbarButtonHoverBorderColor(this.isDarkMode());
                 button.style.transform = 'scale(1.02)';
             });
 
             button.addEventListener('mouseleave', () => {
-                button.style.borderColor = '#d1d5db';
+                button.style.borderColor = MenuStyles.getMarginToolbarButtonNormalBorderColor(this.isDarkMode());
                 button.style.transform = 'scale(1)';
             });
 
@@ -414,33 +331,15 @@ export class CalloutMenu {
      */
     private createMenuItem(options: any, index: number, isEdit: boolean): HTMLElement {
         const item = document.createElement('div');
+        item.setAttribute('data-menu-item', '');
+        item.setAttribute('data-command', options.command || '');
+        item.style.cssText = MenuStyles.getMenuItemStyle(this.isDarkMode(), options);
         
-        // 边注菜单项的特殊样式
-        const marginNoteStyle = options.isMarginNote ? `
-            border-left: 3px solid ${options.marginPosition === 'left' ? '#10b981' : '#f59e0b'};
-            background: linear-gradient(135deg, 
-                ${options.marginPosition === 'left' ? '#f0fdf4' : '#fffbeb'} 0%, 
-                #ffffff 100%);
-            font-size: 12px;
-        ` : '';
-        
-        item.style.cssText = `
-            padding: 10px 12px;
-            cursor: pointer;
-            border: 1px solid #f3f4f6;
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            transition: background-color 0.1s ease, transform 0.1s ease, border-color 0.1s ease;
-            ${marginNoteStyle}
-        `;
-
         item.innerHTML = `
-            <span style="width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${options.icon}</span>
-            <div style="flex: 1; min-width: 0;">
-                <div style="font-weight: 600; color: #1f2937; font-size: 14px; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${options.displayName}</div>
-                <div style="color: #9ca3af; font-size: 10px; font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${options.command}</div>
+            <span style="${MenuStyles.getMenuItemIconStyle()}">${options.icon}</span>
+            <div style="${MenuStyles.getMenuItemContentStyle()}">
+                <div class="menu-item-title" style="${MenuStyles.getMenuItemTitleStyle()}; color: ${MenuStyles.getMenuItemTitleColor(this.isDarkMode())}">${options.displayName}</div>
+                <div class="menu-item-command" style="${MenuStyles.getMenuItemCommandStyle()}; color: ${MenuStyles.getMenuItemCommandColor(this.isDarkMode())}">${options.command}</div>
             </div>
         `;
 
@@ -452,8 +351,9 @@ export class CalloutMenu {
         item.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            item.style.backgroundColor = '#dbeafe';
-            item.style.color = '#1e40af';
+            const clickStyle = MenuStyles.getMenuItemClickStyle();
+            item.style.backgroundColor = clickStyle.backgroundColor;
+            item.style.color = clickStyle.color;
 
             // console.log('[Callout Menu] 🖱️ 菜单项点击:', {
             //     command: options.command,
@@ -478,14 +378,8 @@ export class CalloutMenu {
      */
     private createFooter(): HTMLElement {
         const footer = document.createElement('div');
-        footer.style.cssText = `
-            padding: 8px 16px;
-            background: #f9fafb;
-            border-top: 1px solid #e5e7eb;
-            font-size: 11px;
-            color: #9ca3af;
-            text-align: center;
-        `;
+        footer.setAttribute('data-menu-footer', '');
+        footer.style.cssText = MenuStyles.getFooterStyle(this.isDarkMode());
         footer.innerHTML = '↑↓←→ 导航 • Enter 确认 • 字母键 过滤 • ESC 关闭';
         return footer;
     }
@@ -820,15 +714,8 @@ export class CalloutMenu {
      */
     private createFilterRow(originalConfig: any, marginConfig: CalloutTypeConfig | null, startIndex: number, isEdit: boolean): HTMLElement {
         const row = document.createElement('div');
-        row.style.cssText = `
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr 1fr;
-            gap: 6px;
-            margin-bottom: 6px;
-            align-items: stretch;
-            min-height: 50px;
-            padding: 4px;
-        `;
+        row.setAttribute('data-filter-row', '');
+        row.style.cssText = MenuStyles.getFilterRowStyle(this.isDarkMode());
 
         // 第1列：原始类型
         let originalIndex = startIndex;
@@ -839,16 +726,8 @@ export class CalloutMenu {
             // 原生样式的其他3列显示占位符
             for (let i = 0; i < 3; i++) {
                 const placeholder = document.createElement('div');
-                placeholder.style.cssText = `
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    color: #9ca3af;
-                    font-size: 11px;
-                    background: #f9fafb;
-                    border-radius: 4px;
-                    border: 1px solid #e5e7eb;
-                `;
+                placeholder.setAttribute('data-placeholder', '');
+                placeholder.style.cssText = MenuStyles.getPlaceholderStyle(this.isDarkMode());
                 placeholder.textContent = '-';
                 row.appendChild(placeholder);
             }
@@ -912,27 +791,13 @@ export class CalloutMenu {
      */
     private createCompactMenuItem(options: any, index: number, isEdit: boolean): HTMLElement {
         const item = document.createElement('div');
-        
-        // 紧凑样式
-        item.style.cssText = `
-            padding: 6px 8px;
-            cursor: pointer;
-            border: 1px solid #f3f4f6;
-            border-radius: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 4px;
-            transition: all 0.1s ease;
-            font-size: 12px;
-            min-height: 32px;
-            background: ${options.marginPosition === 'left' ? '#f0fdf4' : 
-                        options.marginPosition === 'right' ? '#fffbeb' : '#ffffff'};
-        `;
+        item.setAttribute('data-compact-item', '');
+        item.setAttribute('data-margin-position', options.marginPosition || 'normal');
+        item.style.cssText = MenuStyles.getCompactMenuItemStyle(this.isDarkMode(), options.marginPosition);
 
         item.innerHTML = `
             <span style="font-size: 14px;">${options.icon}</span>
-            <span style="font-weight: 500; color: #374151;">${options.displayName}</span>
+            <span class="compact-item-text" style="font-weight: 500; color: ${MenuStyles.getCompactMenuItemTextColor(this.isDarkMode())}">${options.displayName}</span>
         `;
 
         // 添加 tooltip
