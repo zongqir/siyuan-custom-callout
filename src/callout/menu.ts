@@ -582,9 +582,49 @@ export class CalloutMenu {
      */
     private handleClearCallout() {
         if (this.currentTargetBlockQuote) {
-            this.processor.clearCalloutStyle(this.currentTargetBlockQuote);
+            // 🔧 保存blockquote引用，防止hideMenu时被清空
+            const targetBlockQuote = this.currentTargetBlockQuote;
+            
+            this.processor.clearCalloutStyle(targetBlockQuote);
+            
+            // 🔧 原生模式特殊处理：延迟恢复光标焦点
+            setTimeout(() => {
+                // 确保光标在正确的位置
+                const titleDiv = targetBlockQuote.querySelector('[contenteditable="true"]') as HTMLElement;
+                if (titleDiv) {
+                    console.log('[Callout Menu] 🎯 原生模式：开始恢复光标焦点');
+                    
+                    // 强制聚焦并设置光标
+                    titleDiv.focus();
+                    
+                    // 确保光标设置成功
+                    requestAnimationFrame(() => {
+                        const selection = window.getSelection();
+                        const range = document.createRange();
+                        
+                        // 如果titleDiv有内容，光标移到末尾；如果没有内容，也要确保光标在其中
+                        if (titleDiv.childNodes.length > 0) {
+                            range.selectNodeContents(titleDiv);
+                            range.collapse(false); // 光标移到末尾
+                        } else {
+                            // 空元素时，确保光标在元素内
+                            range.selectNodeContents(titleDiv);
+                        }
+                        
+                        selection?.removeAllRanges();
+                        selection?.addRange(range);
+                        
+                        console.log('[Callout Menu] ✅ 原生模式：光标焦点已恢复', {
+                            focused: document.activeElement === titleDiv,
+                            hasSelection: selection?.rangeCount > 0
+                        });
+                    });
+                }
+            }, 250); // 延长等待时间，确保DOM更新完成
         }
-        setTimeout(() => this.hideMenu(true), 100);
+        
+        // 延迟隐藏菜单，确保焦点处理完成
+        setTimeout(() => this.hideMenu(true), 300);
     }
 
     /**
