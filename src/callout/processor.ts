@@ -109,16 +109,26 @@ export class CalloutProcessor {
         console.log('[Callout] 尝试解析参数化命令:', text);
         const parsedCommand = this.parseCalloutCommand(text);
         if (parsedCommand) {
-            console.log('[Callout] 📝 匹配参数化命令成功，设置callout');
+            console.log('[Callout] 📝 匹配参数化命令成功，解析结果:', {
+                type: parsedCommand.config.type,
+                width: parsedCommand.width,
+                originalCommand: parsedCommand.originalCommand
+            });
             
             // 设置基础 callout 类型
             blockquote.setAttribute('custom-callout', parsedCommand.config.type);
 
             // 设置边注相关属性（只保留宽度）
-            if (parsedCommand.width && parsedCommand.width !== '20%') {
+            if (parsedCommand.width && parsedCommand.width !== null) {
+                // 只有明确指定宽度参数才设置
+                console.log('[Callout] 🎯 设置宽度属性:', parsedCommand.width);
                 blockquote.setAttribute('data-margin-width', parsedCommand.width);
                 // 设置CSS变量
                 blockquote.style.setProperty('--margin-width', parsedCommand.width);
+            } else {
+                console.log('[Callout] ⚠️ 没有宽度参数，保持现有宽度设置不变');
+                // 不要清除已有的宽度属性！用户可能之前设置过宽度
+                // 只有在明确要设置新宽度时才修改
             }
 
             // 标记标题并设置显示名称
@@ -150,13 +160,13 @@ export class CalloutProcessor {
             }
         }
 
-        // 简化的清理逻辑
+        // 简化的清理逻辑  
         console.log('[Callout] 🔍 没有匹配任何callout类型，进入清理逻辑');
         
-        // 如果不匹配任何 callout 类型，清除相关属性
+        // 如果不匹配任何 callout 类型，谨慎清除属性（保留宽度设置）
         if (blockquote.hasAttribute('custom-callout')) {
-            console.log('[Callout] ========== 清除 callout 属性 ==========');
-            this.clearCalloutAttributes(blockquote, titleDiv);
+            console.log('[Callout] ========== 谨慎清除 callout 属性（保留宽度）==========');
+            this.clearCalloutAttributesConservatively(blockquote, titleDiv);
         }
 
         return false;
@@ -211,6 +221,22 @@ export class CalloutProcessor {
         blockquote.removeAttribute('data-margin-width');
         // 清除CSS变量
         blockquote.style.removeProperty('--margin-width');
+        
+        titleDiv.removeAttribute('data-callout-title');
+        titleDiv.removeAttribute('data-callout-display-name');
+        this.removeCollapseToggle(titleDiv);
+    }
+
+    /**
+     * 谨慎清除Callout属性（保留用户可能手动设置的宽度）
+     */
+    private clearCalloutAttributesConservatively(blockquote: HTMLElement, titleDiv: HTMLElement) {
+        blockquote.removeAttribute('custom-callout');
+        blockquote.removeAttribute('data-collapsed');
+        
+        // ⚠️ 保留宽度属性！用户可能通过拖拽手动设置了宽度
+        // 不要清除 data-margin-width 和 --margin-width
+        console.log('[Callout] 🛡️ 保留现有宽度设置，避免用户设置丢失');
         
         titleDiv.removeAttribute('data-callout-title');
         titleDiv.removeAttribute('data-callout-display-name');
@@ -375,14 +401,23 @@ export class CalloutProcessor {
      * 支持格式: [!info|30%] 或 [!info|30%|2em]
      */
     parseCalloutCommand(text: string): ParsedCalloutCommand | null {
+        console.log('[Callout] 🔍 开始解析命令:', text);
+        
         // 匹配 [!type] 或 [!type|params] 格式
         const match = text.match(/^\[!([^|\]]+)(\|.*?)?\]$/);
         if (!match) {
+            console.log('[Callout] ❌ 正则匹配失败');
             return null;
         }
 
         const calloutType = match[1]; // info
         const paramsString = match[2]; // |30%|2em
+        
+        console.log('[Callout] 📋 解析结果:', {
+            calloutType,
+            paramsString,
+            fullMatch: match[0]
+        });
         
         // 构造查找用的键（现在配置中使用 [!type] 格式）
         const searchKey = `[!${calloutType}]`;
@@ -390,13 +425,22 @@ export class CalloutProcessor {
         // 查找匹配的配置
         const config = this.calloutTypes.get(searchKey);
         if (!config) {
+            console.log('[Callout] ❌ 找不到配置，searchKey:', searchKey);
+            console.log('[Callout] 可用的配置键:', Array.from(this.calloutTypes.keys()));
             return null;
         }
 
+        console.log('[Callout] ✅ 找到配置:', config.type);
+
         // 解析参数 - 只保留宽度
         const params = paramsString ? paramsString.substring(1).split('|') : []; // 移除开头的|
-        const width = this.parseWidth(params[0]); // 第一个参数作为宽度
+        console.log('[Callout] 📊 参数列表:', params);
+        
+        // 只有明确提供参数时才解析宽度，避免给无参数的callout设置默认宽度
+        const width = params.length > 0 && params[0] ? this.parseWidth(params[0]) : null;
         const spacing = this.parseSpacing(params[1]); // 第二个参数作为间距（暂时保留解析，但不使用）
+        
+        console.log('[Callout] 🎯 解析后的宽度:', width);
 
         return {
             type: config.type,
@@ -412,24 +456,30 @@ export class CalloutProcessor {
     /**
      * 解析宽度参数
      */
-    private parseWidth(param?: string): string {
-        if (!param) return '20%'; // 默认宽度 - 更窄，适合边注
+    private parseWidth(param: string): string {
+        console.log('[Callout] 🔍 parseWidth接收参数:', param);
         
         const normalized = param.trim();
+        console.log('[Callout] 📐 标准化后的参数:', normalized);
         
-        // 验证宽度格式 (支持 % 和 px, em, rem 等)
-        if (/^\d+(%|px|em|rem|vw)$/.test(normalized)) {
+        // 验证宽度格式 (支持 % 和 px, em, rem 等，支持小数)
+        if (/^[\d.]+(%|px|em|rem|vw)$/.test(normalized)) {
+            console.log('[Callout] ✅ 正则匹配成功，返回:', normalized);
             return normalized;
         }
         
         // 如果只是数字，默认当作百分比
-        if (/^\d+$/.test(normalized)) {
-            const num = parseInt(normalized);
-            if (num > 0 && num <= 50) { // 限制最大50%，防止太宽
-                return `${num}%`;
+        if (/^[\d.]+$/.test(normalized)) {
+            const num = parseFloat(normalized);
+            console.log('[Callout] 🔢 纯数字参数，解析为:', num);
+            if (num > 0 && num <= 100) { // 限制到100%
+                const result = `${num}%`;
+                console.log('[Callout] ✅ 数字范围有效，返回:', result);
+                return result;
             }
         }
         
+        console.log('[Callout] ❌ 参数无效，回退到默认20%');
         return '20%'; // 回退到默认值
     }
 

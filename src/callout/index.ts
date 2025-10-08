@@ -11,4 +11,6 @@ export * from './config';
 export * from './icons';
 export * from './colors';
 export * from './themes/index';
+export * from './drag-resize';
+export * from './debug-helper';
 

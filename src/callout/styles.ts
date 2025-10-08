@@ -225,6 +225,9 @@ export function generateCalloutStyles(customTypes?: CalloutTypeConfig[], themeId
     // 添加边注功能CSS
     styles.push(generateMarginNoteCSS());
 
+    // 添加拖拽调整功能CSS
+    styles.push(generateDragResizeCSS());
+
     return styles.join('\n');
 }
 
@@ -249,6 +252,102 @@ function generateMarginNoteCSS(): string {
         width: 100% !important;
         max-width: none !important;
     }
+}
+`;
+}
+
+/**
+ * 生成拖拽调整功能CSS
+ */
+function generateDragResizeCSS(): string {
+    return `
+/* ==================== 拖拽调整功能样式 ==================== */
+
+/* 拖拽状态下的样式 */
+.protyle-wysiwyg .bq[custom-callout].callout-resizing {
+    transition: none !important;
+    user-select: none !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* 拖拽手柄基础样式 */
+.callout-resize-handle {
+    position: absolute !important;
+    right: -8px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    width: 16px !important;
+    height: 40px !important;
+    cursor: ew-resize !important;
+    z-index: 10 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    opacity: 0 !important;
+    transition: opacity 0.2s ease !important;
+    background: rgba(0, 0, 0, 0.1) !important;
+    border-radius: 8px !important;
+    backdrop-filter: blur(4px) !important;
+}
+
+/* 拖拽手柄悬停效果 */
+.callout-resize-handle:hover {
+    opacity: 1 !important;
+    background: rgba(0, 0, 0, 0.15) !important;
+}
+
+/* 拖拽手柄内部样式 */
+.resize-handle-inner {
+    width: 6px !important;
+    height: 20px !important;
+    background: #666 !important;
+    border-radius: 3px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: background 0.2s ease !important;
+}
+
+/* 拖拽手柄点状图案 */
+.resize-handle-dots {
+    width: 2px !important;
+    height: 12px !important;
+    background: repeating-linear-gradient(
+        to bottom, 
+        #fff 0, 
+        #fff 1px, 
+        transparent 1px, 
+        transparent 3px
+    ) !important;
+    border-radius: 1px !important;
+}
+
+/* 拖拽时的全局样式 */
+body.dragging-callout {
+    cursor: ew-resize !important;
+    user-select: none !important;
+}
+
+/* 响应式：在小屏幕上隐藏拖拽手柄 */
+@media (max-width: 768px) {
+    .callout-resize-handle {
+        display: none !important;
+    }
+}
+
+/* 确保callout容器有相对定位 */
+.protyle-wysiwyg .bq[custom-callout] {
+    position: relative !important;
+}
+
+/* 拖拽时的手柄高亮效果 */
+.callout-resize-handle.active {
+    opacity: 1 !important;
+    background: rgba(66, 153, 225, 0.2) !important;
+}
+
+.callout-resize-handle.active .resize-handle-inner {
+    background: #4299e1 !important;
 }
 `;
 }

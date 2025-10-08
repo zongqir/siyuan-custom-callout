@@ -1,5 +1,6 @@
 import { CalloutProcessor } from './processor';
 import { CalloutMenu } from './menu';
+import { CalloutDragResizer } from './drag-resize';
 import { generateCalloutStyles } from './styles';
 import type { CalloutConfig } from './config';
 import { ConfigManager } from './config';
@@ -10,6 +11,7 @@ import { ConfigManager } from './config';
 export class CalloutManager {
     private processor: CalloutProcessor;
     private menu: CalloutMenu;
+    private dragResizer: CalloutDragResizer | null = null;
     private observer: MutationObserver | null = null;
     private styleElement: HTMLStyleElement | null = null;
     private currentConfig: CalloutConfig | null = null;
@@ -47,6 +49,9 @@ export class CalloutManager {
 
         // 注入样式
         this.injectStyles();
+
+        // 初始化拖拽调整功能
+        this.initializeDragResize();
 
         // 处理现有的blockquote
         this.processor.processAllBlockquotes();
@@ -212,6 +217,14 @@ export class CalloutManager {
     }
 
     /**
+     * 初始化拖拽调整功能
+     */
+    private initializeDragResize() {
+        console.log('[CalloutManager] 初始化拖拽调整功能');
+        this.dragResizer = new CalloutDragResizer(this.processor);
+    }
+
+    /**
      * 销毁Callout功能
      */
     destroy() {
@@ -219,6 +232,12 @@ export class CalloutManager {
         if (this.observer) {
             this.observer.disconnect();
             this.observer = null;
+        }
+
+        // 销毁拖拽调整功能
+        if (this.dragResizer) {
+            this.dragResizer.destroy();
+            this.dragResizer = null;
         }
 
         // 移除样式
@@ -251,6 +270,13 @@ export class CalloutManager {
      */
     getMenu(): CalloutMenu {
         return this.menu;
+    }
+
+    /**
+     * 获取拖拽调整器实例
+     */
+    getDragResizer(): CalloutDragResizer | null {
+        return this.dragResizer;
     }
 }
 
