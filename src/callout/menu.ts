@@ -85,7 +85,8 @@ export class CalloutMenu {
 
         const menu = document.createElement('div');
         menu.className = 'custom-callout-menu';
-        menu.setAttribute('tabindex', '0');
+        // 移除tabindex，防止面板失去焦点时触发blur
+        // menu.setAttribute('tabindex', '0');
         // 应用主题样式
         menu.style.cssText = MenuStyles.getMenuContainerStyle(this.isDarkMode());
 
@@ -291,6 +292,7 @@ export class CalloutMenu {
             </div>
         `;
 
+        // 鼠标悬浮高亮选项（只改变视觉，不触发选择）
         item.addEventListener('mouseenter', () => {
             this.selectedMenuIndex = index;
             this.updateMenuSelection();
@@ -328,7 +330,7 @@ export class CalloutMenu {
         const footer = document.createElement('div');
         footer.setAttribute('data-menu-footer', '');
         footer.style.cssText = MenuStyles.getFooterStyle(this.isDarkMode());
-        footer.innerHTML = '↑↓←→ 导航 • Enter 确认 • 字母键 过滤 • ESC 关闭';
+        footer.innerHTML = '↑↓←→ 导航 • Enter 确认 • 字母键 过滤 • ESC/× 关闭';
         return footer;
     }
 
@@ -581,10 +583,46 @@ export class CalloutMenu {
      * 处理清除Callout
      */
     private handleClearCallout() {
+        logger.log('[Callout Menu] 🧹 处理清除Callout（原生样式）');
+        
         if (this.currentTargetBlockQuote) {
+            // 标记引述块为正在使用，防止被自动删除
+            const nodeId = this.currentTargetBlockQuote.getAttribute('data-node-id');
+            if (nodeId) {
+                this.processor.markAsRecentlyCreated(nodeId);
+                logger.log('[Callout Menu] 🛡️ 保护引述块免被自动删除:', nodeId);
+            }
+            
+            // 保存引述块引用，用于恢复焦点
+            const blockquoteToFocus = this.currentTargetBlockQuote;
+            
             this.processor.clearCalloutStyle(this.currentTargetBlockQuote);
+            logger.log('[Callout Menu] ✅ 已清除callout样式');
+            
+            // 延迟一点再隐藏菜单，并确保焦点返回
+            setTimeout(() => {
+                this.hideMenu(true);
+                
+                // 确保焦点返回到引述块
+                setTimeout(() => {
+                    const editableDiv = blockquoteToFocus.querySelector('div[contenteditable="true"]') as HTMLElement;
+                    if (editableDiv) {
+                        logger.log('[Callout Menu] 🎯 恢复焦点到引述块（清除后）');
+                        editableDiv.focus();
+                        
+                        // 设置光标到末尾
+                        const selection = window.getSelection();
+                        const range = document.createRange();
+                        range.selectNodeContents(editableDiv);
+                        range.collapse(false);
+                        selection?.removeAllRanges();
+                        selection?.addRange(range);
+                    }
+                }, 100);
+            }, 100);
+        } else {
+            setTimeout(() => this.hideMenu(true), 100);
         }
-        setTimeout(() => this.hideMenu(true), 100);
     }
 
     /**
@@ -592,6 +630,13 @@ export class CalloutMenu {
      */
     private handleSelectCallout(command: string, isEdit: boolean) {
         if (this.currentTargetBlockQuote) {
+            // 标记引述块为正在使用，防止被自动删除
+            const nodeId = this.currentTargetBlockQuote.getAttribute('data-node-id');
+            if (nodeId) {
+                this.processor.markAsRecentlyCreated(nodeId);
+                logger.log('[Callout Menu] 🛡️ 保护引述块免被自动删除:', nodeId);
+            }
+            
             this.insertCommand(command, this.currentTargetBlockQuote, isEdit);
         }
         setTimeout(() => this.hideMenu(true), 300);
@@ -775,7 +820,7 @@ export class CalloutMenu {
         menu.style.top = '0px';
         menu.style.visibility = 'hidden';
         menu.style.opacity = '1';
-        menu.style.pointerEvents = 'auto';
+        menu.style.pointerEvents = 'none'; // 初始禁用鼠标事件，防止意外点击
 
         requestAnimationFrame(() => {
             const menuRect = menu.getBoundingClientRect();
@@ -809,6 +854,12 @@ export class CalloutMenu {
                 menu.style.opacity = '1';
                 menu.style.transform = 'translateY(0)';
                 menu.focus();
+                
+                // 延迟启用鼠标事件，防止菜单刚显示时意外触发点击
+                setTimeout(() => {
+                    menu.style.pointerEvents = 'auto';
+                    logger.log('[Callout Menu] ✅ 菜单鼠标事件已启用');
+                }, 150); // 150ms延迟，确保菜单完全显示
             });
 
             this.isMenuVisible = true;
@@ -827,6 +878,8 @@ export class CalloutMenu {
     hideMenu(immediate: boolean = false) {
         if (!this.commandMenu || !this.isMenuVisible) return;
 
+        const targetBlockQuote = this.currentTargetBlockQuote; // 保存引用，因为下面会重置
+        
         this.currentTargetBlockQuote = null;
         this.currentIsEdit = false; // 重置编辑状态
         this.selectedMenuIndex = 0;
@@ -837,10 +890,36 @@ export class CalloutMenu {
         this.filterText = '';
         this.filterInput = null;
 
+        // 智能焦点恢复：只在需要时恢复焦点，避免干扰插入流程
+        const restoreFocus = () => {
+            if (targetBlockQuote) {
+                const editableDiv = targetBlockQuote.querySelector('div[contenteditable="true"]') as HTMLElement;
+                if (editableDiv) {
+                    // 检查当前是否已经有焦点，如果有就不要干扰
+                    const currentFocus = document.activeElement;
+                    const hasValidFocus = currentFocus && (
+                        currentFocus === editableDiv || 
+                        editableDiv.contains(currentFocus)
+                    );
+                    
+                    if (!hasValidFocus) {
+                        logger.log('[Callout Menu] 🎯 恢复焦点到引述块（无现有焦点时）');
+                        setTimeout(() => {
+                            editableDiv.focus();
+                            // 不强制设置光标位置，让自然的光标状态保持
+                        }, 50);
+                    } else {
+                        logger.log('[Callout Menu] ✅ 引述块已有焦点，跳过焦点恢复');
+                    }
+                }
+            }
+        };
+
         if (immediate) {
             this.commandMenu.remove();
             this.commandMenu = null;
             this.isMenuVisible = false;
+            restoreFocus();
             return;
         }
 
@@ -854,6 +933,7 @@ export class CalloutMenu {
                 this.commandMenu = null;
             }
             this.isMenuVisible = false;
+            restoreFocus();
         }, 200);
     }
 
@@ -870,15 +950,15 @@ export class CalloutMenu {
         };
         document.addEventListener('keydown', this.globalKeydownHandler);
 
-        // 点击外部关闭菜单
-        this.globalClickHandler = (e: MouseEvent) => {
-            if (this.commandMenu && !this.commandMenu.contains(e.target as Node) && this.isMenuVisible) {
-                setTimeout(() => {
-                    if (this.isMenuVisible) this.hideMenu(true);
-                }, 100);
-            }
-        };
-        document.addEventListener('click', this.globalClickHandler);
+        // 禁用点击外部关闭菜单 - 只允许ESC键或明确点击关闭按钮
+        // this.globalClickHandler = (e: MouseEvent) => {
+        //     if (this.commandMenu && !this.commandMenu.contains(e.target as Node) && this.isMenuVisible) {
+        //         setTimeout(() => {
+        //             if (this.isMenuVisible) this.hideMenu(true);
+        //         }, 100);
+        //     }
+        // };
+        // document.addEventListener('click', this.globalClickHandler);
     }
 
     /**

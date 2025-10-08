@@ -49,6 +49,34 @@ export function generateCalloutStyles(customTypes?: CalloutTypeConfig[], themeId
     user-select: none !important;
 }
 
+/* 确保callout有最小高度，方便点击编辑 */
+.protyle-wysiwyg .bq[custom-callout] {
+    min-height: 60px !important;
+    padding-bottom: 8px !important;
+    cursor: text !important;
+}
+
+/* 编辑状态：显示原始内容，隐藏友好名称 */
+.protyle-wysiwyg .bq[custom-callout][data-editing="true"] [data-callout-title="true"] {
+    user-select: text !important;
+    cursor: text !important;
+}
+
+.protyle-wysiwyg .bq[custom-callout][data-editing="true"] [data-callout-title="true"] * {
+    display: inline !important;
+    visibility: visible !important;
+}
+
+.protyle-wysiwyg .bq[custom-callout][data-editing="true"] [data-callout-title="true"]::before,
+.protyle-wysiwyg .bq[custom-callout][data-editing="true"] [data-callout-title="true"]::after {
+    display: none !important;
+}
+
+.protyle-wysiwyg .bq[custom-callout][data-editing="true"] [data-callout-title="true"] {
+    padding-left: 0 !important;
+}
+
+
 /* 折叠状态下隐藏内容 */
 .protyle-wysiwyg .bq[custom-callout][data-collapsed="true"] > div:not(:first-child) {
     display: none !important;

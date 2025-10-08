@@ -1,5 +1,6 @@
 import { DEFAULT_CALLOUT_TYPES, CalloutTypeConfig, ParsedCalloutCommand } from './types';
 import { logger } from '../libs/logger';
+import { getChildBlocks, deleteBlock } from '../api';
 
 /**
  * Callout处理器 - 负责检测和转换引述块为Callout样式
@@ -86,7 +87,6 @@ export class CalloutProcessor {
         // 尝试解析参数化命令
         const parsedCommand = this.parseCalloutCommand(text);
         if (parsedCommand) {
-            
             // 设置基础 callout 类型
             blockquote.setAttribute('custom-callout', parsedCommand.config.type);
 
@@ -177,6 +177,116 @@ export class CalloutProcessor {
     }
 
     /**
+     * 检查引述块是否为空（没有子块）
+     */
+    async isBlockquoteEmpty(blockquote: HTMLElement): Promise<boolean> {
+        const nodeId = blockquote.getAttribute('data-node-id');
+        if (!nodeId) {
+            return false;
+        }
+
+        try {
+            const childBlocks = await getChildBlocks(nodeId);
+           // logger.log('[Callout] 检查引述块子块数量:', childBlocks?.length || 0);
+            
+            // 如果没有子块，则认为是空的
+            return !childBlocks || childBlocks.length === 0;
+        } catch (error) {
+            logger.error('[Callout] 检查子块失败:', error);
+            return false;
+        }
+    }
+
+    /**
+     * 删除空的引述块
+     */
+    async removeEmptyBlockquote(blockquote: HTMLElement): Promise<boolean> {
+        const nodeId = blockquote.getAttribute('data-node-id');
+        if (!nodeId) {
+            logger.warn('[Callout] 无法获取引述块ID，跳过删除');
+            return false;
+        }
+
+        try {
+            logger.log('[Callout] 🗑️ 删除空的引述块:', nodeId);
+            await deleteBlock(nodeId);
+            logger.log('[Callout] ✅ 成功删除空引述块');
+            return true;
+        } catch (error) {
+            logger.error('[Callout] 删除引述块失败:', error);
+            return false;
+        }
+    }
+
+    /**
+     * 扫描并清理空的引述块（增加保护机制）
+     */
+    async scanAndRemoveEmptyBlockquotes(): Promise<number> {
+        const blockquotes = document.querySelectorAll('[data-type="NodeBlockquote"], .bq');
+        let removedCount = 0;
+
+        for (const bq of blockquotes) {
+            const blockquoteElement = bq as HTMLElement;
+            
+            try {
+                // 检查是否是正在操作的引述块
+                if (this.isBlockquoteBeingUsed(blockquoteElement)) {
+                    logger.log('[Callout] ⚠️ 跳过正在操作的引述块，避免误删');
+                    continue;
+                }
+                
+                const isEmpty = await this.isBlockquoteEmpty(blockquoteElement);
+                
+                if (isEmpty) {
+                    const success = await this.removeEmptyBlockquote(blockquoteElement);
+                    if (success) {
+                        removedCount++;
+                    }
+                }
+            } catch (error) {
+                logger.error('[Callout] 处理引述块时发生错误:', error);
+            }
+        }
+
+        if (removedCount > 0) {
+            logger.log(`[Callout] 🧹 清理完成，删除了 ${removedCount} 个空引述块`);
+        }
+
+        return removedCount;
+    }
+
+    /**
+     * 检查引述块是否正在被使用（有焦点或最近被操作）
+     */
+    private isBlockquoteBeingUsed(blockquote: HTMLElement): boolean {
+        // 检查是否有焦点
+        const activeElement = document.activeElement;
+        if (activeElement && blockquote.contains(activeElement)) {
+            return true;
+        }
+
+        // 检查是否是最近创建的
+        const nodeId = blockquote.getAttribute('data-node-id');
+        if (nodeId && this.isRecentlyCreated(nodeId)) {
+            return true;
+        }
+
+        // 检查是否有contenteditable焦点
+        const editableDiv = blockquote.querySelector('div[contenteditable="true"]') as HTMLElement;
+        if (editableDiv) {
+            const selection = window.getSelection();
+            if (selection && selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                if (editableDiv.contains(range.commonAncestorContainer)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * 检查是否有自定义样式
      */
     private hasCustomStyle(blockQuote: HTMLElement): boolean {
@@ -199,24 +309,6 @@ export class CalloutProcessor {
         return false;
     }
 
-    /**
-     * 清除Callout属性
-     */
-    private clearCalloutAttributes(blockquote: HTMLElement, titleDiv: HTMLElement) {
-        blockquote.removeAttribute('custom-callout');
-        blockquote.removeAttribute('data-collapsed');
-        // 清除宽度和高度相关属性
-        blockquote.removeAttribute('data-margin-width');
-        blockquote.removeAttribute('data-margin-height');
-        // 清除CSS变量
-        blockquote.style.removeProperty('--margin-width');
-        blockquote.style.removeProperty('--margin-height');
-        blockquote.style.removeProperty('min-height');
-        
-        titleDiv.removeAttribute('data-callout-title');
-        titleDiv.removeAttribute('data-callout-display-name');
-        this.removeCollapseToggle(titleDiv);
-    }
 
     /**
      * 谨慎清除Callout属性（保留用户可能手动设置的宽度）
@@ -474,7 +566,7 @@ export class CalloutProcessor {
         const paramsString = match[2]; // |30%|120px
         const collapseMarker = match[3]; // + 或 - 或 undefined
         
-        // console.log('[Callout] 📋 解析结果:', {
+        // logger.log('[Callout] 📋 解析结果:', {
         //     calloutType,
         //     paramsString,
         //     collapseMarker,
