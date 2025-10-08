@@ -234,21 +234,11 @@ export class CalloutDragResizer {
      * 创建垂直拖拽手柄（调整高度）
      */
     private createVerticalHandle(blockquote: HTMLElement) {
-        // 🔥 强制设置父元素定位，不管之前是什么
-        blockquote.style.setProperty('position', 'relative', 'important');
-        console.log('[CalloutResize] 🔥 强制设置blockquote为relative定位 (!important)');
-        
-        // 🔥 输出父元素的实际计算样式
-        setTimeout(() => {
-            const parentStyle = window.getComputedStyle(blockquote);
-            console.log('[CalloutResize] 🔥 父元素实际样式:', {
-                position: parentStyle.position,
-                display: parentStyle.display,
-                width: parentStyle.width,
-                height: parentStyle.height,
-                zIndex: parentStyle.zIndex
-            });
-        }, 100);
+        // 确保blockquote有相对定位
+        const computedStyle = window.getComputedStyle(blockquote);
+        if (computedStyle.position === 'static') {
+            blockquote.style.position = 'relative';
+        }
 
         const handle = document.createElement('div');
         handle.className = 'callout-resize-handle callout-resize-handle-vertical';
@@ -260,135 +250,86 @@ export class CalloutDragResizer {
             </div>
         `;
 
-        // 🚀🚀🚀 终极解决方案：JavaScript直接计算像素位置！🚀🚀🚀
-        
-        // 基础样式
-        handle.style.setProperty('position', 'absolute', 'important');
-        handle.style.setProperty('width', '80px', 'important');       // 🔥 更大更明显
-        handle.style.setProperty('height', '25px', 'important');      
-        handle.style.setProperty('cursor', 'ns-resize', 'important');
-        handle.style.setProperty('z-index', '999999', 'important');   
-        handle.style.setProperty('display', 'block', 'important');    
-        handle.style.setProperty('opacity', '1', 'important');        
-        handle.style.setProperty('background', 'linear-gradient(90deg, #ff0000, #00ff00, #0000ff)', 'important'); 
-        handle.style.setProperty('border', '5px solid #ffffff', 'important'); 
-        handle.style.setProperty('border-radius', '10px', 'important');
-        handle.style.setProperty('box-shadow', '0 0 30px rgba(255, 0, 0, 1)', 'important'); 
-        handle.style.setProperty('font-size', '12px', 'important');
-        handle.style.setProperty('font-weight', 'bold', 'important');
-        handle.style.setProperty('color', 'white', 'important');
-        handle.style.setProperty('text-align', 'center', 'important');
-        handle.style.setProperty('line-height', '25px', 'important');
-        
         // 🚀 JavaScript直接计算位置：强制放到底部中央！
         const updatePosition = () => {
-            const parentRect = blockquote.getBoundingClientRect();
             const parentStyle = window.getComputedStyle(blockquote);
             
             // 计算父元素内部可用区域
-            const parentLeft = parseFloat(parentStyle.paddingLeft || '0');
             const parentWidth = blockquote.offsetWidth - parseFloat(parentStyle.paddingLeft || '0') - parseFloat(parentStyle.paddingRight || '0');
             const parentHeight = blockquote.offsetHeight;
             
             // 计算手柄位置：水平居中，垂直在底部
-            const handleWidth = 80;
+            const handleWidth = parentWidth / 2; // 宽度为callout宽度的一半
             const handleLeft = (parentWidth - handleWidth) / 2;
             const handleTop = parentHeight - 5; // 距离底部5px
             
-            // 直接设置像素位置
+            // 直接设置像素位置 - 使用!important强制应用
             handle.style.setProperty('left', `${handleLeft}px`, 'important');
             handle.style.setProperty('top', `${handleTop}px`, 'important');
+            handle.style.setProperty('width', `${handleWidth}px`, 'important');
             handle.style.setProperty('bottom', 'auto', 'important'); // 清除bottom
             handle.style.setProperty('transform', 'none', 'important'); // 清除transform
             
             console.log('[CalloutResize] 🚀 JavaScript强制定位:', {
                 父元素尺寸: { width: parentWidth, height: parentHeight },
                 计算位置: { left: handleLeft, top: handleTop },
-                实际设置: { left: `${handleLeft}px`, top: `${handleTop}px` }
+                手柄宽度: handleWidth,
+                实际设置: { left: `${handleLeft}px`, top: `${handleTop}px`, width: `${handleWidth}px` }
             });
         };
-        
-        // 立即执行一次
+
+        // 设置垂直手柄基础样式（与水平手柄风格一致）- 使用!important确保样式生效
+        handle.style.setProperty('position', 'absolute', 'important');
+        handle.style.setProperty('height', '16px', 'important');      // 长度很窄（对应水平手柄的16px宽度）
+        handle.style.setProperty('cursor', 'ns-resize', 'important');
+        handle.style.setProperty('z-index', '1000', 'important');
+        handle.style.setProperty('display', 'flex', 'important');
+        handle.style.setProperty('align-items', 'center', 'important');
+        handle.style.setProperty('justify-content', 'center', 'important');
+        handle.style.setProperty('opacity', '0', 'important');
+        handle.style.setProperty('transition', 'opacity 0.2s ease', 'important');
+        handle.style.setProperty('background', 'rgba(0, 0, 0, 0.3)', 'important');  // 与水平手柄相同的背景
+        handle.style.setProperty('border-radius', '8px', 'important');               // 与水平手柄相同的圆角
+        handle.style.setProperty('backdrop-filter', 'blur(4px)', 'important');       // 与水平手柄相同的模糊效果
+
+        // 设置内部结构样式
+        const handleInner = handle.querySelector('.resize-handle-inner') as HTMLElement;
+        Object.assign(handleInner.style, {
+            height: '6px',          // 垂直手柄的内部高度对应水平手柄的宽度
+            width: '20px',          // 垂直手柄的内部宽度对应水平手柄的高度  
+            background: '#666',
+            borderRadius: '3px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+        });
+
+        const dots = handle.querySelector('.resize-handle-dots') as HTMLElement;
+        Object.assign(dots.style, {
+            height: '2px',          // 垂直排列改为水平排列
+            width: '12px',
+            background: 'repeating-linear-gradient(to right, #fff 0, #fff 1px, transparent 1px, transparent 3px)', // 水平重复
+            borderRadius: '1px'
+        });
+
+        // 立即执行一次定位
         setTimeout(updatePosition, 10);
         
-        // 监听窗口大小变化
+        // 多次重试定位，确保成功
+        setTimeout(updatePosition, 50);
+        setTimeout(updatePosition, 100);
+        setTimeout(updatePosition, 200);
+        
+        // 监听窗口大小变化以更新位置
         const resizeObserver = new ResizeObserver(updatePosition);
         resizeObserver.observe(blockquote);
         
-        // 🔥 修复后设置内容（在内部结构设置之后）
-        handle.textContent = '底边拖拽';
-        
-        console.log('[CalloutResize] 🔥 用!important强制设置所有垂直手柄样式！');
-        
-        console.log('[CalloutResize] 🔥🔥🔥 创建了无法忽视的垂直拖拽手柄！🔥🔥🔥');
+        // 监听窗口resize事件
+        window.addEventListener('resize', updatePosition);
 
         blockquote.appendChild(handle);
-        
-        // 🔥 立即检查手柄的实际位置和样式
-        setTimeout(() => {
-            const rect = handle.getBoundingClientRect();
-            const parentRect = blockquote.getBoundingClientRect();
-            const computedStyle = window.getComputedStyle(handle);
-            
-            console.log('[CalloutResize] 🔥 垂直手柄实际状态检查:');
-            console.log('手柄位置:', {
-                left: rect.left,
-                top: rect.top,
-                bottom: rect.bottom,
-                width: rect.width,
-                height: rect.height
-            });
-            console.log('父元素位置:', {
-                left: parentRect.left,
-                top: parentRect.top,
-                bottom: parentRect.bottom,
-                width: parentRect.width,
-                height: parentRect.height
-            });
-            console.log('计算样式:', {
-                position: computedStyle.position,
-                bottom: computedStyle.bottom,
-                left: computedStyle.left,
-                transform: computedStyle.transform,
-                display: computedStyle.display,
-                opacity: computedStyle.opacity,
-                zIndex: computedStyle.zIndex
-            });
-            console.log('相对位置:', {
-                手柄距父元素底部: parentRect.bottom - rect.top,
-                手柄是否在父元素下方: rect.top > parentRect.bottom
-            });
-        }, 200);
-        
         this.bindHandleEvents(handle, blockquote);
         console.log('[CalloutResize] ✅ 垂直手柄创建完成');
-        
-        // 调试：输出手柄的位置和尺寸信息
-        setTimeout(() => {
-            const rect = handle.getBoundingClientRect();
-            const parentRect = blockquote.getBoundingClientRect();
-            console.log('[CalloutResize] 🔍 垂直手柄调试信息:', {
-                手柄位置: {
-                    left: rect.left,
-                    top: rect.top,
-                    width: rect.width,
-                    height: rect.height,
-                    bottom: rect.bottom
-                },
-                父元素位置: {
-                    left: parentRect.left,
-                    top: parentRect.top,
-                    width: parentRect.width,
-                    height: parentRect.height,
-                    bottom: parentRect.bottom
-                },
-                相对位置: {
-                    相对左边距: rect.left - parentRect.left,
-                    相对顶部距: rect.top - parentRect.top,
-                    是否在父元素内: rect.bottom <= parentRect.bottom + 20
-                }
-            });
-        }, 100);
     }
 
     /**
@@ -411,43 +352,21 @@ export class CalloutDragResizer {
         blockquote.addEventListener('mouseenter', () => {
             if (!this.isDragging) {
                 console.log('[CalloutResize] 🐭 鼠标进入callout，显示所有手柄');
-                // 显示所有拖拽手柄
                 const allHandles = blockquote.querySelectorAll('.callout-resize-handle');
-                console.log('[CalloutResize] 📊 找到手柄数量:', allHandles.length);
-                allHandles.forEach((h, index) => {
+                allHandles.forEach(h => {
                     const handle = h as HTMLElement;
-                    console.log(`[CalloutResize] 📌 手柄${index + 1}类名:`, handle.className);
-                    handle.style.opacity = '1';
-                    
-                    // 🔥 强制输出手柄的详细信息
-                    const rect = handle.getBoundingClientRect();
-                    const computedStyle = window.getComputedStyle(handle);
-                    console.log(`[CalloutResize] 🔍 手柄${index + 1}详细信息:`, {
-                        位置: { left: rect.left, top: rect.top, width: rect.width, height: rect.height },
-                        显示: { display: computedStyle.display, visibility: computedStyle.visibility, opacity: computedStyle.opacity },
-                        定位: { position: computedStyle.position, zIndex: computedStyle.zIndex },
-                        背景和边框: { background: computedStyle.background, border: computedStyle.border },
-                        父元素: handle.parentElement?.tagName,
-                        在DOM中: document.contains(handle)
-                    });
+                    handle.style.opacity = '1'; // 🎯 悬停时显示所有手柄
                 });
             }
         });
 
         blockquote.addEventListener('mouseleave', () => {
             if (!this.isDragging) {
-                console.log('[CalloutResize] 🐭 鼠标离开callout，但垂直手柄永不隐藏！');
-                // 只隐藏水平手柄，垂直手柄永远闪烁可见！
+                console.log('[CalloutResize] 🐭 鼠标离开callout，隐藏所有手柄');
                 const allHandles = blockquote.querySelectorAll('.callout-resize-handle');
                 allHandles.forEach(h => {
                     const handle = h as HTMLElement;
-                    // 🔥 垂直手柄永远不隐藏，永远闪烁！
-                    if (handle.classList.contains('callout-resize-handle-vertical')) {
-                        handle.style.opacity = '1';
-                        console.log('[CalloutResize] 🔥 垂直手柄永远可见，拒绝隐藏！');
-                    } else {
-                        handle.style.opacity = '0';
-                    }
+                    handle.style.opacity = '0'; // 🎯 离开时隐藏所有手柄
                 });
             }
         });
@@ -606,17 +525,9 @@ export class CalloutDragResizer {
         if (this.currentHandle) {
             this.currentHandle.classList.remove('active');
             
-            // 🎯 拖拽结束后，检查鼠标是否还在callout上
-            // 如果在，保持显示；如果不在，才隐藏
+            // 🎯 拖拽结束后，保持手柄显示让用户能看到
             setTimeout(() => {
-                // 延迟一点检查，让鼠标位置稳定
-                const rect = this.currentBlockquote!.getBoundingClientRect();
-                const mouseX = this.dragType === 'horizontal' ? this.startX : 0; // 简化：先保持显示
-                const mouseY = this.dragType === 'vertical' ? this.startY : 0;
-                
-                // 🎯 暂时总是保持显示，让用户能看到手柄
                 console.log('[CalloutResize] 🎯 拖拽结束，保持手柄显示让用户能看到');
-                
                 // 如果用户真的想隐藏，可以移开鼠标触发mouseleave
             }, 100);
         }
