@@ -56,7 +56,8 @@ export function generateCalloutStyles(customTypes?: CalloutTypeConfig[], themeId
 
 /* 但是确保按钮始终显示 */
 .protyle-wysiwyg .bq[custom-callout][data-collapsed="true"] .callout-delete-button,
-.protyle-wysiwyg .bq[custom-callout][data-collapsed="true"] .callout-collapse-button {
+.protyle-wysiwyg .bq[custom-callout][data-collapsed="true"] .callout-collapse-button,
+.protyle-wysiwyg .bq[custom-callout][data-collapsed="true"] .callout-insert-button {
     display: flex !important;
 }
 
@@ -133,6 +134,28 @@ export function generateCalloutStyles(customTypes?: CalloutTypeConfig[], themeId
     pointer-events: auto !important;
     display: flex !important;
     visibility: visible !important;
+}
+
+/* 插入按钮样式 */
+.protyle-wysiwyg .bq[custom-callout] .callout-insert-button {
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transition: opacity 0.2s ease !important;
+}
+
+.protyle-wysiwyg .bq[custom-callout]:hover .callout-insert-button {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+}
+
+/* 折叠状态下插入按钮也要可见 */
+.protyle-wysiwyg .bq[custom-callout][data-collapsed="true"] .callout-insert-button {
+    opacity: 0.6 !important;
+    pointer-events: auto !important;
+}
+
+.protyle-wysiwyg .bq[custom-callout][data-collapsed="true"]:hover .callout-insert-button {
+    opacity: 1 !important;
 }
 
 /* 覆盖思源原生引述块的边框样式 */

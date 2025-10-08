@@ -127,6 +127,9 @@ export class CalloutProcessor {
             // 添加折叠功能（仅保留双击编辑，不包含点击折叠）
             this.addTitleEditFunction(blockquote, titleDiv);
 
+            // 添加插入按钮
+            this.addInsertButton(blockquote);
+
             // 添加折叠按钮
             this.addCollapseButton(blockquote);
 
@@ -150,6 +153,9 @@ export class CalloutProcessor {
 
                 // 添加折叠功能（仅保留双击编辑，不包含点击折叠）
                 this.addTitleEditFunction(blockquote, titleDiv);
+
+                // 添加插入按钮
+                this.addInsertButton(blockquote);
 
                 // 添加折叠按钮
                 this.addCollapseButton(blockquote);
@@ -228,6 +234,7 @@ export class CalloutProcessor {
         titleDiv.removeAttribute('data-callout-title');
         titleDiv.removeAttribute('data-callout-display-name');
         this.removeCollapseToggle(titleDiv);
+        this.removeInsertButton(blockquote);
         this.removeCollapseButton(blockquote);
         this.removeDeleteButton(blockquote);
     }
@@ -245,6 +252,7 @@ export class CalloutProcessor {
         titleDiv.removeAttribute('data-callout-title');
         titleDiv.removeAttribute('data-callout-display-name');
         this.removeCollapseToggle(titleDiv);
+        this.removeInsertButton(blockquote);
         this.removeCollapseButton(blockquote);
         this.removeDeleteButton(blockquote);
     }
@@ -281,7 +289,8 @@ export class CalloutProcessor {
                 this.removeCollapseToggle(titleDiv);
             }
 
-            // 移除折叠按钮和删除按钮
+            // 移除所有按钮
+            this.removeInsertButton(blockquoteElement);
             this.removeCollapseButton(blockquoteElement);
             this.removeDeleteButton(blockquoteElement);
 
@@ -447,6 +456,161 @@ export class CalloutProcessor {
         if (collapseButton && collapseButton.parentNode) {
             collapseButton.remove();
             (blockquote as any)._collapseButton = null;
+        }
+    }
+
+    /**
+     * 添加插入按钮
+     */
+    private addInsertButton(blockquote: HTMLElement) {
+        // 检查是否已经存在插入按钮
+        const existingButton = blockquote.querySelector('.callout-insert-button');
+        if (existingButton) {
+            return; // 已存在，不重复添加
+        }
+
+        const insertButton = document.createElement('div');
+        insertButton.className = 'callout-insert-button';
+        insertButton.innerHTML = '＋';
+        insertButton.title = '插入内容行';
+        
+        // 应用样式
+        const isDark = this.isDarkMode();
+        insertButton.style.cssText = this.getInsertButtonStyle(isDark);
+
+        // 添加鼠标事件
+        insertButton.addEventListener('mouseenter', () => {
+            insertButton.style.background = isDark ? '#10b981' : '#22c55e';
+            insertButton.style.color = 'white';
+            insertButton.style.transform = 'scale(1.1)';
+        });
+
+        insertButton.addEventListener('mouseleave', () => {
+            insertButton.style.cssText = this.getInsertButtonStyle(isDark);
+        });
+
+        // 添加点击事件
+        insertButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.handleInsertButtonClick(blockquote);
+        });
+
+        // 将按钮添加到blockquote
+        blockquote.appendChild(insertButton);
+
+        // 保存按钮引用以便清理
+        (blockquote as any)._insertButton = insertButton;
+    }
+
+    /**
+     * 获取插入按钮样式
+     */
+    private getInsertButtonStyle(isDark: boolean): string {
+        return `
+            position: absolute;
+            top: 8px;
+            right: 56px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: ${isDark ? '#374151' : '#f3f4f6'};
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 12px;
+            color: ${isDark ? '#d1d5db' : '#6b7280'};
+            transition: all 0.15s ease;
+            z-index: 100;
+        `;
+    }
+
+    /**
+     * 处理插入按钮点击
+     */
+    private handleInsertButtonClick(blockquote: HTMLElement) {
+        try {
+            // 找到标题div
+            const titleDiv = blockquote.querySelector('[data-callout-title="true"]') as HTMLElement;
+            if (!titleDiv) {
+                logger.error('[Callout] 找不到标题div');
+                return;
+            }
+
+            // 插入回车到标题结尾
+            this.insertNewlineAtTitleEnd(titleDiv);
+            
+            logger.log('[Callout] ➕ 插入按钮点击完成');
+        } catch (error) {
+            logger.error('[Callout] 插入按钮处理出错:', error);
+        }
+    }
+
+    /**
+     * 在标题结尾插入回车
+     */
+    private insertNewlineAtTitleEnd(titleDiv: HTMLElement) {
+        // 聚焦到标题div
+        titleDiv.focus();
+        
+        // 将光标移动到文本结尾
+        const selection = window.getSelection();
+        const range = document.createRange();
+        
+        // 选择标题div的所有内容
+        range.selectNodeContents(titleDiv);
+        // 将光标移动到结尾
+        range.collapse(false);
+        
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+        
+        // 短暂等待确保光标定位
+        setTimeout(() => {
+            // 创建回车键事件
+            const enterKeyDown = new KeyboardEvent('keydown', {
+                key: 'Enter',
+                code: 'Enter',
+                keyCode: 13,
+                which: 13,
+                bubbles: true,
+                cancelable: true
+            });
+            
+            const enterKeyUp = new KeyboardEvent('keyup', {
+                key: 'Enter',
+                code: 'Enter', 
+                keyCode: 13,
+                which: 13,
+                bubbles: true,
+                cancelable: true
+            });
+            
+            // 分发键盘事件
+            titleDiv.dispatchEvent(enterKeyDown);
+            titleDiv.dispatchEvent(enterKeyUp);
+            
+            // 也触发input事件确保变化被检测到
+            const inputEvent = new InputEvent('input', {
+                bubbles: true,
+                cancelable: true,
+                inputType: 'insertLineBreak'
+            });
+            titleDiv.dispatchEvent(inputEvent);
+            
+            logger.log('[Callout] ↩️ 在标题结尾插入回车完成');
+        }, 50);
+    }
+
+    /**
+     * 移除插入按钮
+     */
+    private removeInsertButton(blockquote: HTMLElement) {
+        const insertButton = (blockquote as any)._insertButton;
+        if (insertButton && insertButton.parentNode) {
+            insertButton.remove();
+            (blockquote as any)._insertButton = null;
         }
     }
 
@@ -1094,7 +1258,8 @@ export class CalloutProcessor {
                 if (titleDiv) {
                     this.removeCollapseToggle(titleDiv);
                 }
-                // 移除折叠按钮和删除按钮
+                // 移除所有按钮
+                this.removeInsertButton(callout as HTMLElement);
                 this.removeCollapseButton(callout as HTMLElement);
                 this.removeDeleteButton(callout as HTMLElement);
             }
