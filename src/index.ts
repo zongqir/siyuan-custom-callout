@@ -7,6 +7,7 @@ import "./index.scss";
 import { CalloutManager } from "./callout";
 import SettingPanel from "./settings/panel-v2.svelte";
 import { Dialog } from "siyuan";
+import { logger } from "./libs/logger";
 
 const STORAGE_NAME = "callout-config";
 
@@ -15,7 +16,7 @@ export default class CustomCalloutPlugin extends Plugin {
     private isMobile: boolean;
 
     async onload() {
-        console.log("[Custom Callout] Plugin loading...");
+        logger.log("Plugin loading...");
 
         const frontEnd = this.getFrontEnd();
         this.isMobile = frontEnd === "mobile" || frontEnd === "browser-mobile";
@@ -30,7 +31,7 @@ export default class CustomCalloutPlugin extends Plugin {
         this.calloutManager = new CalloutManager(this);
         await this.calloutManager.initialize();
 
-        console.log("[Custom Callout] Plugin loaded successfully");
+        logger.log("Plugin loaded successfully");
         showMessage(this.i18n.name + " 已加载");
     }
 
@@ -47,7 +48,7 @@ export default class CustomCalloutPlugin extends Plugin {
     }
 
     async onunload() {
-        console.log("[Custom Callout] Plugin unloading...");
+        logger.log("Plugin unloading...");
 
         // 销毁Callout管理器
         if (this.calloutManager) {
@@ -55,7 +56,7 @@ export default class CustomCalloutPlugin extends Plugin {
             this.calloutManager = null;
         }
 
-        console.log("[Custom Callout] Plugin unloaded");
+        logger.log("Plugin unloaded");
     }
 
     /**

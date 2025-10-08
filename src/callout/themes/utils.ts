@@ -63,7 +63,7 @@ export function importTheme(json: string): ThemeStyle | null {
         }
         return data.theme;
     } catch (error) {
-        console.error('导入主题失败:', error);
+        // console.error('导入主题失败:', error);
         return null;
     }
 }

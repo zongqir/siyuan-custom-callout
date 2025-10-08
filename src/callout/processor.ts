@@ -1,4 +1,5 @@
 import { DEFAULT_CALLOUT_TYPES, CalloutTypeConfig, ParsedCalloutCommand } from './types';
+import { logger } from '../libs/logger';
 
 /**
  * Callout处理器 - 负责检测和转换引述块为Callout样式
@@ -133,7 +134,7 @@ export class CalloutProcessor {
         //console.log('[Callout] 尝试旧的匹配方式');
         for (const [trigger, config] of this.calloutTypes.entries()) {
             if (text.startsWith(trigger)) {
-                console.log('[Callout] 📝 匹配旧格式成功:', trigger);
+                logger.log('[Callout] 📝 匹配旧格式成功:', trigger);
                 // 设置 callout 类型
                 blockquote.setAttribute('custom-callout', config.type);
 
@@ -153,7 +154,7 @@ export class CalloutProcessor {
         
         // 如果不匹配任何 callout 类型，谨慎清除属性（保留宽度设置）
         if (blockquote.hasAttribute('custom-callout')) {
-            console.log('[Callout] ========== 谨慎清除 callout 属性（保留宽度）==========');
+            logger.log('[Callout] ========== 谨慎清除 callout 属性（保留宽度）==========');
             this.clearCalloutAttributesConservatively(blockquote, titleDiv);
         }
 
@@ -266,7 +267,7 @@ export class CalloutProcessor {
 
             return true;
         } catch (error) {
-            console.error('[Callout] Error clearing style:', error);
+            logger.error('[Callout] Error clearing style:', error);
             return false;
         }
     }
@@ -307,7 +308,7 @@ export class CalloutProcessor {
             clickTimeout = setTimeout(() => {
                 if (clickCount === 1) {
                     // 单击：折叠功能
-                    console.log('[Callout] 单击标题，执行折叠操作');
+                    logger.log('[Callout] 单击标题，执行折叠操作');
                     e.preventDefault();
                     e.stopPropagation();
                     this.toggleCollapse(blockquote);
@@ -334,7 +335,7 @@ export class CalloutProcessor {
             }
             clickCount = 0;
 
-            console.log('[Callout] 双击标题，进入编辑模式');
+            logger.log('[Callout] 双击标题，进入编辑模式');
             
             // 双击：进入编辑模式
             // 不阻止默认行为，让contenteditable正常工作
@@ -486,8 +487,8 @@ export class CalloutProcessor {
         // 查找匹配的配置
         const config = this.calloutTypes.get(searchKey);
         if (!config) {
-            console.log('[Callout] ❌ 找不到配置，searchKey:', searchKey);
-            console.log('[Callout] 可用的配置键:', Array.from(this.calloutTypes.keys()));
+            logger.log('[Callout] ❌ 找不到配置，searchKey:', searchKey);
+            logger.log('[Callout] 可用的配置键:', Array.from(this.calloutTypes.keys()));
             return null;
         }
 
@@ -594,7 +595,7 @@ export class CalloutProcessor {
             }
         }
         
-        console.log('[Callout] ❌ 高度参数无效，忽略');
+        logger.log('[Callout] ❌ 高度参数无效，忽略');
         return null;
     }
 
@@ -636,14 +637,14 @@ export class CalloutProcessor {
      * 清除宽度和高度样式
      */
     private clearMarginNoteStyles(blockquote: HTMLElement) {
-        console.log('[Callout] 🧽 清除宽度和高度样式');
+        logger.log('[Callout] 🧽 清除宽度和高度样式');
         
         // 清除宽度和高度相关的CSS变量
         blockquote.style.removeProperty('--margin-width');
         blockquote.style.removeProperty('--margin-height');
         blockquote.style.removeProperty('min-height');
         
-        console.log('[Callout] 🧽 宽度和高度样式清除完成');
+        logger.log('[Callout] 🧽 宽度和高度样式清除完成');
     }
 
 
@@ -661,7 +662,7 @@ export class CalloutProcessor {
         // 找到可编辑的标题div
         const titleDiv = blockquote.querySelector('div[contenteditable="true"]') as HTMLElement;
         if (!titleDiv) {
-            console.error('[Callout] 找不到可编辑标题div');
+            logger.error('[Callout] 找不到可编辑标题div');
             return;
         }
 
@@ -681,7 +682,7 @@ export class CalloutProcessor {
             parsed.collapsed = null;
         }
         
-        console.log('[Callout] 🎯 持久化折叠状态:', {
+        logger.log('[Callout] 🎯 持久化折叠状态:', {
             currentCollapsed,
             parsedCollapsed: parsed.collapsed,
             originalContent
@@ -830,7 +831,7 @@ export class CalloutProcessor {
         // 失焦确保保存
         titleDiv.blur();
         
-        console.log('[Callout] ✅ 标题已更新:', newContent);
+        logger.log('[Callout] ✅ 标题已更新:', newContent);
     }
 }
 

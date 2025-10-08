@@ -2,6 +2,7 @@ import { DEFAULT_CALLOUT_TYPES, CalloutTypeConfig } from './types';
 import { CalloutProcessor } from './processor';
 import { MenuThemeHelper } from './menu-theme-helper';
 import * as MenuStyles from './menu-styles';
+import { logger } from '../libs/logger';
 
 /**
  * Callout命令菜单管理器
@@ -35,7 +36,7 @@ export class CalloutMenu {
         
         // 订阅主题变化
         this.themeHelper.subscribe((isDark) => {
-            console.log('[Callout Menu] 🌙 主题已切换:', isDark ? '黑夜' : '白天');
+            logger.log('[Callout Menu] 🌙 主题已切换:', isDark ? '黑夜' : '白天');
             if (this.isMenuVisible && this.commandMenu) {
                 this.themeHelper.refreshMenuTheme(this.commandMenu);
             }
@@ -596,8 +597,8 @@ export class CalloutMenu {
      * 统一的文本更新函数 - 模拟真实编辑
      */
     private updateEditableText(editableDiv: HTMLElement, newText: string) {
-        console.log('[Callout Menu] ✂️ 统一文本更新 - 模拟真实编辑');
-        console.log('[Callout Menu] 📄 修改前文本:', editableDiv.textContent);
+        logger.log('[Callout Menu] ✂️ 统一文本更新 - 模拟真实编辑');
+        logger.log('[Callout Menu] 📄 修改前文本:', editableDiv.textContent);
         
         // 聚焦
         editableDiv.focus();
@@ -609,18 +610,18 @@ export class CalloutMenu {
         selection?.removeAllRanges();
         selection?.addRange(range);
         
-        console.log('[Callout Menu] 📝 已选中全部文本');
+        logger.log('[Callout Menu] 📝 已选中全部文本');
         
         // 2. 使用 execCommand 删除（模拟按删除键）
         document.execCommand('delete', false);
         
-        console.log('[Callout Menu] 🗑️ 已删除文本');
+        logger.log('[Callout Menu] 🗑️ 已删除文本');
         
         // 3. 使用 execCommand 插入新文本（模拟键盘输入）
         document.execCommand('insertText', false, newText);
         
-        console.log('[Callout Menu] ✍️ 已插入新文本:', newText);
-        console.log('[Callout Menu] 📄 修改后文本:', editableDiv.textContent);
+        logger.log('[Callout Menu] ✍️ 已插入新文本:', newText);
+        logger.log('[Callout Menu] 📄 修改后文本:', editableDiv.textContent);
     }
 
     /**
@@ -647,8 +648,8 @@ export class CalloutMenu {
         try {
             if (isEdit) {
                 // 编辑模式：直接替换并立即处理
-                console.log('[Callout Menu] ✏️ 编辑模式 - 修改命令:', command);
-                console.log('[Callout Menu] 📄 修改前文本:', editableDiv.textContent);
+                logger.log('[Callout Menu] ✏️ 编辑模式 - 修改命令:', command);
+                logger.log('[Callout Menu] 📄 修改前文本:', editableDiv.textContent);
                 
                 // 保存用户设置的宽度和高度（如果有的话）
                 const existingWidth = blockQuoteElement.getAttribute('data-margin-width');
@@ -657,7 +658,7 @@ export class CalloutMenu {
                 const existingHeightCSS = blockQuoteElement.style.getPropertyValue('--margin-height');
                 const existingMinHeight = blockQuoteElement.style.getPropertyValue('min-height');
                 
-                console.log('[Callout Menu] 💾 保存现有尺寸设置:', {
+                logger.log('[Callout Menu] 💾 保存现有尺寸设置:', {
                     width: existingWidth,
                     height: existingHeight,
                     widthCSS: existingWidthCSS,
@@ -669,7 +670,7 @@ export class CalloutMenu {
                 blockQuoteElement.removeAttribute('custom-callout');
                 blockQuoteElement.removeAttribute('data-collapsed');
                 
-                console.log('[Callout Menu] 🧹 已清除callout类型属性（保留尺寸设置）');
+                logger.log('[Callout Menu] 🧹 已清除callout类型属性（保留尺寸设置）');
                 
                 // 使用统一的文本更新函数
                 this.updateEditableText(editableDiv, command);
@@ -681,7 +682,7 @@ export class CalloutMenu {
                     // 恢复用户设置的尺寸（如果有的话）
                     setTimeout(() => {
                         if (existingWidth) {
-                            console.log('[Callout Menu] 🔄 恢复宽度设置:', existingWidth);
+                            logger.log('[Callout Menu] 🔄 恢复宽度设置:', existingWidth);
                             blockQuoteElement.setAttribute('data-margin-width', existingWidth);
                             if (existingWidthCSS) {
                                 blockQuoteElement.style.setProperty('--margin-width', existingWidthCSS);
@@ -689,7 +690,7 @@ export class CalloutMenu {
                         }
                         
                         if (existingHeight) {
-                            console.log('[Callout Menu] 🔄 恢复高度设置:', existingHeight);
+                            logger.log('[Callout Menu] 🔄 恢复高度设置:', existingHeight);
                             blockQuoteElement.setAttribute('data-margin-height', existingHeight);
                             if (existingHeightCSS) {
                                 blockQuoteElement.style.setProperty('--margin-height', existingHeightCSS);
@@ -699,7 +700,7 @@ export class CalloutMenu {
                             }
                         }
                         
-                        console.log('[Callout Menu] ✅ 尺寸设置恢复完成');
+                        logger.log('[Callout Menu] ✅ 尺寸设置恢复完成');
                     }, 50);
                 }, 100);
             } else {
@@ -747,7 +748,7 @@ export class CalloutMenu {
                 }, 150);
             }
         } catch (error) {
-            console.error('[Callout Menu] Error inserting command:', error);
+            logger.error('[Callout Menu] Error inserting command:', error);
         }
     }
 

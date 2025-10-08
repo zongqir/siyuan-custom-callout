@@ -1,5 +1,6 @@
 import type { CalloutTypeConfig } from './types';
 import { DEFAULT_CALLOUT_TYPES } from './types';
+import { logger } from '../libs/logger';
 
 /**
  * 主题样式覆盖配置
@@ -58,7 +59,7 @@ export class ConfigManager {
                 themeOverrides: data.themeOverrides || {}
             };
         } catch (error) {
-            console.error('[Callout Config] Error loading config:', error);
+            logger.error('[Callout Config] Error loading config:', error);
             return this.getDefaultConfig();
         }
     }
@@ -80,7 +81,7 @@ export class ConfigManager {
             };
             await plugin.saveData(this.STORAGE_KEY, data);
         } catch (error) {
-            console.error('[Callout Config] Error saving config:', error);
+            logger.error('[Callout Config] Error saving config:', error);
             throw error;
         }
     }

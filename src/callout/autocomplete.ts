@@ -1,5 +1,6 @@
 import { CalloutTypeConfig } from './types';
 import { CalloutProcessor } from './processor';
+import { logger } from '../libs/logger';
 
 /**
  * Callout 自动补全管理器
@@ -46,15 +47,15 @@ export class CalloutAutocomplete {
      * 显示自动补全菜单
      */
     showAutocomplete(x: number, y: number, blockquote: HTMLElement, inputText: string) {
-        console.log('[Autocomplete] showAutocomplete 调用 - 输入文本:', `"${inputText}"`);
+        logger.log('[Autocomplete] showAutocomplete 调用 - 输入文本:', `"${inputText}"`);
         
         this.suggestions = this.getSuggestions(inputText);
         
-        console.log('[Autocomplete] 找到建议:', this.suggestions.length, '个');
+        logger.log('[Autocomplete] 找到建议:', this.suggestions.length, '个');
         
         // 如果没有建议，隐藏菜单
         if (this.suggestions.length === 0) {
-            console.log('[Autocomplete] 无建议，隐藏菜单');
+            logger.log('[Autocomplete] 无建议，隐藏菜单');
             this.hideAutocomplete();
             return;
         }
