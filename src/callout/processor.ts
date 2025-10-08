@@ -124,8 +124,11 @@ export class CalloutProcessor {
                 blockquote.setAttribute('data-collapsed', String(parsedCommand.collapsed));
             }
 
-            // 添加折叠功能
-            this.addCollapseToggle(blockquote, titleDiv);
+            // 添加折叠功能（仅保留双击编辑，不包含点击折叠）
+            this.addTitleEditFunction(blockquote, titleDiv);
+
+            // 添加折叠按钮
+            this.addCollapseButton(blockquote);
 
             // 添加删除按钮
             this.addDeleteButton(blockquote);
@@ -145,8 +148,11 @@ export class CalloutProcessor {
                 titleDiv.setAttribute('data-callout-title', 'true');
                 titleDiv.setAttribute('data-callout-display-name', config.displayName);
 
-                // 添加折叠功能
-                this.addCollapseToggle(blockquote, titleDiv);
+                // 添加折叠功能（仅保留双击编辑，不包含点击折叠）
+                this.addTitleEditFunction(blockquote, titleDiv);
+
+                // 添加折叠按钮
+                this.addCollapseButton(blockquote);
 
                 // 添加删除按钮
                 this.addDeleteButton(blockquote);
@@ -222,6 +228,7 @@ export class CalloutProcessor {
         titleDiv.removeAttribute('data-callout-title');
         titleDiv.removeAttribute('data-callout-display-name');
         this.removeCollapseToggle(titleDiv);
+        this.removeCollapseButton(blockquote);
         this.removeDeleteButton(blockquote);
     }
 
@@ -238,6 +245,7 @@ export class CalloutProcessor {
         titleDiv.removeAttribute('data-callout-title');
         titleDiv.removeAttribute('data-callout-display-name');
         this.removeCollapseToggle(titleDiv);
+        this.removeCollapseButton(blockquote);
         this.removeDeleteButton(blockquote);
     }
 
@@ -273,7 +281,8 @@ export class CalloutProcessor {
                 this.removeCollapseToggle(titleDiv);
             }
 
-            // 移除删除按钮
+            // 移除折叠按钮和删除按钮
+            this.removeCollapseButton(blockquoteElement);
             this.removeDeleteButton(blockquoteElement);
 
             return true;
@@ -284,50 +293,13 @@ export class CalloutProcessor {
     }
 
     /**
-     * 添加折叠功能
+     * 添加标题编辑功能（仅双击编辑，移除单击折叠）
      */
-    private addCollapseToggle(blockquote: HTMLElement, titleDiv: HTMLElement) {
+    private addTitleEditFunction(blockquote: HTMLElement, titleDiv: HTMLElement) {
         // 移除旧的监听器
-        if ((titleDiv as any)._titleCollapseHandler) {
-            titleDiv.removeEventListener('click', (titleDiv as any)._titleCollapseHandler, true);
-        }
         if ((titleDiv as any)._titleDblClickHandler) {
             titleDiv.removeEventListener('dblclick', (titleDiv as any)._titleDblClickHandler, true);
         }
-
-        let clickTimeout: NodeJS.Timeout | null = null;
-        let clickCount = 0;
-
-        // 创建点击处理器（延迟执行，等待可能的双击）
-        const clickHandler = (e: MouseEvent) => {
-            const rect = titleDiv.getBoundingClientRect();
-            const clickX = e.clientX - rect.left;
-
-            // 点击图标区域（0-40px）用于切换主题，不处理折叠
-            if (clickX >= 0 && clickX <= 40) {
-                return;
-            }
-
-            clickCount++;
-            
-            // 如果已经有定时器在运行，取消它
-            if (clickTimeout) {
-                clearTimeout(clickTimeout);
-            }
-
-            // 设置延迟执行，等待可能的双击
-            clickTimeout = setTimeout(() => {
-                if (clickCount === 1) {
-                    // 单击：折叠功能
-                    logger.log('[Callout] 单击标题，执行折叠操作');
-                    e.preventDefault();
-                    e.stopPropagation();
-                    this.toggleCollapse(blockquote);
-                }
-                clickCount = 0;
-                clickTimeout = null;
-            }, 300); // 300ms内如果没有第二次点击，则认为是单击
-        };
 
         // 创建双击处理器（用于编辑）
         const dblClickHandler = (e: MouseEvent) => {
@@ -338,13 +310,6 @@ export class CalloutProcessor {
             if (clickX >= 0 && clickX <= 40) {
                 return;
             }
-
-            // 取消单击的定时器
-            if (clickTimeout) {
-                clearTimeout(clickTimeout);
-                clickTimeout = null;
-            }
-            clickCount = 0;
 
             logger.log('[Callout] 双击标题，进入编辑模式');
             
@@ -363,32 +328,145 @@ export class CalloutProcessor {
         };
 
         // 保存引用
-        (titleDiv as any)._titleCollapseHandler = clickHandler;
         (titleDiv as any)._titleDblClickHandler = dblClickHandler;
 
         // 添加监听器
-        titleDiv.addEventListener('click', clickHandler, true);
         titleDiv.addEventListener('dblclick', dblClickHandler, true);
         
         // 设置光标样式提示用户可以双击编辑
-        titleDiv.style.cursor = 'pointer';
-        titleDiv.title = '单击折叠/展开，双击编辑';
+        titleDiv.style.cursor = 'text';
+        titleDiv.title = '双击编辑';
     }
 
     /**
-     * 移除折叠功能
+     * 添加折叠按钮
      */
-    private removeCollapseToggle(titleDiv: HTMLElement) {
-        if ((titleDiv as any)._titleCollapseHandler) {
-            titleDiv.removeEventListener('click', (titleDiv as any)._titleCollapseHandler, true);
-            (titleDiv as any)._titleCollapseHandler = null;
+    private addCollapseButton(blockquote: HTMLElement) {
+        // 检查是否已经存在折叠按钮
+        const existingButton = blockquote.querySelector('.callout-collapse-button');
+        if (existingButton) {
+            return; // 已存在，不重复添加
         }
+
+        const collapseButton = document.createElement('div');
+        collapseButton.className = 'callout-collapse-button';
+        collapseButton.title = '折叠/展开';
+        
+        // 根据当前状态设置图标
+        const isCollapsed = blockquote.getAttribute('data-collapsed') === 'true';
+        this.updateCollapseButtonIcon(collapseButton, isCollapsed);
+        
+        // 应用样式
+        const isDark = this.isDarkMode();
+        collapseButton.style.cssText = this.getCollapseButtonStyle(isDark);
+
+        // 添加鼠标事件
+        collapseButton.addEventListener('mouseenter', () => {
+            collapseButton.style.background = isDark ? '#4b5563' : '#e5e7eb';
+            collapseButton.style.transform = 'scale(1.1)';
+        });
+
+        collapseButton.addEventListener('mouseleave', () => {
+            collapseButton.style.cssText = this.getCollapseButtonStyle(isDark);
+            this.updateCollapseButtonIcon(collapseButton, blockquote.getAttribute('data-collapsed') === 'true');
+        });
+
+        // 添加点击事件
+        collapseButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.handleCollapseButtonClick(blockquote, collapseButton);
+        });
+
+        // 将按钮添加到blockquote
+        blockquote.appendChild(collapseButton);
+
+        // 保存按钮引用以便清理
+        (blockquote as any)._collapseButton = collapseButton;
+    }
+
+    /**
+     * 更新折叠按钮图标
+     */
+    private updateCollapseButtonIcon(button: HTMLElement, isCollapsed: boolean) {
+        if (isCollapsed) {
+            // 折叠状态：显示向下箭头
+            button.innerHTML = '▼';
+        } else {
+            // 展开状态：显示向右箭头
+            button.innerHTML = '▶';
+        }
+    }
+
+    /**
+     * 获取折叠按钮样式
+     */
+    private getCollapseButtonStyle(isDark: boolean): string {
+        return `
+            position: absolute;
+            top: 8px;
+            right: 32px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: ${isDark ? '#374151' : '#f3f4f6'};
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 10px;
+            color: ${isDark ? '#d1d5db' : '#6b7280'};
+            transition: all 0.15s ease;
+            z-index: 100;
+        `;
+    }
+
+    /**
+     * 处理折叠按钮点击
+     */
+    private handleCollapseButtonClick(blockquote: HTMLElement, button: HTMLElement) {
+        try {
+            // 切换折叠状态
+            this.toggleCollapse(blockquote);
+            
+            // 更新按钮图标
+            const isCollapsed = blockquote.getAttribute('data-collapsed') === 'true';
+            this.updateCollapseButtonIcon(button, isCollapsed);
+            
+            logger.log('[Callout] 🔄 折叠按钮点击完成，当前状态:', isCollapsed ? '折叠' : '展开');
+        } catch (error) {
+            logger.error('[Callout] 折叠按钮处理出错:', error);
+        }
+    }
+
+    /**
+     * 移除折叠按钮
+     */
+    private removeCollapseButton(blockquote: HTMLElement) {
+        const collapseButton = (blockquote as any)._collapseButton;
+        if (collapseButton && collapseButton.parentNode) {
+            collapseButton.remove();
+            (blockquote as any)._collapseButton = null;
+        }
+    }
+
+    /**
+     * 移除标题编辑功能
+     */
+    private removeTitleEditFunction(titleDiv: HTMLElement) {
         if ((titleDiv as any)._titleDblClickHandler) {
             titleDiv.removeEventListener('dblclick', (titleDiv as any)._titleDblClickHandler, true);
             (titleDiv as any)._titleDblClickHandler = null;
         }
         titleDiv.style.cursor = '';
         titleDiv.title = '';
+    }
+
+    /**
+     * 移除折叠功能（兼容旧方法名）
+     */
+    private removeCollapseToggle(titleDiv: HTMLElement) {
+        this.removeTitleEditFunction(titleDiv);
     }
 
     /**
@@ -1016,7 +1094,8 @@ export class CalloutProcessor {
                 if (titleDiv) {
                     this.removeCollapseToggle(titleDiv);
                 }
-                // 移除删除按钮
+                // 移除折叠按钮和删除按钮
+                this.removeCollapseButton(callout as HTMLElement);
                 this.removeDeleteButton(callout as HTMLElement);
             }
         });
