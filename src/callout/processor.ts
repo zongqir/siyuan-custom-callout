@@ -78,7 +78,7 @@ export class CalloutProcessor {
         });
 
         // 处理所有涉及边注位置清理的逻辑 - 简化版
-        if (text === '' && !blockquote.hasAttribute('custom-callout') && !blockquote.hasAttribute('data-margin-width')) {
+        if (text === '' && !blockquote.hasAttribute('custom-callout') && !blockquote.hasAttribute('data-margin-width') && !blockquote.hasAttribute('data-margin-height')) {
             console.log('[Callout] 🧹 文本为空且无属性，检查是否有遗留CSS...');
             if (this.hasMarginNoteStyles(blockquote)) {
                 console.log('[Callout] 🧹 发现遗留CSS，直接清理！');
@@ -118,7 +118,7 @@ export class CalloutProcessor {
             // 设置基础 callout 类型
             blockquote.setAttribute('custom-callout', parsedCommand.config.type);
 
-            // 设置边注相关属性（只保留宽度）
+            // 设置边注相关属性（宽度和高度）
             if (parsedCommand.width && parsedCommand.width !== null) {
                 // 只有明确指定宽度参数才设置
                 console.log('[Callout] 🎯 设置宽度属性:', parsedCommand.width);
@@ -129,6 +129,19 @@ export class CalloutProcessor {
                 console.log('[Callout] ⚠️ 没有宽度参数，保持现有宽度设置不变');
                 // 不要清除已有的宽度属性！用户可能之前设置过宽度
                 // 只有在明确要设置新宽度时才修改
+            }
+
+            if (parsedCommand.height && parsedCommand.height !== null) {
+                // 只有明确指定高度参数才设置
+                console.log('[Callout] 📏 设置高度属性:', parsedCommand.height);
+                blockquote.setAttribute('data-margin-height', parsedCommand.height);
+                // 设置CSS变量
+                blockquote.style.setProperty('--margin-height', parsedCommand.height);
+                blockquote.style.setProperty('min-height', parsedCommand.height);
+            } else {
+                console.log('[Callout] ⚠️ 没有高度参数，保持现有高度设置不变');
+                // 不要清除已有的高度属性！用户可能之前设置过高度
+                // 只有在明确要设置新高度时才修改
             }
 
             // 标记标题并设置显示名称
@@ -217,10 +230,13 @@ export class CalloutProcessor {
     private clearCalloutAttributes(blockquote: HTMLElement, titleDiv: HTMLElement) {
         blockquote.removeAttribute('custom-callout');
         blockquote.removeAttribute('data-collapsed');
-        // 清除宽度相关属性
+        // 清除宽度和高度相关属性
         blockquote.removeAttribute('data-margin-width');
+        blockquote.removeAttribute('data-margin-height');
         // 清除CSS变量
         blockquote.style.removeProperty('--margin-width');
+        blockquote.style.removeProperty('--margin-height');
+        blockquote.style.removeProperty('min-height');
         
         titleDiv.removeAttribute('data-callout-title');
         titleDiv.removeAttribute('data-callout-display-name');
@@ -234,9 +250,9 @@ export class CalloutProcessor {
         blockquote.removeAttribute('custom-callout');
         blockquote.removeAttribute('data-collapsed');
         
-        // ⚠️ 保留宽度属性！用户可能通过拖拽手动设置了宽度
-        // 不要清除 data-margin-width 和 --margin-width
-        console.log('[Callout] 🛡️ 保留现有宽度设置，避免用户设置丢失');
+        // ⚠️ 保留宽度和高度属性！用户可能通过拖拽手动设置了宽度和高度
+        // 不要清除 data-margin-width、--margin-width、data-margin-height、--margin-height
+        console.log('[Callout] 🛡️ 保留现有宽度和高度设置，避免用户设置丢失');
         
         titleDiv.removeAttribute('data-callout-title');
         titleDiv.removeAttribute('data-callout-display-name');
@@ -254,10 +270,13 @@ export class CalloutProcessor {
         try {
             blockquoteElement.removeAttribute('custom-callout');
             blockquoteElement.removeAttribute('data-collapsed');
-            // 清除宽度相关属性
+            // 清除宽度和高度相关属性
             blockquoteElement.removeAttribute('data-margin-width');
+            blockquoteElement.removeAttribute('data-margin-height');
             // 清除CSS变量
             blockquoteElement.style.removeProperty('--margin-width');
+            blockquoteElement.style.removeProperty('--margin-height');
+            blockquoteElement.style.removeProperty('min-height');
 
             const titleDiv = blockquoteElement.querySelector('[data-callout-title="true"]') as HTMLElement;
             if (titleDiv) {
@@ -397,8 +416,8 @@ export class CalloutProcessor {
     }
 
     /**
-     * 解析参数化命令语法 - 只保留宽度参数
-     * 支持格式: [!info|30%] 或 [!info|30%|2em]
+     * 解析参数化命令语法 - 支持宽度和高度参数
+     * 支持格式: [!info|30%] 或 [!info|30%|120px] 或 [!info|120px]
      */
     parseCalloutCommand(text: string): ParsedCalloutCommand | null {
         console.log('[Callout] 🔍 开始解析命令:', text);
@@ -411,7 +430,7 @@ export class CalloutProcessor {
         }
 
         const calloutType = match[1]; // info
-        const paramsString = match[2]; // |30%|2em
+        const paramsString = match[2]; // |30%|120px
         
         console.log('[Callout] 📋 解析结果:', {
             calloutType,
@@ -432,21 +451,45 @@ export class CalloutProcessor {
 
         console.log('[Callout] ✅ 找到配置:', config.type);
 
-        // 解析参数 - 只保留宽度
+        // 解析参数 - 支持宽度和高度
         const params = paramsString ? paramsString.substring(1).split('|') : []; // 移除开头的|
         console.log('[Callout] 📊 参数列表:', params);
         
-        // 只有明确提供参数时才解析宽度，避免给无参数的callout设置默认宽度
-        const width = params.length > 0 && params[0] ? this.parseWidth(params[0]) : null;
-        const spacing = this.parseSpacing(params[1]); // 第二个参数作为间距（暂时保留解析，但不使用）
+        // 解析参数：可能是宽度(%)、高度(px)或间距
+        let width: string | null = null;
+        let height: string | null = null;
+        let spacing: string | null = null;
         
-        console.log('[Callout] 🎯 解析后的宽度:', width);
+        for (const param of params) {
+            if (!param) continue;
+            
+            const trimmed = param.trim();
+            if (trimmed.endsWith('%')) {
+                // 宽度参数
+                width = this.parseWidth(trimmed);
+            } else if (trimmed.endsWith('px')) {
+                // 可能是高度参数
+                const heightValue = this.parseHeight(trimmed);
+                if (heightValue) {
+                    height = heightValue;
+                } else {
+                    // 如果不是有效高度，可能是间距参数
+                    spacing = this.parseSpacing(trimmed);
+                }
+            } else {
+                // 其他格式的间距参数
+                spacing = this.parseSpacing(trimmed);
+            }
+        }
+        
+        console.log('[Callout] 🎯 解析结果:', { width, height, spacing });
 
         return {
             type: config.type,
             config: config,
             position: 'normal', // 固定为normal
             width: width,
+            height: height,
             spacing: spacing,
             originalCommand: text
         };
@@ -484,6 +527,45 @@ export class CalloutProcessor {
     }
 
     /**
+     * 解析高度参数
+     */
+    private parseHeight(param: string): string | null {
+        console.log('[Callout] 🔍 parseHeight接收参数:', param);
+        
+        const normalized = param.trim();
+        console.log('[Callout] 📏 标准化后的参数:', normalized);
+        
+        // 验证高度格式 (支持 px, 支持小数)
+        if (/^[\d.]+px$/.test(normalized)) {
+            const num = parseFloat(normalized);
+            console.log('[Callout] 🔢 解析出数字:', num);
+            
+            // 限制高度范围（50px - 1000px）
+            if (num >= 50 && num <= 1000) {
+                console.log('[Callout] ✅ 高度范围有效，返回:', normalized);
+                return normalized;
+            } else {
+                console.log('[Callout] ⚠️ 高度超出范围，忽略:', num);
+                return null;
+            }
+        }
+        
+        // 如果只是数字，默认当作像素
+        if (/^[\d.]+$/.test(normalized)) {
+            const num = parseFloat(normalized);
+            console.log('[Callout] 🔢 纯数字参数，解析为:', num);
+            if (num >= 50 && num <= 1000) {
+                const result = `${Math.round(num)}px`;
+                console.log('[Callout] ✅ 数字范围有效，返回:', result);
+                return result;
+            }
+        }
+        
+        console.log('[Callout] ❌ 高度参数无效，忽略');
+        return null;
+    }
+
+    /**
      * 解析间距参数
      */
     private parseSpacing(param?: string): string {
@@ -510,23 +592,25 @@ export class CalloutProcessor {
     
 
     /**
-     * 检测元素是否有宽度样式
+     * 检测元素是否有宽度或高度样式
      */
     private hasMarginNoteStyles(blockquote: HTMLElement): boolean {
-        // 检查是否有宽度属性
-        return blockquote.hasAttribute('data-margin-width');
+        // 检查是否有宽度或高度属性
+        return blockquote.hasAttribute('data-margin-width') || blockquote.hasAttribute('data-margin-height');
     }
 
     /**
-     * 清除宽度样式
+     * 清除宽度和高度样式
      */
     private clearMarginNoteStyles(blockquote: HTMLElement) {
-        console.log('[Callout] 🧽 清除宽度样式');
+        console.log('[Callout] 🧽 清除宽度和高度样式');
         
-        // 只清除宽度相关的CSS变量
+        // 清除宽度和高度相关的CSS变量
         blockquote.style.removeProperty('--margin-width');
+        blockquote.style.removeProperty('--margin-height');
+        blockquote.style.removeProperty('min-height');
         
-        console.log('[Callout] 🧽 宽度样式清除完成');
+        console.log('[Callout] 🧽 宽度和高度样式清除完成');
     }
 
 

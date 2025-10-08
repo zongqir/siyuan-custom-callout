@@ -32,6 +32,8 @@ export interface ParsedCalloutCommand {
     position: 'normal';
     /** 边注宽度 */
     width?: string;
+    /** 边注高度 */
+    height?: string;
     /** 边注间距 */
     spacing?: string;
     /** 原始命令文本 */
