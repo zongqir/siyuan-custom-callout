@@ -85,11 +85,6 @@ export class CalloutProcessor {
         // 尝试解析参数化命令
         const parsedCommand = this.parseCalloutCommand(text);
         if (parsedCommand) {
-            console.log('[Callout] 📝 匹配参数化命令成功，解析结果:', {
-                type: parsedCommand.config.type,
-                width: parsedCommand.width,
-                originalCommand: parsedCommand.originalCommand
-            });
             
             // 设置基础 callout 类型
             blockquote.setAttribute('custom-callout', parsedCommand.config.type);
@@ -97,7 +92,6 @@ export class CalloutProcessor {
             // 设置边注相关属性（宽度和高度）
             if (parsedCommand.width && parsedCommand.width !== null) {
                 // 只有明确指定宽度参数才设置
-                console.log('[Callout] 🎯 设置宽度属性:', parsedCommand.width);
                 blockquote.setAttribute('data-margin-width', parsedCommand.width);
                 // 设置CSS变量
                 blockquote.style.setProperty('--margin-width', parsedCommand.width);
@@ -115,7 +109,7 @@ export class CalloutProcessor {
                 blockquote.style.setProperty('--margin-height', parsedCommand.height);
                 blockquote.style.setProperty('min-height', parsedCommand.height);
             } else {
-                console.log('[Callout] ⚠️ 没有高度参数，保持现有高度设置不变');
+               // console.log('[Callout] ⚠️ 没有高度参数，保持现有高度设置不变');
                 // 不要清除已有的高度属性！用户可能之前设置过高度
                 // 只有在明确要设置新高度时才修改
             }
@@ -127,7 +121,6 @@ export class CalloutProcessor {
             // 应用折叠状态
             if (parsedCommand.collapsed !== null && parsedCommand.collapsed !== undefined) {
                 blockquote.setAttribute('data-collapsed', String(parsedCommand.collapsed));
-                console.log('[Callout] 🎯 应用折叠状态:', parsedCommand.collapsed);
             }
 
             // 添加折叠功能
@@ -156,7 +149,7 @@ export class CalloutProcessor {
         }
 
         // 简化的清理逻辑  
-        console.log('[Callout] 🔍 没有匹配任何callout类型，进入清理逻辑');
+        //console.log('[Callout] 🔍 没有匹配任何callout类型，进入清理逻辑');
         
         // 如果不匹配任何 callout 类型，谨慎清除属性（保留宽度设置）
         if (blockquote.hasAttribute('custom-callout')) {
@@ -469,12 +462,10 @@ export class CalloutProcessor {
      * 组合格式: [!info|30%|120px]- (带宽高的折叠状态)
      */
     parseCalloutCommand(text: string): ParsedCalloutCommand | null {
-        console.log('[Callout] 🔍 开始解析命令:', text);
         
         // 匹配 [!type] 或 [!type|params] 格式，支持可选的折叠标记 +/-
         const match = text.match(/^\[!([^|\]]+)(\|.*?)?\]([+-])?$/);
         if (!match) {
-            console.log('[Callout] ❌ 正则匹配失败');
             return null;
         }
 
@@ -482,12 +473,12 @@ export class CalloutProcessor {
         const paramsString = match[2]; // |30%|120px
         const collapseMarker = match[3]; // + 或 - 或 undefined
         
-        console.log('[Callout] 📋 解析结果:', {
-            calloutType,
-            paramsString,
-            collapseMarker,
-            fullMatch: match[0]
-        });
+        // console.log('[Callout] 📋 解析结果:', {
+        //     calloutType,
+        //     paramsString,
+        //     collapseMarker,
+        //     fullMatch: match[0]
+        // });
         
         // 构造查找用的键（现在配置中使用 [!type] 格式）
         const searchKey = `[!${calloutType}]`;
@@ -500,11 +491,9 @@ export class CalloutProcessor {
             return null;
         }
 
-        console.log('[Callout] ✅ 找到配置:', config.type);
 
         // 解析参数 - 支持宽度和高度
         const params = paramsString ? paramsString.substring(1).split('|') : []; // 移除开头的|
-        console.log('[Callout] 📊 参数列表:', params);
         
         // 解析参数：可能是宽度(%)、高度(px)或间距
         let width: string | null = null;
@@ -536,7 +525,6 @@ export class CalloutProcessor {
         // 解析折叠状态：- 表示折叠，+ 表示展开，undefined 表示默认展开
         const collapsed = collapseMarker === '-' ? true : (collapseMarker === '+' ? false : null);
         
-        console.log('[Callout] 🎯 解析结果:', { width, height, spacing, collapsed });
 
         return {
             type: config.type,
@@ -569,10 +557,8 @@ export class CalloutProcessor {
         // 如果只是数字，默认当作百分比
         if (/^[\d.]+$/.test(normalized)) {
             const num = parseFloat(normalized);
-            console.log('[Callout] 🔢 纯数字参数，解析为:', num);
             if (num > 0 && num <= 100) { // 限制到100%
                 const result = `${num}%`;
-                console.log('[Callout] ✅ 数字范围有效，返回:', result);
                 return result;
             }
         }
@@ -608,10 +594,8 @@ export class CalloutProcessor {
         // 如果只是数字，默认当作像素
         if (/^[\d.]+$/.test(normalized)) {
             const num = parseFloat(normalized);
-            console.log('[Callout] 🔢 纯数字参数，解析为:', num);
             if (num >= 50 && num <= 1000) {
                 const result = `${Math.round(num)}px`;
-                console.log('[Callout] ✅ 数字范围有效，返回:', result);
                 return result;
             }
         }
