@@ -32,7 +32,23 @@
     });
 
     onMount(() => {
-        loadCallouts();
+        // 延迟加载，确保 DOM 和 callout processor 都已准备好
+        // 使用多次尝试策略，确保能够成功加载
+        setTimeout(() => {
+            lastUpdateTime = 0;
+            currentDocId = '';
+            loadCallouts();
+        }, 800);
+        
+        // 第二次尝试（如果第一次失败）
+        setTimeout(() => {
+            if (callouts.length === 0) {
+                lastUpdateTime = 0;
+                currentDocId = '';
+                loadCallouts();
+            }
+        }, 2000);
+        
         // 监听点击事件，检测文档切换
         document.addEventListener('click', handleDocumentSwitch);
     });
