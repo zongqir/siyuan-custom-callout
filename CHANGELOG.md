@@ -1,5 +1,35 @@
 # Changelog
 
+## v1.2.1 2025-01-08
+
+### 🐛 Bug Fixes
+
+* **资源泄漏修复**: 修复插件卸载时未能正确清理资源的问题
+  - 移除所有事件监听器（全局和元素级别）
+  - 清理定时器（setInterval）
+  - 断开所有观察者（MutationObserver, ResizeObserver）
+  - 取消主题订阅
+  - 移除动态创建的 DOM 元素
+
+### 🔧 改进
+
+* 添加完善的资源清理机制，确保插件可以安全地卸载和重新加载
+* 防止内存泄漏和僵尸事件处理
+* 提高插件稳定性和性能
+
+### 📝 技术细节
+
+修复的文件：
+- `src/callout/processor.ts` - Callout 元素事件监听器清理
+- `src/callout/manager.ts` - 全局事件监听器清理
+- `src/callout/menu.ts` - 菜单资源和主题订阅清理
+- `src/callout/autocomplete.ts` - 自动补全监听器清理
+- `src/callout/menu-theme.ts` - 媒体查询监听器清理
+- `src/callout/drag-resize.ts` - 拖拽相关资源清理
+- `src/callout/proxy-button.ts` - 块标高亮资源清理
+
+---
+
 ## v0.3.5 2024-04-30
 
 * [Add `direction` to plugin method `Setting.addItem`](https://github.com/siyuan-note/siyuan/issues/11183)
