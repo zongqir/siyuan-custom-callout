@@ -6,6 +6,7 @@
     import { DEFAULT_CALLOUT_TYPES } from '../callout/types';
     import { ConfigManager, type CalloutConfig } from '../callout/config';
     import { THEME_STYLES } from '../callout/themes/index';
+    import { OUTLINE_THEME_STYLES, getDefaultOutlineTheme } from '../dock/themes';
     import EditDialog from './edit-dialog.svelte';
     import { showMessage } from 'siyuan';
 
@@ -25,6 +26,7 @@
     // 折叠状态
     let menuPreviewCollapsed = false;
     let themeCollapsed = false;
+    let outlineThemeCollapsed = false;
     
     // 主题覆盖配置
     let backgroundStyle: 'solid' | 'gradient' | 'default' = 'default';
@@ -45,6 +47,8 @@
 
     // 获取当前选中的主题
     $: currentTheme = THEME_STYLES.find(t => t.id === config?.themeId) || THEME_STYLES[0];
+    
+    // 大纲主题会在设置界面中直接使用，不需要单独的响应式变量
 
     // 计算预览样式（主题 + 样式微调）
     $: previewStyles = {
@@ -101,6 +105,19 @@
         config = { ...config, themeId: newThemeId };
         await saveConfig();
         showMessage(`已切换到「${THEME_STYLES.find(t => t.id === newThemeId)?.name}」风格`, 2000, 'info');
+    }
+    
+    async function handleOutlineThemeChange(newThemeId: string) {
+        if (!config) return;
+        config = { ...config, outlineThemeId: newThemeId };
+        await saveConfig();
+        
+        // 通知插件更新大纲主题
+        if (plugin.updateOutlineTheme) {
+            await plugin.updateOutlineTheme(newThemeId);
+        }
+        
+        showMessage(`大纲已切换到「${OUTLINE_THEME_STYLES.find(t => t.id === newThemeId)?.name}」风格`, 2000, 'info');
     }
     
     async function handleOverrideChange() {
@@ -226,6 +243,26 @@
             await saveConfig();
             showMessage('样式微调已重置', 2000, 'info');
         }
+    }
+
+    // 类型管理相关函数
+    function isTypeHidden(typeId: string): boolean {
+        return config?.hiddenDefaults?.has(typeId) || false;
+    }
+    
+    async function toggleTypeVisibility(typeId: string) {
+        if (!config) return;
+        
+        const hiddenDefaults = new Set(config.hiddenDefaults);
+        if (hiddenDefaults.has(typeId)) {
+            hiddenDefaults.delete(typeId);
+        } else {
+            hiddenDefaults.add(typeId);
+        }
+        
+        config = { ...config, hiddenDefaults };
+        await saveConfig();
+        showMessage(`已${hiddenDefaults.has(typeId) ? '隐藏' : '显示'}「${typeId}」类型`, 2000, 'info');
     }
 
     // 拖拽相关函数
@@ -473,6 +510,7 @@
         </div>
         
         <!-- 3. 样式微调 -->
+        {#if !themeCollapsed}
         <div class="override-section">
             <div class="section-header">
                 <div class="header-left">
@@ -721,6 +759,194 @@
                 </div>
             </div>
         </div>
+        {/if}
+
+        <!-- 4. 大纲风格 -->
+        <div class="theme-section">
+            <div class="section-header clickable" on:click={() => outlineThemeCollapsed = !outlineThemeCollapsed}>
+                <div class="header-left">
+                    <h3><span class="section-number">4.</span> 大纲风格</h3>
+                    <p>自定义 Callout 大纲面板的视觉样式</p>
+                </div>
+                <div class="expand-icon" class:expanded={!outlineThemeCollapsed}>
+                    <svg width="16" height="16" viewBox="0 0 16 16">
+                        <path fill="currentColor" d="M8 4l-6 6h12z"/>
+                    </svg>
+                </div>
+            </div>
+            
+            {#if !outlineThemeCollapsed}
+            <div class="theme-grid">
+                {#each OUTLINE_THEME_STYLES as theme}
+                    <div 
+                        class="theme-card outline-theme-card" 
+                        class:active={config.outlineThemeId === theme.id}
+                        on:click={() => handleOutlineThemeChange(theme.id)}
+                    >
+                        <div class="theme-header">
+                            <div class="theme-emoji">{theme.preview}</div>
+                            <div class="theme-name">{theme.name}</div>
+                        </div>
+                        
+                        <div class="theme-description">
+                            {theme.description}
+                        </div>
+                        
+                        <!-- 大纲主题预览 -->
+                        <div class="outline-theme-preview">
+                            <div class="outline-preview-header" style="
+                                background: {theme.headerBackground};
+                                border-bottom: {theme.headerBorder};
+                                padding: {theme.headerPadding};
+                            ">
+                                <div class="outline-preview-title" style="
+                                    color: {theme.headerTitleColor};
+                                    font-size: {theme.headerTitleFontSize};
+                                    font-weight: {theme.headerTitleFontWeight};
+                                ">
+                                    📋 Callout 大纲
+                                </div>
+                            </div>
+                            
+                            <div class="outline-preview-list" style="
+                                padding: {theme.listPadding};
+                                gap: {theme.listGap};
+                                background: {theme.listBackground};
+                            ">
+                                <div class="outline-preview-card" style="
+                                    padding: {theme.cardPadding};
+                                    border-radius: {theme.cardBorderRadius};
+                                    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+                                    border: 1px solid #4f46e5;
+                                ">
+                                    <div class="outline-preview-card-header" style="
+                                        gap: {theme.cardHeaderGap};
+                                        margin-bottom: {theme.cardHeaderMarginBottom};
+                                    ">
+                                        <div class="outline-preview-icon" style="
+                                            width: {theme.iconSize};
+                                            height: {theme.iconSize};
+                                        ">💡</div>
+                                        <div class="outline-preview-label" style="
+                                            padding: {theme.labelPadding};
+                                            border-radius: {theme.labelBorderRadius};
+                                            font-size: {theme.labelFontSize};
+                                            background: {theme.labelBackground};
+                                            color: {theme.labelColor};
+                                        ">提示</div>
+                                    </div>
+                                    <div class="outline-preview-content" style="
+                                        font-size: {theme.contentFontSize};
+                                        color: {theme.contentColor};
+                                        line-height: {theme.contentLineHeight};
+                                    ">
+                                        这是大纲预览内容
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {#if config.outlineThemeId === theme.id}
+                            <div class="theme-check">✓</div>
+                        {/if}
+                    </div>
+                {/each}
+            </div>
+            {/if}
+        </div>
+        
+        <!-- 5. 类型预览 & 管理 -->
+        <div class="types-section">
+            <div class="section-header clickable" on:click={() => menuPreviewCollapsed = !menuPreviewCollapsed}>
+                <div class="header-left">
+                    <h3><span class="section-number">5.</span> 类型预览 & 管理</h3>
+                    <p>查看所有可用的 Callout 类型，可以自定义、隐藏、重新排序</p>
+                </div>
+                <div class="expand-icon" class:expanded={!menuPreviewCollapsed}>
+                    <svg width="16" height="16" viewBox="0 0 16 16">
+                        <path fill="currentColor" d="M8 4l-6 6h12z"/>
+                    </svg>
+                </div>
+            </div>
+            
+            {#if !menuPreviewCollapsed}
+            <div class="types-grid" style="--grid-columns: {gridColumns};">
+                {#each allTypes as type, index (type.type)}
+                    <div 
+                        class="type-card"
+                        class:hidden={isTypeHidden(type.type)}
+                        draggable="true"
+                        on:dragstart={(e) => handleDragStart(e, index)}
+                        on:dragover={(e) => handleDragOver(e, index)}
+                        on:dragleave={handleDragLeave}
+                        on:drop={(e) => handleDrop(e, index)}
+                        on:dragend={handleDragEnd}
+                    >
+                        <div class="type-header">
+                            <div class="type-icon-section">
+                                <div class="type-icon" style="color: {type.color};">
+                                    {@html type.icon}
+                                </div>
+                                <div class="type-info">
+                                    <div class="type-name">{type.displayName}</div>
+                                    <div class="type-commands">
+                                        <span class="command-tag primary">{type.command}</span>
+                                        {#if type.alias}
+                                            <span class="command-tag secondary">{type.alias}</span>
+                                        {/if}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="type-actions">
+                                <button 
+                                    class="toggle-btn" 
+                                    class:hidden-type={isTypeHidden(type.type)}
+                                    on:click={() => toggleTypeVisibility(type.type)}
+                                    title={isTypeHidden(type.type) ? '显示此类型' : '隐藏此类型'}
+                                >
+                                    {#if isTypeHidden(type.type)}
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                                            <path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M1 12s3-7 11-7 11 7 11 7-3 7-11 7-11-7-11-7z"/>
+                                            <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2" fill="none"/>
+                                            <path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M3 3l18 18"/>
+                                        </svg>
+                                    {:else}
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                                            <path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M1 12s3-7 11-7 11 7 11 7-3 7-11 7-11-7-11-7z"/>
+                                            <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2" fill="none"/>
+                                        </svg>
+                                    {/if}
+                                </button>
+                                
+                                <button 
+                                    class="edit-btn" 
+                                    on:click={() => handleEdit(type)}
+                                    title="编辑此类型"
+                                >
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                                        <path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                        <path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="type-demo" style="background: {type.bgGradient}; border-left-color: {type.color};">
+                            <div class="demo-title" style="color: {type.color};">
+                                <div class="demo-icon" style="color: {type.color};">
+                                    {@html type.icon}
+                                </div>
+                                <span>{type.displayName}</span>
+                            </div>
+                            <div class="demo-content">这是 {type.displayName} 类型的示例内容</div>
+                        </div>
+                    </div>
+                {/each}
+            </div>
+            {/if}
+        </div>
+        
     {/if}
 </div>
 
@@ -805,6 +1031,65 @@
     /* 主题选择区域 */
     .theme-section {
         margin-bottom: 32px;
+    }
+    
+    /* 大纲主题预览样式 */
+    .outline-theme-card {
+        min-height: 200px;
+    }
+    
+    .outline-theme-preview {
+        margin-top: 12px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: 6px;
+        overflow: hidden;
+        background: #fff;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    
+    .outline-preview-header {
+        display: flex;
+        align-items: center;
+        position: relative;
+    }
+    
+    .outline-preview-title {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .outline-preview-list {
+        display: flex;
+        flex-direction: column;
+        min-height: 60px;
+    }
+    
+    .outline-preview-card {
+        position: relative;
+    }
+    
+    .outline-preview-card-header {
+        display: flex;
+        align-items: center;
+    }
+    
+    .outline-preview-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    
+    .outline-preview-label {
+        font-weight: 600;
+        white-space: nowrap;
+    }
+    
+    .outline-preview-content {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     .theme-grid {
@@ -1332,6 +1617,164 @@
 
     .preview-content {
         user-select: none;
+    }
+
+    /* 类型预览和管理样式 */
+    .types-section {
+        margin-bottom: 32px;
+    }
+
+    .types-grid {
+        display: grid;
+        grid-template-columns: repeat(var(--grid-columns), 1fr);
+        gap: 16px;
+        padding: 16px;
+        background: var(--b3-theme-surface);
+        border-radius: 8px;
+        border: 1px solid var(--b3-border-color);
+    }
+
+    .type-card {
+        position: relative;
+        background: white;
+        border-radius: 8px;
+        border: 1px solid #e5e7eb;
+        overflow: hidden;
+        transition: all 0.2s ease;
+        cursor: grab;
+    }
+
+    .type-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .type-card.hidden {
+        opacity: 0.45;
+    }
+
+    .type-card:active {
+        cursor: grabbing;
+    }
+
+    .type-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px;
+        background: #f8f9fa;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .type-icon-section {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+    }
+
+    .type-icon {
+        flex-shrink: 0;
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .type-info {
+        min-width: 0;
+    }
+
+    .type-name {
+        font-size: 14px;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 4px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .type-commands {
+        display: flex;
+        gap: 4px;
+    }
+
+    .command-tag {
+        font-size: 11px;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-weight: 500;
+    }
+
+    .command-tag.primary {
+        background: #e0f2fe;
+        color: #0277bd;
+    }
+
+    .command-tag.secondary {
+        background: #f3e5f5;
+        color: #7b1fa2;
+    }
+
+    .type-actions {
+        display: flex;
+        gap: 6px;
+    }
+
+    .toggle-btn, .edit-btn {
+        width: 24px;
+        height: 24px;
+        padding: 0;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+        color: #6b7280;
+    }
+
+    .toggle-btn:hover, .edit-btn:hover {
+        background: #e5e7eb;
+        color: #374151;
+    }
+
+    .toggle-btn.hidden-type {
+        color: #ef4444;
+    }
+
+    .type-demo {
+        padding: 12px;
+        margin: 8px;
+        border-radius: 6px;
+        border-left: 3px solid currentColor;
+    }
+
+    .demo-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        margin-bottom: 6px;
+    }
+
+    .demo-icon {
+        width: 16px;
+        height: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .demo-content {
+        font-size: 12px;
+        color: #6b7280;
+        line-height: 1.5;
     }
 
 </style>

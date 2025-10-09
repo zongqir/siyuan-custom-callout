@@ -8,6 +8,7 @@ import SettingPanel from "./settings/panel-v2.svelte";
 import CalloutOutlineDock from "./dock/callout-outline.svelte";
 import { Dialog } from "siyuan";
 import { logger } from "./libs/logger";
+import { ConfigManager } from "./callout/config";
 
 const STORAGE_NAME = "callout-config";
 const DOCK_TYPE = "callout-outline-dock";
@@ -16,6 +17,7 @@ export default class CustomCalloutPlugin extends Plugin {
     private calloutManager: CalloutManager | null = null;
     private isMobile: boolean;
     private dockPanel: CalloutOutlineDock | null = null;
+    private currentOutlineThemeId: string = 'modern';
 
     async onload() {
         logger.log("Plugin loading...");
@@ -32,6 +34,9 @@ export default class CustomCalloutPlugin extends Plugin {
         // 初始化Callout管理器
         this.calloutManager = new CalloutManager(this);
         await this.calloutManager.initialize();
+
+        // 加载大纲主题配置
+        await this.loadOutlineTheme();
 
         logger.log("Plugin loaded successfully");
     }
@@ -68,7 +73,8 @@ export default class CustomCalloutPlugin extends Plugin {
                 this.dockPanel = new CalloutOutlineDock({
                     target: container,
                     props: {
-                        plugin: this
+                        plugin: this,
+                        themeId: this.currentOutlineThemeId
                     }
                 });
             },
@@ -128,6 +134,31 @@ export default class CustomCalloutPlugin extends Plugin {
     openSettings() {
                 this.openSetting();
             }
+
+    /**
+     * 加载大纲主题配置
+     */
+    private async loadOutlineTheme() {
+        try {
+            const config = await ConfigManager.load(this);
+            this.currentOutlineThemeId = config.outlineThemeId || 'modern';
+        } catch (error) {
+            logger.error('[Plugin] Failed to load outline theme config:', error);
+            this.currentOutlineThemeId = 'modern';
+        }
+    }
+
+    /**
+     * 更新大纲主题
+     */
+    public async updateOutlineTheme(themeId: string) {
+        this.currentOutlineThemeId = themeId;
+        
+        // 如果大纲面板已经创建，更新其主题
+        if (this.dockPanel) {
+            this.dockPanel.$set({ themeId: themeId });
+        }
+    }
 
     /**
      * 获取前端环境

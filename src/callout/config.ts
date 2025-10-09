@@ -29,6 +29,7 @@ export interface CalloutConfig {
     typeOrder: string[]; // 类型显示顺序（类型ID列表）
     gridColumns: number; // 网格列数（2/3/4）
     themeId: string; // 当前使用的主题ID
+    outlineThemeId?: string; // 大纲主题ID
     themeOverrides?: ThemeOverrides; // 主题样式覆盖
 }
 
@@ -57,6 +58,7 @@ export class ConfigManager {
                 typeOrder: data.typeOrder || [],
                 gridColumns: data.gridColumns || 3,
                 themeId: data.themeId || 'modern',
+                outlineThemeId: data.outlineThemeId || 'modern',
                 themeOverrides: data.themeOverrides || {}
             };
         } catch (error) {
@@ -99,6 +101,7 @@ export class ConfigManager {
             typeOrder: [],
             gridColumns: 3,
             themeId: 'modern',
+            outlineThemeId: 'modern',
             themeOverrides: {}
         };
     }
@@ -266,6 +269,7 @@ export class ConfigManager {
         if (preserveSettings && currentConfig) {
             defaultConfig.gridColumns = currentConfig.gridColumns;
             defaultConfig.themeId = currentConfig.themeId;
+            defaultConfig.outlineThemeId = currentConfig.outlineThemeId || 'modern';
         }
         return defaultConfig;
     }
