@@ -12,6 +12,7 @@ A powerful plugin for SiYuan Notes that transforms your blockquotes into beautif
 - 📐 **Smart Margin System** - Support for left/right margins with drag-to-resize
 - ⚡ **3 Creation Methods** - Visual menu, command input, or smart autocomplete
 - 🎯 **Rich Interactions** - Collapse/expand, type switching, drag-to-resize
+- 📋 **Outline Support** - Callout content displays in sidebar outline panel for quick navigation
 - 📱 **Cross-Platform** - Works on desktop, mobile, and browser
 
 ---
@@ -197,7 +198,6 @@ Backup plugin data before uninstalling.
 ### Q4: Can I export notes with callouts?
 
 **A**: Yes! Callout styles are preserved when exporting:
-- ✅ Export as PDF - Perfect style preservation
 - ✅ Export as HTML - Style preserved
 - ✅ Export as Markdown - Command format preserved
 
@@ -253,7 +253,16 @@ For more options, feel free to request on GitHub!
 
 ## 🔄 Changelog
 
-### v0.4.1 (Latest)
+### v1.3.0 (Latest)
+- ✨ Added Callout Line outline support
+- 🎨 Optimized sidebar panel experience
+- 🐛 Fixed various known issues
+
+### v1.2.1
+- 🐛 Fixed resource leak issues on plugin unload
+- 🔧 Improved plugin stability and performance
+
+### v0.4.1
 - ✨ Added 8 theme style system
 - ✨ Added theme quick config feature
 - ✨ Added drag-to-resize width and height
