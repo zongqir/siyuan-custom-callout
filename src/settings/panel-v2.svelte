@@ -184,21 +184,6 @@
     async function handleOutlineOverrideChange() {
         if (!config) return;
         
-        console.log('Outline override change triggered:', {
-            cardSize: outlineCardSize,
-            colorVibrancy: outlineColorVibrancy,
-            backgroundOpacity: outlineBackgroundOpacity,
-            cardBackgroundStyle: outlineCardBackgroundStyle,
-            titleFontSize: outlineTitleFontSize,
-            contentFontSize: outlineContentFontSize,
-            iconSize: outlineIconSize,
-            compactMode: outlineCompactMode,
-            showBorder: outlineShowBorder,
-            textColor: outlineTextColor,
-            contentMaxLines: outlineContentMaxLines,
-            hideContent: outlineHideContent
-        });
-        
         // 构建大纲覆盖配置（总是保存所有值，确保能够正确覆盖）
         const outlineOverrides: OutlineOverrides = {
             cardSize: outlineCardSize !== 'default' ? outlineCardSize as any : undefined,
@@ -222,19 +207,13 @@
             }
         });
         
-        console.log('Final outline overrides:', outlineOverrides);
-        
         config = { ...config, outlineOverrides };
         await saveConfig();
         
-        console.log('Config saved, current config.outlineOverrides:', config.outlineOverrides);
-        
         // 通知插件刷新大纲样式
         if (plugin.refreshOutlineStyles) {
-            console.log('Calling refreshOutlineStyles...');
             await plugin.refreshOutlineStyles();
         } else if (plugin.updateOutlineTheme) {
-            console.log('Falling back to updateOutlineTheme...');
             await plugin.updateOutlineTheme(config.outlineThemeId || 'modern');
         }
     }
@@ -1222,14 +1201,14 @@
                             </svg>
                             内容显示行数
                         </label>
-                        <input
-                            type="range"
-                            min="1" max="5" step="1"
-                            bind:value={outlineContentMaxLines}
-                            on:input={handleOutlineOverrideChange}
-                            disabled={outlineHideContent}
-                        />
-                        <span class="range-value">{outlineContentMaxLines}行</span>
+                        <select bind:value={outlineContentMaxLines} on:change={handleOutlineOverrideChange}>
+                            <option value={1}>1行</option>
+                            <option value={2}>2行（默认）</option>
+                            <option value={3}>3行</option>
+                            <option value={4}>4行</option>
+                            <option value={5}>5行</option>
+                            <option value={99}>全部显示</option>
+                        </select>
                     </div>
                     
                     <!-- 隐藏内容 -->

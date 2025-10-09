@@ -37,6 +37,9 @@
     let contentMaxLines: number = 2;
     let hideContent: boolean = false;
     
+    // 🎯 显示密度模式（纯前端临时状态，不持久化）
+    let densityMode: 'normal' | 'compact' | 'minimal' = 'normal';
+    
     // 响应式更新主题
     $: updateTheme(themeId);
     
@@ -58,14 +61,6 @@
             textColor = outlineOverrides?.textColor || 'auto';
             contentMaxLines = outlineOverrides?.contentMaxLines || 2;
             hideContent = outlineOverrides?.hideContent || false;
-            
-            console.log('Loaded config in outline component:', config);
-            console.log('Loaded outlineOverrides:', outlineOverrides);
-            console.log('Card background style:', cardBackgroundStyle);
-            console.log('Color vibrancy:', colorVibrancy);
-            console.log('Text color:', textColor);
-            console.log('Content max lines:', contentMaxLines);
-            console.log('Hide content:', hideContent);
             
             themeCSS = generateOutlineThemeCSS(currentTheme, outlineOverrides);
         } catch (error) {
@@ -436,7 +431,7 @@
             id: blockId,
             type: calloutType,
             title: title,
-            content: content.substring(0, 300), // 300字符足够显示5行
+            content: content.substring(0, 600), // 600字符确保能显示5行完整内容
             config: config,
             collapsed: collapsed
         };
@@ -486,6 +481,19 @@
         currentDocId = ''; // 重置文档ID，强制刷新
         loadCallouts();
     }
+    
+    /**
+     * 切换显示密度：正常 → 紧凑 → 极简 → 正常
+     */
+    function toggleDensity() {
+        if (densityMode === 'normal') {
+            densityMode = 'compact';
+        } else if (densityMode === 'compact') {
+            densityMode = 'minimal';
+        } else {
+            densityMode = 'normal';
+        }
+    }
 </script>
 
 <div class="callout-outline-dock" style={themeCSS}>
@@ -495,6 +503,31 @@
             <span>{plugin.i18n.calloutOutline || 'Callout 大纲'}</span>
         </div>
         <div class="header-actions">
+            <!-- 密度切换按钮 -->
+            <button 
+                class="density-btn" 
+                on:click={toggleDensity}
+                title={densityMode === 'normal' ? '正常视图 → 紧凑视图' : (densityMode === 'compact' ? '紧凑视图 → 极简视图' : '极简视图 → 正常视图')}
+            >
+                {#if densityMode === 'normal'}
+                    <!-- 正常：三条线 -->
+                    <svg viewBox="0 0 24 24">
+                        <path fill="currentColor" d="M3 6h18v2H3V6zm0 5h18v2H3v-2zm0 5h18v2H3v-2z"/>
+                    </svg>
+                {:else if densityMode === 'compact'}
+                    <!-- 紧凑：两条线 -->
+                    <svg viewBox="0 0 24 24">
+                        <path fill="currentColor" d="M3 7h18v2H3V7zm0 8h18v2H3v-2z"/>
+                    </svg>
+                {:else}
+                    <!-- 极简：一条线 -->
+                    <svg viewBox="0 0 24 24">
+                        <path fill="currentColor" d="M3 11h18v2H3v-2z"/>
+                    </svg>
+                {/if}
+            </button>
+            
+            <!-- 刷新按钮 -->
             <button 
                 class="refresh-btn" 
                 on:click={handleRefresh}
@@ -562,8 +595,19 @@
                         <div class="callout-title">{callout.title}</div>
                     {/if}
                     
-                    {#if !hideContent && callout.content}
-                        <div class="callout-preview" style="-webkit-line-clamp: {contentMaxLines}; line-clamp: {contentMaxLines};">{callout.content}</div>
+                    <!-- 密度模式优先级高于持久化配置 -->
+                    {#if callout.content}
+                        {#if densityMode === 'minimal'}
+                            <!-- 极简模式：不显示内容 -->
+                        {:else if densityMode === 'compact'}
+                            <!-- 紧凑模式：固定显示1行 -->
+                            <div class="callout-preview" style="-webkit-line-clamp: 1; line-clamp: 1;">{callout.content}</div>
+                        {:else}
+                            <!-- 正常模式：显示至少3行（确保能展开，同时尊重用户设置更多行的需求） -->
+                            {#if !hideContent}
+                                <div class="callout-preview" style="-webkit-line-clamp: {Math.max(contentMaxLines, 3)}; line-clamp: {Math.max(contentMaxLines, 3)};">{callout.content}</div>
+                            {/if}
+                        {/if}
                     {/if}
                 </div>
             {/each}
@@ -613,6 +657,7 @@
             gap: 8px;
         }
 
+        .density-btn,
         .refresh-btn {
             display: flex;
             align-items: center;
