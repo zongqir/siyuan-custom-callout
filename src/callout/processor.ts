@@ -47,6 +47,32 @@ export class CalloutProcessor {
     }
 
     /**
+     * 获取blockquote的第一个内容div（兼容只读和可编辑模式）
+     * 在只读模式下，contenteditable="false"；在可编辑模式下，contenteditable="true"
+     */
+    private getFirstContentDiv(blockquote: HTMLElement): HTMLElement | null {
+        // 方法1：尝试查找第一个 NodeParagraph
+        let titleDiv = blockquote.querySelector('div[data-type="NodeParagraph"]:first-of-type') as HTMLElement;
+        if (titleDiv) {
+            // 获取 NodeParagraph 内部的 contenteditable div
+            const innerDiv = titleDiv.querySelector('div[contenteditable]') as HTMLElement;
+            if (innerDiv) {
+                return innerDiv;
+            }
+            return titleDiv;
+        }
+        
+        // 方法2：查找任何 contenteditable div（不管是 true 还是 false）
+        titleDiv = blockquote.querySelector('div[contenteditable]') as HTMLElement;
+        if (titleDiv) {
+            return titleDiv;
+        }
+        
+        // 方法3：回退到第一个 div
+        return blockquote.querySelector('div') as HTMLElement;
+    }
+
+    /**
      * 处理单个引述块
      */
     processBlockquote(blockquote: HTMLElement): boolean {
@@ -83,7 +109,7 @@ export class CalloutProcessor {
             return false;
         }
 
-        const titleDiv = blockquote.querySelector('div[contenteditable="true"]') as HTMLElement;
+        const titleDiv = this.getFirstContentDiv(blockquote);
         const text = titleDiv?.textContent?.trim() || '';
 
         console.log('[Callout Debug] Processing text:', `"${text}"`, {
@@ -952,7 +978,7 @@ export class CalloutProcessor {
      * 检查引述块是否为空
      */
     isBlockQuoteEmpty(blockQuote: HTMLElement): boolean {
-        const contentDiv = blockQuote.querySelector('[contenteditable="true"]') as HTMLElement;
+        const contentDiv = this.getFirstContentDiv(blockQuote);
         if (!contentDiv) return false;
 
         const text = contentDiv.textContent?.trim() || '';
@@ -1205,10 +1231,10 @@ export class CalloutProcessor {
      * 持久化折叠状态到标题
      */
     private async persistCollapseState(blockquote: HTMLElement) {
-        // 找到可编辑的标题div
-        const titleDiv = blockquote.querySelector('div[contenteditable="true"]') as HTMLElement;
+        // 找到标题div（兼容只读和可编辑模式）
+        const titleDiv = this.getFirstContentDiv(blockquote);
         if (!titleDiv) {
-            logger.error('[Callout] 找不到可编辑标题div');
+            logger.error('[Callout] 找不到标题div');
             return;
         }
 

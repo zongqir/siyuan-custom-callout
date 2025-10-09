@@ -252,9 +252,9 @@ export class CalloutAutocomplete {
 
         const selectedType = this.suggestions[this.selectedIndex];
         
-        // 获取第一行的编辑器
+        // 获取第一行的编辑器（兼容只读模式）
         const firstParagraph = this.currentTargetBlockQuote.querySelector('div[data-type="NodeParagraph"]:first-of-type');
-        const titleDiv = firstParagraph?.querySelector('div[contenteditable="true"]') as HTMLElement;
+        const titleDiv = firstParagraph?.querySelector('div[contenteditable]') as HTMLElement;
         
         if (titleDiv) {
             // 替换文本为选中的命令

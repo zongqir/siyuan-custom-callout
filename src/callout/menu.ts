@@ -618,8 +618,8 @@ export class CalloutMenu {
             
             // 🔧 原生模式特殊处理：延迟恢复光标焦点
             setTimeout(() => {
-                // 确保光标在正确的位置
-                const titleDiv = targetBlockQuote.querySelector('[contenteditable="true"]') as HTMLElement;
+                // 确保光标在正确的位置（兼容只读模式）
+                const titleDiv = targetBlockQuote.querySelector('[contenteditable]') as HTMLElement;
                 if (titleDiv) {
                     console.log('[Callout Menu] 🎯 原生模式：开始恢复光标焦点');
                     
@@ -685,8 +685,8 @@ export class CalloutMenu {
                 container = container.parentElement!;
             }
             
-            // 查找最近的contenteditable div
-            const editableDiv = (container as HTMLElement).closest('[contenteditable="true"]') as HTMLElement;
+            // 查找最近的contenteditable div（兼容只读模式）
+            const editableDiv = (container as HTMLElement).closest('[contenteditable]') as HTMLElement;
             
             // 确保找到的div在指定的blockquote内
             if (editableDiv && blockQuoteElement.contains(editableDiv)) {
@@ -746,8 +746,8 @@ export class CalloutMenu {
             // 🔧 修复：优先获取当前焦点所在的可编辑div，而不是第一个
             editableDiv = this.getCurrentFocusedEditableDiv(blockQuoteElement);
             if (!editableDiv) {
-                // 如果没有焦点，才回退到第一个可编辑div
-                editableDiv = blockQuoteElement.querySelector('[contenteditable="true"]');
+                // 如果没有焦点，才回退到第一个div（兼容只读模式）
+                editableDiv = blockQuoteElement.querySelector('[contenteditable]');
             }
         }
         if (!editableDiv) return;

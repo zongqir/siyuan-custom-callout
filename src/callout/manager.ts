@@ -288,10 +288,10 @@ export class CalloutManager {
                 return false;
             }
             
-            // 获取blockquote的第一个可编辑div
-            const firstDiv = blockquote.querySelector('div[contenteditable="true"]');
+            // 获取blockquote的第一个内容div（兼容只读模式）
+            const firstDiv = blockquote.querySelector('div[contenteditable]');
             if (!firstDiv) {
-                console.log('[Callout Debug] 光标检测: blockquote中找不到第一个可编辑div');
+                console.log('[Callout Debug] 光标检测: blockquote中找不到第一个div');
                 return false;
             }
             

@@ -949,8 +949,8 @@ export class CalloutDragResizer {
      * 通过模拟键盘输入来更新标题并持久化
      */
     private async updateTitleWithKeyboardInput(blockquote: HTMLElement, finalWidth: number | null, finalHeight: number | null) {
-        // 找到可编辑的标题div
-        const titleDiv = blockquote.querySelector('div[contenteditable="true"]') as HTMLElement;
+        // 找到标题div（兼容只读模式）
+        const titleDiv = blockquote.querySelector('div[contenteditable]') as HTMLElement;
         if (!titleDiv) {
             return;
         }
