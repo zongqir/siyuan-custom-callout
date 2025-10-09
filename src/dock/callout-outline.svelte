@@ -20,6 +20,7 @@
         content: string;
         config: CalloutTypeConfig;
         collapsed: boolean;
+        isExpanded?: boolean; // 🎯 单个卡片的展开状态（优先级最高）
     }
 
     let callouts: CalloutItem[] = [];
@@ -497,6 +498,22 @@
             densityMode = 'minimal';
         }
     }
+    
+    /**
+     * 🎯 切换单个卡片的展开/折叠状态（优先级最高）
+     */
+    function toggleCardExpand(event: MouseEvent, index: number) {
+        event.stopPropagation(); // 阻止冒泡，避免触发卡片点击跳转
+        callouts = callouts.map((callout, i) => {
+            if (i === index) {
+                return {
+                    ...callout,
+                    isExpanded: callout.isExpanded === undefined ? true : !callout.isExpanded
+                };
+            }
+            return callout;
+        });
+    }
 </script>
 
 <div class="callout-outline-dock" style={themeCSS}>
@@ -583,7 +600,7 @@
         </div>
     {:else}
         <div class="callout-list">
-            {#each callouts as callout (callout.id)}
+            {#each callouts as callout, index (callout.id)}
                 <div 
                     class="callout-card" 
                     style="
@@ -599,6 +616,25 @@
                     tabindex="0"
                     title="点击跳转到此 Callout"
                 >
+                    <!-- 🎯 浮动展开/折叠按钮（hover时显示） -->
+                    <button 
+                        class="card-expand-btn" 
+                        on:click={(e) => toggleCardExpand(e, index)}
+                        title={callout.isExpanded ? '折叠内容' : '展开全部'}
+                    >
+                        {#if callout.isExpanded}
+                            <!-- 折叠图标：向上箭头 -->
+                            <svg viewBox="0 0 16 16" width="16" height="16">
+                                <path fill="currentColor" d="M8 5l-5 5h10z"/>
+                            </svg>
+                        {:else}
+                            <!-- 展开图标：向下箭头 -->
+                            <svg viewBox="0 0 16 16" width="16" height="16">
+                                <path fill="currentColor" d="M8 11l-5-5h10z"/>
+                            </svg>
+                        {/if}
+                    </button>
+                
                     <div class="callout-card-header">
                         <div class="callout-icon" style="color: {callout.config.color}">
                             {@html getTypeIcon(callout.config)}
@@ -613,18 +649,20 @@
                                 </svg>
                             {/if}
                         </div>
-                        <svg class="jump-icon" viewBox="0 0 16 16" width="16" height="16">
-                            <path fill="currentColor" d="M8.5 1.5l5 5-5 5-1-1 3.5-3.5H1v-1.5h10L7.5 2.5z"/>
-                        </svg>
                     </div>
                     
                     {#if callout.title && callout.title !== callout.config.displayName}
                         <div class="callout-title">{callout.title}</div>
                     {/if}
                     
-                    <!-- 密度模式：4档切换 -->
+                    <!-- 🎯 内容显示逻辑（优先级：卡片展开状态 > 全局密度模式） -->
                     {#if callout.content}
-                        {#if densityMode === 'auto'}
+                        {#if callout.isExpanded === true}
+                            <!-- 🔥 优先级最高：单独展开此卡片，显示全部内容 -->
+                            <div class="callout-preview" style="-webkit-line-clamp: 99; line-clamp: 99;">{callout.content}</div>
+                        {:else if callout.isExpanded === false}
+                            <!-- 🔥 优先级最高：单独折叠此卡片，不显示内容 -->
+                        {:else if densityMode === 'auto'}
                             <!-- 自动模式：使用设置配置 -->
                             {#if !hideContent}
                                 <div class="callout-preview" style="-webkit-line-clamp: {contentMaxLines}; line-clamp: {contentMaxLines};">{callout.content}</div>
@@ -823,10 +861,52 @@
         &:hover {
             opacity: var(--outline-card-hover-opacity, 0.9);
             border-color: color-mix(in srgb, var(--callout-color) 80%, #000 20%);
+            
+            // 🎯 hover时显示展开/折叠按钮
+            .card-expand-btn {
+                opacity: 1;
+                visibility: visible;
+            }
         }
 
         &:active {
             opacity: 0.95;
+        }
+    }
+    
+    // 🎯 浮动展开/折叠按钮
+    .card-expand-btn {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        width: 24px;
+        height: 24px;
+        border-radius: 6px;
+        border: none;
+        background: rgba(0, 0, 0, 0.2);
+        backdrop-filter: blur(4px);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.2s ease;
+        z-index: 10;
+        
+        svg {
+            width: 14px;
+            height: 14px;
+            fill: #fff;
+        }
+        
+        &:hover {
+            background: rgba(0, 0, 0, 0.35);
+            transform: scale(1.1);
+        }
+        
+        &:active {
+            transform: scale(0.95);
         }
     }
     
@@ -838,6 +918,19 @@
         
         &:hover {
             border-color: rgba(255, 255, 255, 0.5) !important;
+        }
+        
+        // 浅色背景下的按钮样式（使用主题色）
+        .card-expand-btn {
+            background: rgba(255, 255, 255, 0.6);
+            
+            svg {
+                fill: var(--callout-color);
+            }
+            
+            &:hover {
+                background: rgba(255, 255, 255, 0.85);
+            }
         }
     }
     
@@ -855,7 +948,6 @@
         align-items: center;
         gap: var(--outline-card-header-gap, 10px);
         margin-bottom: var(--outline-card-header-margin-bottom, 10px);
-        justify-content: space-between;
 
         .callout-icon {
             flex-shrink: 0;
@@ -878,22 +970,6 @@
             align-items: center;
             gap: 8px;
         }
-        
-        .jump-icon {
-            flex-shrink: 0;
-            color: var(--outline-footer-icon-color, #fff);
-            opacity: 0.6;
-            transition: all 0.2s;
-            cursor: pointer;
-        }
-    }
-    
-    // hover 效果 - 显示跳转图标
-    .callout-card:hover {
-        .jump-icon {
-            opacity: 1;
-            transform: translateX(2px);
-        }
     }
     
     // 浅色背景下的图标样式（纯色、渐变和色彩模式）
@@ -914,10 +990,6 @@
             color: var(--outline-label-color, #fff);
             background: var(--outline-label-bg, rgba(0, 0, 0, 0.15));
             white-space: nowrap;
-        }
-        
-        .jump-icon {
-            color: var(--callout-color) !important;
         }
     }
     
@@ -955,10 +1027,6 @@
 
         .collapse-indicator {
             fill: #ffffff !important;
-        }
-        
-        .jump-icon {
-            color: #ffffff !important;
         }
     }
 
@@ -1036,8 +1104,17 @@
             fill: #374151 !important;
         }
         
-        .jump-icon {
-            color: #6b7280 !important;
+        // 深色文字模式下的按钮（使用浅色背景+深色图标）
+        .card-expand-btn {
+            background: rgba(255, 255, 255, 0.7);
+            
+            svg {
+                fill: #374151;
+            }
+            
+            &:hover {
+                background: rgba(255, 255, 255, 0.9);
+            }
         }
     }
     
@@ -1063,10 +1140,6 @@
         
         .collapse-indicator {
             fill: #ffffff !important;
-        }
-        
-        .jump-icon {
-            color: #ffffff !important;
         }
     }
 </style>
