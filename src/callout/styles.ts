@@ -24,6 +24,11 @@ export function generateCalloutStyles(customTypes?: CalloutTypeConfig[], themeId
 /* ==================== Callout 主题变量 ==================== */
 :root {
     ${generateThemeCSS(theme)}
+    
+    /* 动态计算的内部间距 - 基于padding值 */
+    --callout-title-icon-gap: ${calculateIconGap(theme.padding)};
+    --callout-title-margin-bottom: ${calculateTitleMargin(theme.padding)};
+    --callout-list-indent: ${calculateListIndent(theme.padding)};
 }
 
 /* ==================== Callout 通用样式 ==================== */
@@ -201,13 +206,44 @@ export function generateCalloutStyles(customTypes?: CalloutTypeConfig[], themeId
     overflow: visible !important;
 }
 
+/* 清除 blockquote 直接子元素（NodeParagraph等）的额外间距 */
+.protyle-wysiwyg .bq[custom-callout] > div[data-type="NodeParagraph"],
+.protyle-wysiwyg .bq[custom-callout] > div[contenteditable] {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    text-indent: 0 !important;  /* 清除文本缩进 */
+}
+
+/* 🔥 精确清零：清除 NodeParagraph 内部所有可能的子元素的左右间距 */
+.protyle-wysiwyg .bq[custom-callout] > div[data-type="NodeParagraph"] *:not([data-callout-title="true"]),
+.protyle-wysiwyg .bq[custom-callout] > div[contenteditable] *:not([data-callout-title="true"]) {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    text-indent: 0 !important;  /* 清除文本缩进 */
+}
+
+/* 清除 span, p, div 等内联和块级元素的左右间距 */
+.protyle-wysiwyg .bq[custom-callout] > div > span,
+.protyle-wysiwyg .bq[custom-callout] > div > p,
+.protyle-wysiwyg .bq[custom-callout] > div > div:not([data-type]) {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    text-indent: 0 !important;  /* 清除文本缩进 */
+}
+
 /* 标题行样式 */
 .protyle-wysiwyg .bq[custom-callout] [data-callout-title="true"] {
     font-weight: var(--callout-title-font-weight) !important;
     font-size: var(--callout-title-font-size) !important;
     min-height: var(--callout-title-height) !important;
-    margin-bottom: 12px !important;
-    padding-left: calc(var(--callout-icon-size) + 12px) !important;
+    margin-bottom: var(--callout-title-margin-bottom, 12px) !important;
+    padding-left: calc(var(--callout-icon-size) + var(--callout-title-icon-gap, 12px)) !important;
     position: relative !important;
     display: block !important;
     color: transparent !important;
@@ -221,14 +257,14 @@ export function generateCalloutStyles(customTypes?: CalloutTypeConfig[], themeId
     list-style-type: disc !important;
     list-style-position: outside !important;
     margin-left: 0 !important;
-    padding-left: 12px !important;
+    padding-left: var(--callout-list-indent, 12px) !important;
 }
 
 .protyle-wysiwyg .bq[custom-callout] ol {
     list-style-type: decimal !important;
     list-style-position: outside !important;
     margin-left: 0 !important;
-    padding-left: 12px !important;
+    padding-left: var(--callout-list-indent, 12px) !important;
 }
 
 .protyle-wysiwyg .bq[custom-callout] li {
@@ -249,7 +285,7 @@ export function generateCalloutStyles(customTypes?: CalloutTypeConfig[], themeId
     display: list-item !important;
     list-style-type: disc !important;
     list-style-position: outside !important;
-    margin: 4px 0 4px 12px !important;
+    margin: 4px 0 4px var(--callout-list-indent, 12px) !important;
     padding-left: 0px !important;
 }
 
@@ -279,7 +315,7 @@ export function generateCalloutStyles(customTypes?: CalloutTypeConfig[], themeId
 /* 嵌套列表样式 */
 .protyle-wysiwyg .bq[custom-callout] ul ul {
     list-style-type: circle !important;
-    margin: 4px 0 4px 16px !important;
+    margin: 4px 0 4px calc(var(--callout-list-indent, 12px) + 4px) !important;
 }
 
 .protyle-wysiwyg .bq[custom-callout] ul ul ul {
@@ -289,7 +325,7 @@ export function generateCalloutStyles(customTypes?: CalloutTypeConfig[], themeId
 /* 特别针对标题行中的列表 - 确保项目符号可见 */
 .protyle-wysiwyg .bq[custom-callout] [data-callout-title="true"] ul {
     margin: 8px 0 !important;
-    padding-left: 12px !important;
+    padding-left: var(--callout-list-indent, 12px) !important;
 }
 
 .protyle-wysiwyg .bq[custom-callout] [data-callout-title="true"] li {
@@ -300,7 +336,7 @@ export function generateCalloutStyles(customTypes?: CalloutTypeConfig[], themeId
 .protyle-wysiwyg .bq[custom-callout] [data-callout-title="true"] div[data-type="NodeListItem"] {
     display: list-item !important;
     list-style-type: disc !important;
-    margin: 2px 0 2px 12px !important;
+    margin: 2px 0 2px var(--callout-list-indent, 12px) !important;
     padding-left: 0px !important;
 }
 
@@ -333,7 +369,7 @@ export function generateCalloutStyles(customTypes?: CalloutTypeConfig[], themeId
     font-weight: var(--callout-title-font-weight) !important;
     opacity: 1 !important;
     position: absolute !important;
-    left: calc(var(--callout-icon-size) + 12px) !important;
+    left: calc(var(--callout-icon-size) + var(--callout-title-icon-gap, 12px)) !important;
     top: 50% !important;
     transform: translateY(-50%) !important;
     line-height: 1 !important;
@@ -367,6 +403,10 @@ export function generateCalloutStyles(customTypes?: CalloutTypeConfig[], themeId
 .protyle-wysiwyg .bq[custom-callout="${config.type}"] > div {
     border: none !important;
     overflow: visible !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
 }
 
 .protyle-wysiwyg .bq[custom-callout="${config.type}"] > div::before {
@@ -634,5 +674,62 @@ function hexToRgba(hex: string, alpha: number): string {
     const g = parseInt(hex.slice(3, 5), 16);
     const b = parseInt(hex.slice(5, 7), 16);
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+/**
+ * 根据padding值计算标题图标间距
+ * padding越小，图标间距也越小
+ */
+function calculateIconGap(padding: string): string {
+    // 解析padding值，提取水平方向的值
+    const values = padding.split(' ').map(v => parseInt(v));
+    const horizontalPadding = values.length === 2 ? values[1] : values[0];
+    
+    // 当padding为0-8时，gap为0-4px
+    // 当padding为8-16时，gap为4-8px  
+    // 当padding为16+时，gap为8-12px
+    if (horizontalPadding <= 4) {
+        return '0px';
+    } else if (horizontalPadding <= 8) {
+        return `${Math.round(horizontalPadding * 0.5)}px`;
+    } else if (horizontalPadding <= 16) {
+        return `${Math.round(4 + (horizontalPadding - 8) * 0.5)}px`;
+    } else {
+        return `${Math.min(12, Math.round(8 + (horizontalPadding - 16) * 0.25))}px`;
+    }
+}
+
+/**
+ * 根据padding值计算标题下方间距
+ */
+function calculateTitleMargin(padding: string): string {
+    const values = padding.split(' ').map(v => parseInt(v));
+    const verticalPadding = values[0];
+    
+    // 标题下方间距随垂直padding缩放，最小4px，最大12px
+    if (verticalPadding <= 4) {
+        return '4px';
+    } else if (verticalPadding <= 16) {
+        return `${Math.round(4 + (verticalPadding - 4) * 0.67)}px`;
+    } else {
+        return '12px';
+    }
+}
+
+/**
+ * 根据padding值计算列表缩进
+ */
+function calculateListIndent(padding: string): string {
+    const values = padding.split(' ').map(v => parseInt(v));
+    const horizontalPadding = values.length === 2 ? values[1] : values[0];
+    
+    // 列表缩进随水平padding缩放，最小4px，最大16px
+    if (horizontalPadding <= 4) {
+        return '4px';
+    } else if (horizontalPadding <= 16) {
+        return `${Math.round(4 + (horizontalPadding - 4) * 0.67)}px`;
+    } else {
+        return '12px';
+    }
 }
 

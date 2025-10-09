@@ -33,6 +33,10 @@
     let borderRadius: string = 'default';
     let leftBorderWidth: string = 'default';
     let borderWidth: string = 'default';
+    // 新增：内边距（边框空白区域）- 使用滑轨分别控制上下和左右
+    let verticalPadding: number = 16;    // 上下内边距 (px)
+    let horizontalPadding: number = 16;  // 左右内边距 (px)
+    let isPaddingCustom: boolean = false; // 是否使用自定义padding
     let titleFontSize: string = 'default';
     let titleFontWeight: string = 'default';
     let titleHeight: string = 'default';
@@ -60,6 +64,11 @@
     
     // 大纲主题会在设置界面中直接使用，不需要单独的响应式变量
 
+    // 计算padding值：组合上下和左右
+    $: computedPadding = isPaddingCustom 
+        ? `${verticalPadding}px ${horizontalPadding}px`
+        : currentTheme.padding;
+
     // 计算预览样式（主题 + 样式微调）
     $: previewStyles = {
         background: backgroundStyle === 'solid' 
@@ -72,7 +81,7 @@
         borderWidth: borderWidth !== 'default' ? borderWidth : currentTheme.borderWidth,
         leftBorderWidth: leftBorderWidth !== 'default' ? leftBorderWidth : currentTheme.leftBorderWidth,
         borderRadius: borderRadius !== 'default' ? borderRadius : currentTheme.borderRadius,
-        padding: currentTheme.padding,
+        padding: computedPadding,  // 使用计算后的padding值
         boxShadow: currentTheme.boxShadow,
         titleFontSize: titleFontSize !== 'default' ? titleFontSize : currentTheme.titleFontSize,
         titleFontWeight: titleFontWeight !== 'default' ? titleFontWeight : currentTheme.titleFontWeight,
@@ -96,6 +105,29 @@
         borderRadius = overrides.borderRadius || 'default';
         leftBorderWidth = overrides.leftBorderWidth || 'default';
         borderWidth = overrides.borderWidth || 'default';
+        
+        // 加载padding配置 - 解析"16px 20px"格式
+        if (overrides.padding) {
+            isPaddingCustom = true;
+            const paddingValues = overrides.padding.split(' ').map(v => parseInt(v));
+            if (paddingValues.length === 2) {
+                verticalPadding = paddingValues[0];
+                horizontalPadding = paddingValues[1];
+            } else if (paddingValues.length === 1) {
+                verticalPadding = horizontalPadding = paddingValues[0];
+            }
+        } else {
+            isPaddingCustom = false;
+            // 从当前主题获取默认值
+            const themePadding = currentTheme.padding.split(' ').map(v => parseInt(v));
+            if (themePadding.length === 2) {
+                verticalPadding = themePadding[0];
+                horizontalPadding = themePadding[1];
+            } else if (themePadding.length === 1) {
+                verticalPadding = horizontalPadding = themePadding[0];
+            }
+        }
+        
         titleFontSize = overrides.titleFontSize || 'default';
         titleFontWeight = overrides.titleFontWeight || 'default';
         titleHeight = overrides.titleHeight || 'default';
@@ -220,6 +252,12 @@
         if (borderRadius !== 'default') overrides.borderRadius = borderRadius;
         if (leftBorderWidth !== 'default') overrides.leftBorderWidth = leftBorderWidth;
         if (borderWidth !== 'default') overrides.borderWidth = borderWidth;
+        
+        // 保存padding配置 - 组合成"vertical horizontal"格式
+        if (isPaddingCustom) {
+            overrides.padding = `${verticalPadding}px ${horizontalPadding}px`;
+        }
+        
         if (titleFontSize !== 'default') overrides.titleFontSize = titleFontSize;
         if (titleFontWeight !== 'default') overrides.titleFontWeight = titleFontWeight;
         if (titleHeight !== 'default') overrides.titleHeight = titleHeight;
@@ -307,6 +345,17 @@
             borderRadius = 'default';
             leftBorderWidth = 'default';
             borderWidth = 'default';
+            
+            // 重置padding到主题默认值
+            isPaddingCustom = false;
+            const themePadding = currentTheme.padding.split(' ').map(v => parseInt(v));
+            if (themePadding.length === 2) {
+                verticalPadding = themePadding[0];
+                horizontalPadding = themePadding[1];
+            } else if (themePadding.length === 1) {
+                verticalPadding = horizontalPadding = themePadding[0];
+            }
+            
             titleFontSize = 'default';
             titleFontWeight = 'default';
             titleHeight = 'default';
@@ -648,6 +697,73 @@
                             <option value="2px">▢ 中 (2px)</option>
                             <option value="3px">▣ 粗 (3px)</option>
                         </select>
+                    </div>
+                    
+                    <!-- 内边距（边框空白区域） - 横纵滑轨 -->
+                    <div class="override-item override-padding-control">
+                        <label>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="vertical-align: -2px; margin-right: 6px;">
+                                <rect x="3" y="3" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"/>
+                                <rect x="7" y="7" width="10" height="10" stroke="currentColor" stroke-width="1.5" fill="none" stroke-dasharray="2,2"/>
+                                <path d="M5 5L7 7M19 5L17 7M19 19L17 17M5 19L7 17" stroke="currentColor" stroke-width="1.5"/>
+                            </svg>
+                            边框空白区域
+                            <input 
+                                type="checkbox" 
+                                bind:checked={isPaddingCustom} 
+                                on:change={handleOverrideChange}
+                                style="margin-left: 8px; cursor: pointer;"
+                                title="启用自定义边距"
+                            />
+                        </label>
+                        
+                        {#if isPaddingCustom}
+                        <div class="padding-sliders">
+                            <!-- 上下内边距 -->
+                            <div class="slider-group">
+                                <div class="slider-label">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="vertical-align: -2px; margin-right: 4px;">
+                                        <path d="M12 5v14M9 8l3-3 3 3M9 16l3 3 3-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                    <span>上下边距</span>
+                                    <span class="slider-value">{verticalPadding}px</span>
+                                </div>
+                                <input 
+                                    type="range" 
+                                    min="4" 
+                                    max="32" 
+                                    step="1"
+                                    bind:value={verticalPadding}
+                                    on:input={handleOverrideChange}
+                                    class="padding-slider"
+                                />
+                            </div>
+                            
+                            <!-- 左右内边距 -->
+                            <div class="slider-group">
+                                <div class="slider-label">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="vertical-align: -2px; margin-right: 4px;">
+                                        <path d="M5 12h14M8 9l-3 3 3 3M16 9l3 3-3 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                    <span>左右边距</span>
+                                    <span class="slider-value">{horizontalPadding}px</span>
+                                </div>
+                                <input 
+                                    type="range" 
+                                    min="4" 
+                                    max="32" 
+                                    step="1"
+                                    bind:value={horizontalPadding}
+                                    on:input={handleOverrideChange}
+                                    class="padding-slider"
+                                />
+                            </div>
+                        </div>
+                        {:else}
+                        <div class="padding-hint">
+                            使用主题默认值: {currentTheme.padding}
+                        </div>
+                        {/if}
                     </div>
                     
                     <!-- 标题字体大小 -->
@@ -1657,6 +1773,112 @@
         outline: none;
         border-color: var(--b3-theme-primary);
         box-shadow: 0 0 0 2px var(--b3-theme-primary-lighter);
+    }
+
+    /* 边距滑轨样式 */
+    .override-padding-control {
+        grid-column: 1 / -1; /* 占据整行 */
+    }
+
+    .override-padding-control label {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .padding-sliders {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin-top: 8px;
+        padding: 12px;
+        background: var(--b3-theme-surface);
+        border-radius: 6px;
+        border: 1px solid var(--b3-border-color);
+    }
+
+    .slider-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .slider-label {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 12px;
+        color: var(--b3-theme-on-surface);
+    }
+
+    .slider-label span {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .slider-value {
+        font-weight: 600;
+        color: var(--b3-theme-primary);
+        min-width: 45px;
+        text-align: right;
+        font-family: monospace;
+    }
+
+    .padding-slider {
+        width: 100%;
+        height: 6px;
+        border-radius: 3px;
+        background: linear-gradient(to right, 
+            var(--b3-theme-primary-lighter) 0%, 
+            var(--b3-theme-primary) 100%);
+        outline: none;
+        -webkit-appearance: none;
+        appearance: none;
+        cursor: pointer;
+    }
+
+    .padding-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: var(--b3-theme-primary);
+        cursor: pointer;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        transition: all 0.2s;
+    }
+
+    .padding-slider::-webkit-slider-thumb:hover {
+        transform: scale(1.2);
+        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+    }
+
+    .padding-slider::-moz-range-thumb {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: var(--b3-theme-primary);
+        cursor: pointer;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        border: none;
+        transition: all 0.2s;
+    }
+
+    .padding-slider::-moz-range-thumb:hover {
+        transform: scale(1.2);
+        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+    }
+
+    .padding-hint {
+        padding: 8px 12px;
+        background: var(--b3-theme-surface);
+        border-radius: 4px;
+        font-size: 12px;
+        color: var(--b3-theme-on-surface);
+        text-align: center;
+        border: 1px solid var(--b3-border-color);
     }
 
     /* 复选框样式 */

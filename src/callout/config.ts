@@ -10,6 +10,7 @@ export interface ThemeOverrides {
     borderRadius?: string;                   // 圆角大小
     leftBorderWidth?: string;                // 左侧条纹粗细
     borderWidth?: string;                    // 整体边框粗细
+    padding?: string;                        // 内边距（边框空白区域）
     titleFontSize?: string;                  // 标题字体大小
     titleFontWeight?: string;                // 标题字体粗细
     titleHeight?: string;                    // 标题栏高度
