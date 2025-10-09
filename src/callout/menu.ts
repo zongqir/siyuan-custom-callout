@@ -32,6 +32,9 @@ export class CalloutMenu {
     // 保存事件监听器引用
     private globalKeydownHandler: ((e: KeyboardEvent) => void) | null = null;
     private globalClickHandler: ((e: MouseEvent) => void) | null = null;
+    
+    // 🔧 控制鼠标悬停是否可以改变选中状态（防止菜单刚打开时鼠标位置干扰）
+    private allowMouseHover: boolean = false;
 
     constructor(processor: CalloutProcessor) {
         this.processor = processor;
@@ -82,6 +85,7 @@ export class CalloutMenu {
         // console.log('[Callout Menu] 🎯 createCommandMenu - isEdit:', isEdit);
         this.selectedMenuIndex = 0;
         this.menuItems = [];
+        this.allowMouseHover = false; // 🔧 禁用鼠标悬停，防止初始位置干扰
 
         const menu = document.createElement('div');
         menu.className = 'custom-callout-menu';
@@ -292,8 +296,11 @@ export class CalloutMenu {
         `;
 
         item.addEventListener('mouseenter', () => {
-            this.selectedMenuIndex = index;
-            this.updateMenuSelection();
+            // 🔧 只有在允许鼠标悬停时才改变选中状态（防止菜单刚打开时的干扰）
+            if (this.allowMouseHover) {
+                this.selectedMenuIndex = index;
+                this.updateMenuSelection();
+            }
         });
 
         item.addEventListener('click', (e) => {
@@ -382,19 +389,41 @@ export class CalloutMenu {
             // 导航键和确认键
             if (e.key === 'ArrowDown') {
                 e.preventDefault();
-                this.selectedMenuIndex = Math.min(this.selectedMenuIndex + cols, this.menuItems.length - 1);
+                // 向下移动：加cols，但不超过最大索引
+                const newIndex = this.selectedMenuIndex + cols;
+                this.selectedMenuIndex = Math.min(newIndex, this.menuItems.length - 1);
                 this.updateMenuSelection();
             } else if (e.key === 'ArrowUp') {
                 e.preventDefault();
-                this.selectedMenuIndex = Math.max(this.selectedMenuIndex - cols, 0);
+                // 向上移动：减cols，但不小于0
+                const newIndex = this.selectedMenuIndex - cols;
+                this.selectedMenuIndex = Math.max(newIndex, 0);
                 this.updateMenuSelection();
             } else if (e.key === 'ArrowRight') {
                 e.preventDefault();
-                this.selectedMenuIndex = Math.min(this.selectedMenuIndex + 1, this.menuItems.length - 1);
+                // 🔧 修复：向右移动，但不能跨行
+                const currentRow = Math.floor(this.selectedMenuIndex / cols);
+                const currentCol = this.selectedMenuIndex % cols;
+                const nextCol = currentCol + 1;
+                
+                // 只有在同一行内才移动
+                if (nextCol < cols && this.selectedMenuIndex + 1 < this.menuItems.length) {
+                    const nextRow = Math.floor((this.selectedMenuIndex + 1) / cols);
+                    // 确保下一个位置仍在同一行
+                    if (nextRow === currentRow) {
+                        this.selectedMenuIndex++;
+                    }
+                }
                 this.updateMenuSelection();
             } else if (e.key === 'ArrowLeft') {
                 e.preventDefault();
-                this.selectedMenuIndex = Math.max(this.selectedMenuIndex - 1, 0);
+                // 🔧 修复：向左移动，但不能跨行
+                const currentCol = this.selectedMenuIndex % cols;
+                
+                // 只有不在行首才移动
+                if (currentCol > 0) {
+                    this.selectedMenuIndex--;
+                }
                 this.updateMenuSelection();
             } else if (e.key === 'Enter') {
                 e.preventDefault();
@@ -638,6 +667,42 @@ export class CalloutMenu {
     }
 
     /**
+     * 获取当前焦点所在的可编辑div（在指定的blockquote内）
+     */
+    private getCurrentFocusedEditableDiv(blockQuoteElement: HTMLElement): HTMLElement | null {
+        try {
+            const selection = window.getSelection();
+            if (!selection || selection.rangeCount === 0) {
+                logger.log('[Callout Menu] 🔍 No selection found');
+                return null;
+            }
+            
+            const range = selection.getRangeAt(0);
+            let container = range.commonAncestorContainer;
+            
+            // 如果是文本节点，获取其父元素
+            if (container.nodeType === Node.TEXT_NODE) {
+                container = container.parentElement!;
+            }
+            
+            // 查找最近的contenteditable div
+            const editableDiv = (container as HTMLElement).closest('[contenteditable="true"]') as HTMLElement;
+            
+            // 确保找到的div在指定的blockquote内
+            if (editableDiv && blockQuoteElement.contains(editableDiv)) {
+                logger.log('[Callout Menu] ✅ Found focused editable div in blockquote');
+                return editableDiv;
+            }
+            
+            logger.log('[Callout Menu] ⚠️ Focused element not in target blockquote');
+            return null;
+        } catch (e) {
+            logger.error('[Callout Menu] ❌ Error finding focused editable div:', e);
+            return null;
+        }
+    }
+
+    /**
      * 统一的文本更新函数 - 模拟真实编辑
      */
     private updateEditableText(editableDiv: HTMLElement, newText: string) {
@@ -678,7 +743,12 @@ export class CalloutMenu {
             editableDiv = blockQuoteElement.querySelector('[data-callout-title="true"]');
         }
         if (!editableDiv) {
-            editableDiv = blockQuoteElement.querySelector('[contenteditable="true"]');
+            // 🔧 修复：优先获取当前焦点所在的可编辑div，而不是第一个
+            editableDiv = this.getCurrentFocusedEditableDiv(blockQuoteElement);
+            if (!editableDiv) {
+                // 如果没有焦点，才回退到第一个可编辑div
+                editableDiv = blockQuoteElement.querySelector('[contenteditable="true"]');
+            }
         }
         if (!editableDiv) return;
 
@@ -852,6 +922,13 @@ export class CalloutMenu {
             });
 
             this.isMenuVisible = true;
+            
+            // 🔧 只有在鼠标真正移动后才启用鼠标悬停（而不是简单延迟）
+            const enableMouseHoverOnMove = () => {
+                this.allowMouseHover = true;
+                document.removeEventListener('mousemove', enableMouseHoverOnMove);
+            };
+            document.addEventListener('mousemove', enableMouseHoverOnMove, { once: true });
 
             // 标记为最近创建
             const nodeId = blockQuoteElement.getAttribute('data-node-id');
@@ -871,6 +948,7 @@ export class CalloutMenu {
         this.currentIsEdit = false; // 重置编辑状态
         this.selectedMenuIndex = 0;
         this.menuItems = [];
+        this.allowMouseHover = false; // 🔧 重置鼠标悬停标志
         
         // 重置过滤状态
         this.filterMode = false;
