@@ -794,19 +794,62 @@ export class CalloutProcessor {
     /**
      * 处理删除按钮点击
      */
-    private handleDeleteButtonClick(blockquote: HTMLElement) {
+    private async handleDeleteButtonClick(blockquote: HTMLElement) {
         try {
-            // 第一件事：模拟点击之前经过CSS处理的关闭按钮
-            // 清除callout样式
-            this.clearCalloutStyle(blockquote);
+            const nodeId = blockquote.getAttribute('data-node-id');
+            if (!nodeId) return;
             
-            // 第二件事：模拟键盘的backspace
-            const titleDiv = blockquote.querySelector('[contenteditable="true"]') as HTMLElement;
-            if (titleDiv) {
-                this.simulateBackspace(titleDiv);
+            // 第一步：找到标题div并模拟悬停
+            const titleDiv = blockquote.querySelector('[data-callout-title="true"]') as HTMLElement;
+            if (!titleDiv) return;
+            
+            const rect = titleDiv.getBoundingClientRect();
+            const hoverX = rect.left + rect.width / 2;
+            const hoverY = rect.top + rect.height / 2;
+            
+            const mouseEnterEvent = new MouseEvent('mouseenter', {
+                bubbles: true,
+                cancelable: true,
+                view: window,
+                clientX: hoverX,
+                clientY: hoverY
+            });
+            
+            const mouseOverEvent = new MouseEvent('mouseover', {
+                bubbles: true,
+                cancelable: true,
+                view: window,
+                clientX: hoverX,
+                clientY: hoverY
+            });
+            
+            titleDiv.dispatchEvent(mouseEnterEvent);
+            titleDiv.dispatchEvent(mouseOverEvent);
+            
+            // 等待橙色块标按钮出现（1秒）
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            // 第二步：点击橙色块标按钮
+            const gutterButton = document.querySelector(`.protyle-gutters button[data-node-id="${nodeId}"].callout-gutter-highlight`) as HTMLElement;
+            if (!gutterButton) return;
+            
+            const clickEvent = new MouseEvent('click', {
+                bubbles: true,
+                cancelable: true,
+                view: window,
+                button: 0
+            });
+            
+            gutterButton.dispatchEvent(clickEvent);
+            await new Promise(resolve => setTimeout(resolve, 50));
+            
+            // 第三步：键盘模拟backspace（等待1秒）
+            await new Promise(resolve => setTimeout(resolve, 50));
+            
+            const activeEl = document.activeElement as HTMLElement;
+            if (activeEl) {
+                activeEl.dispatchEvent(new KeyboardEvent('keydown', { key: 'Backspace', keyCode: 8, bubbles: true }));
             }
-            
-            logger.log('[Callout] 🗑️ 删除按钮点击完成');
         } catch (error) {
             logger.error('[Callout] 删除按钮处理出错:', error);
         }
