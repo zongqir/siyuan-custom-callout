@@ -42,6 +42,9 @@
     // auto = 使用设置配置, minimal = 只标题, compact = 1行, full = 显示全部
     let densityMode: 'auto' | 'minimal' | 'compact' | 'full' = 'auto';
     
+    // 🎯 当前激活的卡片索引（用于移动端显示按钮）
+    let activeCardIndex: number | null = null;
+    
     // 响应式更新主题
     $: updateTheme(themeId);
     
@@ -244,13 +247,28 @@
         
         // 🎯 监听callout删除事件，刷新大纲
         document.addEventListener('callout-deleted', handleCalloutDeleted);
+        
+        // 🎯 监听全局点击，用于清除激活状态（移动端体验）
+        document.addEventListener('click', handleGlobalClick);
     });
 
     onDestroy(() => {
         document.removeEventListener('click', handleDocumentSwitch);
         document.removeEventListener('callout-menu-closed', handleMenuClosed);
         document.removeEventListener('callout-deleted', handleCalloutDeleted);
+        document.removeEventListener('click', handleGlobalClick);
     });
+    
+    /**
+     * 🎯 处理全局点击，清除卡片激活状态
+     */
+    function handleGlobalClick(event: MouseEvent) {
+        const target = event.target as HTMLElement;
+        // 如果点击的不是卡片内部，清除激活状态
+        if (!target.closest('.callout-card')) {
+            activeCardIndex = null;
+        }
+    }
     
     /**
      * 处理命令面板关闭事件
@@ -439,6 +457,26 @@
         };
     }
 
+    /**
+     * 🎯 处理卡片点击（支持移动端激活按钮显示）
+     */
+    function handleCardClick(event: MouseEvent, index: number, calloutId: string) {
+        // 如果当前卡片未激活，先激活它（移动端场景）
+        if (activeCardIndex !== index) {
+            activeCardIndex = index;
+            // 移动端：第一次点击只激活，不跳转
+            // 检测是否为移动设备（简单判断：没有hover能力）
+            const isMobile = !window.matchMedia('(hover: hover)').matches;
+            if (isMobile) {
+                event.stopPropagation();
+                return;
+            }
+        }
+        
+        // 桌面端或第二次点击：执行跳转
+        jumpToCallout(calloutId, event);
+    }
+    
     async function jumpToCallout(calloutId: string, event?: MouseEvent) {
         // 防止事件冒泡
         if (event) {
@@ -610,13 +648,14 @@
                     "
                     data-background-style={cardBackgroundStyle}
                     data-text-color={textColor}
-                    on:click={(e) => jumpToCallout(callout.id, e)}
+                    data-active={activeCardIndex === index}
+                    on:click={(e) => handleCardClick(e, index, callout.id)}
                     on:keydown={(e) => e.key === 'Enter' && jumpToCallout(callout.id)}
                     role="button"
                     tabindex="0"
                     title="点击跳转到此 Callout"
                 >
-                    <!-- 🎯 浮动展开/折叠按钮（hover时显示） -->
+                    <!-- 🎯 浮动展开/折叠按钮（hover或激活时显示） -->
                     <button 
                         class="card-expand-btn" 
                         on:click={(e) => toggleCardExpand(e, index)}
@@ -871,6 +910,14 @@
 
         &:active {
             opacity: 0.95;
+        }
+        
+        // 🎯 激活状态（移动端点击后）也显示按钮
+        &[data-active="true"] {
+            .card-expand-btn {
+                opacity: 1;
+                visibility: visible;
+            }
         }
     }
     
