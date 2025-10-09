@@ -34,6 +34,8 @@
     let cardBackgroundStyle: 'default' | 'solid' | 'gradient' | 'colorful' | 'vivid' = 'default';
     let colorVibrancy: number = 1.0;
     let textColor: 'auto' | 'dark' | 'light' = 'auto';
+    let contentMaxLines: number = 2;
+    let hideContent: boolean = false;
     
     // 响应式更新主题
     $: updateTheme(themeId);
@@ -54,12 +56,16 @@
             cardBackgroundStyle = outlineOverrides?.cardBackgroundStyle || 'default';
             colorVibrancy = outlineOverrides?.colorVibrancy || 1.0;
             textColor = outlineOverrides?.textColor || 'auto';
+            contentMaxLines = outlineOverrides?.contentMaxLines || 2;
+            hideContent = outlineOverrides?.hideContent || false;
             
             console.log('Loaded config in outline component:', config);
             console.log('Loaded outlineOverrides:', outlineOverrides);
             console.log('Card background style:', cardBackgroundStyle);
             console.log('Color vibrancy:', colorVibrancy);
             console.log('Text color:', textColor);
+            console.log('Content max lines:', contentMaxLines);
+            console.log('Hide content:', hideContent);
             
             themeCSS = generateOutlineThemeCSS(currentTheme, outlineOverrides);
         } catch (error) {
@@ -72,7 +78,12 @@
     export async function updateStyles() {
         // 重新加载类型映射（包括配置更新）
         await initializeTypeMap();
-        updateTheme(themeId);
+        await updateTheme(themeId);
+        
+        // 强制刷新列表以应用新的配置
+        lastUpdateTime = 0;
+        currentDocId = '';
+        loadCallouts();
     }
     
     // 获取卡片背景样式
@@ -403,7 +414,7 @@
         const paragraphs = element.querySelectorAll('[data-type="NodeParagraph"]');
         
         // 跳过第一个段落（通常是标题）
-        for (let i = 1; i < Math.min(paragraphs.length, 4); i++) {
+        for (let i = 1; i < Math.min(paragraphs.length, 10); i++) {
             const p = paragraphs[i] as HTMLElement;
             const text = p.textContent?.trim() || '';
             if (text) {
@@ -425,7 +436,7 @@
             id: blockId,
             type: calloutType,
             title: title,
-            content: content.substring(0, 150),
+            content: content.substring(0, 300), // 300字符足够显示5行
             config: config,
             collapsed: collapsed
         };
@@ -542,21 +553,18 @@
                                 </svg>
                             {/if}
                         </div>
+                        <svg class="jump-icon" viewBox="0 0 16 16" width="16" height="16">
+                            <path fill="currentColor" d="M8.5 1.5l5 5-5 5-1-1 3.5-3.5H1v-1.5h10L7.5 2.5z"/>
+                        </svg>
                     </div>
                     
                     {#if callout.title && callout.title !== callout.config.displayName}
                         <div class="callout-title">{callout.title}</div>
                     {/if}
                     
-                    {#if callout.content}
-                        <div class="callout-preview">{callout.content}</div>
+                    {#if !hideContent && callout.content}
+                        <div class="callout-preview" style="-webkit-line-clamp: {contentMaxLines}; line-clamp: {contentMaxLines};">{callout.content}</div>
                     {/if}
-
-                    <div class="callout-card-footer">
-                        <svg class="jump-icon" viewBox="0 0 16 16" width="14" height="14">
-                            <path fill="currentColor" d="M8.5 1.5l5 5-5 5-1-1 3.5-3.5H1v-1.5h10L7.5 2.5z"/>
-                        </svg>
-                    </div>
                 </div>
             {/each}
         </div>
@@ -772,6 +780,7 @@
         align-items: center;
         gap: var(--outline-card-header-gap, 10px);
         margin-bottom: var(--outline-card-header-margin-bottom, 10px);
+        justify-content: space-between;
 
         .callout-icon {
             flex-shrink: 0;
@@ -787,6 +796,29 @@
                 filter: var(--outline-icon-filter, brightness(0) invert(1));
             }
         }
+        
+        .callout-title-section {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .jump-icon {
+            flex-shrink: 0;
+            color: var(--outline-footer-icon-color, #fff);
+            opacity: 0.6;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+    }
+    
+    // hover 效果 - 显示跳转图标
+    .callout-card:hover {
+        .jump-icon {
+            opacity: 1;
+            transform: translateX(2px);
+        }
     }
     
     // 浅色背景下的图标样式（纯色、渐变和色彩模式）
@@ -799,13 +831,6 @@
             }
         }
 
-        .callout-title-section {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
         .callout-type-label {
             padding: var(--outline-label-padding, 3px 10px);
             border-radius: var(--outline-label-radius, 4px);
@@ -814,6 +839,10 @@
             color: var(--outline-label-color, #fff);
             background: var(--outline-label-bg, rgba(0, 0, 0, 0.15));
             white-space: nowrap;
+        }
+        
+        .jump-icon {
+            color: var(--callout-color) !important;
         }
     }
     
@@ -852,6 +881,10 @@
         .collapse-indicator {
             fill: #ffffff !important;
         }
+        
+        .jump-icon {
+            color: #ffffff !important;
+        }
     }
 
     .callout-title {
@@ -872,11 +905,12 @@
         color: var(--outline-content-color, rgba(255, 255, 255, 0.9));
         line-height: var(--outline-content-line-height, 1.7);
         display: -webkit-box;
-        -webkit-line-clamp: 3;
-        line-clamp: 3;
         -webkit-box-orient: vertical;
         overflow: hidden;
+        word-break: break-word; /* 允许单词内换行 */
+        overflow-wrap: break-word; /* 长单词换行 */
         margin-bottom: var(--outline-content-margin-bottom, 8px);
+        /* -webkit-line-clamp 通过内联样式动态设置，控制显示行数 */
     }
     
     // 浅色背景下的标题和内容样式（纯色、渐变和色彩模式）
@@ -958,45 +992,6 @@
         
         .jump-icon {
             color: #ffffff !important;
-        }
-    }
-
-    .callout-card-footer {
-        display: flex;
-        justify-content: flex-end;
-        align-items: center;
-        padding-top: var(--outline-footer-padding-top, 6px);
-        border-top: var(--outline-footer-border, 1px solid rgba(255, 255, 255, 0.2));
-        opacity: var(--outline-footer-opacity, 0);
-        transition: opacity 0.15s;
-
-        .jump-icon {
-            color: var(--outline-footer-icon-color, #fff);
-            opacity: var(--outline-footer-icon-opacity, 0.8);
-            transition: all 0.15s;
-        }
-    }
-
-    .callout-card:hover .callout-card-footer {
-        opacity: var(--outline-footer-hover-opacity, 1);
-
-        .jump-icon {
-            opacity: var(--outline-footer-icon-hover-opacity, 1);
-            transform: var(--outline-footer-icon-transform, translateX(2px));
-        }
-    }
-    
-    // 浅色背景下的footer样式
-    .callout-card[data-background-style="solid"],
-    .callout-card[data-background-style="gradient"],
-    .callout-card[data-background-style="colorful"],
-    .callout-card[data-background-style="vivid"] {
-        .callout-card-footer {
-            border-top: 1px solid rgba(255, 255, 255, 0.3) !important;
-            
-            .jump-icon {
-                color: var(--callout-color) !important;
-            }
         }
     }
 </style>

@@ -47,6 +47,10 @@ export interface OutlineOverrides {
     showBorder?: boolean;                           // 显示边框
     compactMode?: boolean;                          // 紧凑模式
     textColor?: 'auto' | 'dark' | 'light';          // 文字颜色：auto自动、dark黑色、light白色
+    
+    // 内容显示控制
+    contentMaxLines?: number;                       // 内容最多显示行数 (1-5, 默认2)
+    hideContent?: boolean;                          // 隐藏内容只显示标题（默认false）
 }
 
 /**

@@ -55,6 +55,8 @@
     let outlineCompactMode: boolean = false;
     let outlineShowBorder: boolean = true;
     let outlineTextColor: 'auto' | 'dark' | 'light' = 'auto'; // 文字颜色
+    let outlineContentMaxLines: number = 2;       // 内容最多显示行数
+    let outlineHideContent: boolean = false;      // 是否隐藏内容只显示标题
     
     // 监听列数变化并保存
     $: if (config && gridColumns !== config.gridColumns) {
@@ -149,6 +151,8 @@
         outlineCompactMode = outlineOverrides.compactMode || false;
         outlineShowBorder = outlineOverrides.showBorder !== false;
         outlineTextColor = outlineOverrides.textColor || 'auto';
+        outlineContentMaxLines = outlineOverrides.contentMaxLines || 2;
+        outlineHideContent = outlineOverrides.hideContent || false;
     }
     
     async function handleGridColumnsChange(newColumns: number) {
@@ -190,22 +194,33 @@
             iconSize: outlineIconSize,
             compactMode: outlineCompactMode,
             showBorder: outlineShowBorder,
-            textColor: outlineTextColor
+            textColor: outlineTextColor,
+            contentMaxLines: outlineContentMaxLines,
+            hideContent: outlineHideContent
         });
         
-        // 构建大纲覆盖配置（只保存非默认值）
-        const outlineOverrides: OutlineOverrides = {};
+        // 构建大纲覆盖配置（总是保存所有值，确保能够正确覆盖）
+        const outlineOverrides: OutlineOverrides = {
+            cardSize: outlineCardSize !== 'default' ? outlineCardSize as any : undefined,
+            colorVibrancy: outlineColorVibrancy !== 1.0 ? outlineColorVibrancy : undefined,
+            backgroundOpacity: outlineBackgroundOpacity !== 1.0 ? outlineBackgroundOpacity : undefined,
+            cardBackgroundStyle: outlineCardBackgroundStyle !== 'default' ? outlineCardBackgroundStyle : undefined,
+            titleFontSize: outlineTitleFontSize !== 14 ? outlineTitleFontSize : undefined,
+            contentFontSize: outlineContentFontSize !== 13 ? outlineContentFontSize : undefined,
+            iconSize: outlineIconSize !== 20 ? outlineIconSize : undefined,
+            compactMode: outlineCompactMode || undefined,
+            showBorder: outlineShowBorder === false ? false : undefined,
+            textColor: outlineTextColor !== 'auto' ? outlineTextColor : undefined,
+            contentMaxLines: outlineContentMaxLines,  // 总是保存
+            hideContent: outlineHideContent || undefined
+        };
         
-        if (outlineCardSize !== 'default') outlineOverrides.cardSize = outlineCardSize as any;
-        if (outlineColorVibrancy !== 1.0) outlineOverrides.colorVibrancy = outlineColorVibrancy;
-        if (outlineBackgroundOpacity !== 1.0) outlineOverrides.backgroundOpacity = outlineBackgroundOpacity;
-        if (outlineCardBackgroundStyle !== 'default') outlineOverrides.cardBackgroundStyle = outlineCardBackgroundStyle;
-        if (outlineTitleFontSize !== 14) outlineOverrides.titleFontSize = outlineTitleFontSize;
-        if (outlineContentFontSize !== 13) outlineOverrides.contentFontSize = outlineContentFontSize;
-        if (outlineIconSize !== 20) outlineOverrides.iconSize = outlineIconSize;
-        if (outlineCompactMode) outlineOverrides.compactMode = outlineCompactMode;
-        if (!outlineShowBorder) outlineOverrides.showBorder = outlineShowBorder;
-        if (outlineTextColor !== 'auto') outlineOverrides.textColor = outlineTextColor;
+        // 删除 undefined 的属性
+        Object.keys(outlineOverrides).forEach(key => {
+            if (outlineOverrides[key as keyof OutlineOverrides] === undefined) {
+                delete outlineOverrides[key as keyof OutlineOverrides];
+            }
+        });
         
         console.log('Final outline overrides:', outlineOverrides);
         
@@ -237,6 +252,8 @@
             outlineCompactMode = false;
             outlineShowBorder = true;
             outlineTextColor = 'auto';
+            outlineContentMaxLines = 2;
+            outlineHideContent = false;
             
             // 清空配置中的微调设置
             config = { ...config, outlineOverrides: {} };
@@ -1195,6 +1212,32 @@
                             <option value="dark">⚫ 黑色</option>
                             <option value="light">⚪ 白色</option>
                         </select>
+                    </div>
+                    
+                    <!-- 内容显示行数 -->
+                    <div class="override-item">
+                        <label>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="vertical-align: -2px; margin-right: 6px;">
+                                <path d="M4 6h16M4 10h16M4 14h10M4 18h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                            内容显示行数
+                        </label>
+                        <input
+                            type="range"
+                            min="1" max="5" step="1"
+                            bind:value={outlineContentMaxLines}
+                            on:input={handleOutlineOverrideChange}
+                            disabled={outlineHideContent}
+                        />
+                        <span class="range-value">{outlineContentMaxLines}行</span>
+                    </div>
+                    
+                    <!-- 隐藏内容 -->
+                    <div class="override-item override-checkbox">
+                        <label>
+                            <input type="checkbox" bind:checked={outlineHideContent} on:change={handleOutlineOverrideChange} />
+                            <span>隐藏内容只显示标题</span>
+                        </label>
                     </div>
                 </div>
                 
