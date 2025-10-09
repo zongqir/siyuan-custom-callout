@@ -5,6 +5,7 @@
     import { logger } from '../libs/logger';
     import { getAllEditor } from 'siyuan';
     import { getDefaultOutlineTheme, generateOutlineThemeCSS, type OutlineThemeStyle } from './themes';
+    import { ConfigManager } from '../callout/config';
 
     export let plugin: Plugin;
     export let themeId: string = 'modern'; // 外部传入的主题ID
@@ -34,14 +35,37 @@
     // 响应式更新主题
     $: updateTheme(themeId);
     
-    function updateTheme(id: string) {
-        import('./themes').then(themes => {
+    async function updateTheme(id: string) {
+        try {
+            const themes = await import('./themes');
             const newTheme = themes.getOutlineThemeById(id) || getDefaultOutlineTheme();
-            if (newTheme.id !== currentTheme.id) {
-                currentTheme = newTheme;
-                themeCSS = generateOutlineThemeCSS(currentTheme);
-            }
-        });
+            
+            // 始终重新加载配置和生成CSS，不只是在主题ID变化时
+            currentTheme = newTheme;
+            
+            // 加载样式覆盖配置
+            const config = await ConfigManager.load(plugin);
+            const outlineOverrides = config.outlineOverrides;
+            
+            console.log('Loaded config in outline component:', config);
+            console.log('Loaded outlineOverrides:', outlineOverrides);
+            
+            themeCSS = generateOutlineThemeCSS(currentTheme, outlineOverrides);
+        } catch (error) {
+            console.error('Failed to update outline theme:', error);
+            themeCSS = generateOutlineThemeCSS(getDefaultOutlineTheme());
+        }
+    }
+    
+    // 添加一个专门的更新样式函数，供外部调用
+    export function updateStyles() {
+        updateTheme(themeId);
+    }
+    
+    // 获取背景样式
+    function getBackgroundStyle(): string {
+        // 这个函数返回背景样式，会被CSS中的data属性使用
+        return 'default';
     }
 
     // 创建类型映射
@@ -324,7 +348,8 @@
             {#each callouts as callout (callout.id)}
                 <div 
                     class="callout-card" 
-                    style="--callout-color: {callout.config.color}; --callout-bg: {callout.config.bgGradient};"
+                    style="--callout-color: {callout.config.color}; --callout-bg-gradient: {callout.config.bgGradient};"
+                    data-background-style={getBackgroundStyle()}
                     on:click={(e) => jumpToCallout(callout.id, e)}
                     on:keydown={(e) => e.key === 'Enter' && jumpToCallout(callout.id)}
                     role="button"
@@ -375,6 +400,7 @@
         backdrop-filter: var(--outline-container-backdrop, blur(20px));
         -webkit-backdrop-filter: var(--outline-container-backdrop, blur(20px));
         overflow: hidden;
+        filter: var(--outline-saturation-filter, saturate(1));
     }
 
     .callout-outline-header {

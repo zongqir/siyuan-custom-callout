@@ -19,6 +19,34 @@ export interface ThemeOverrides {
 }
 
 /**
+ * 大纲样式覆盖配置
+ */
+export interface OutlineOverrides {
+    // 卡片尺寸
+    cardSize?: 'compact' | 'normal' | 'large';      // 卡片大小（只影响垂直方向）
+    cardPadding?: string;                            // 卡片内边距
+    cardBorderRadius?: string;                       // 卡片圆角
+    cardGap?: string;                               // 卡片间距
+
+    // 颜色样式
+    colorSaturation?: number;                        // 颜色饱和度 (0.5-1.5)
+    backgroundOpacity?: number;                      // 背景透明度 (0.3-1.0)
+
+    // 字体样式 - 改为数字类型，支持滑块调整
+    titleFontSize?: number;                          // 标题字体大小 (10-18)
+    contentFontSize?: number;                        // 内容字体大小 (9-16)
+    iconSize?: number;                              // 图标大小 (14-24)
+
+    // 间距调整
+    listPadding?: string;                           // 列表内边距
+    headerPadding?: string;                         // 头部内边距
+
+    // 视觉效果
+    showBorder?: boolean;                           // 显示边框
+    compactMode?: boolean;                          // 紧凑模式
+}
+
+/**
  * 用户配置接口
  */
 export interface CalloutConfig {
@@ -31,6 +59,7 @@ export interface CalloutConfig {
     themeId: string; // 当前使用的主题ID
     outlineThemeId?: string; // 大纲主题ID
     themeOverrides?: ThemeOverrides; // 主题样式覆盖
+    outlineOverrides?: OutlineOverrides; // 大纲样式覆盖
 }
 
 /**
@@ -59,7 +88,8 @@ export class ConfigManager {
                 gridColumns: data.gridColumns || 3,
                 themeId: data.themeId || 'modern',
                 outlineThemeId: data.outlineThemeId || 'modern',
-                themeOverrides: data.themeOverrides || {}
+                themeOverrides: data.themeOverrides || {},
+                outlineOverrides: data.outlineOverrides || {}
             };
         } catch (error) {
             logger.error('[Callout Config] Error loading config:', error);
@@ -80,8 +110,14 @@ export class ConfigManager {
                 typeOrder: config.typeOrder,
                 gridColumns: config.gridColumns,
                 themeId: config.themeId,
-                themeOverrides: config.themeOverrides || {}
+                outlineThemeId: config.outlineThemeId || 'modern',
+                themeOverrides: config.themeOverrides || {},
+                outlineOverrides: config.outlineOverrides || {}  // 添加这个字段！
             };
+            
+            console.log('Saving config data:', data);
+            console.log('outlineOverrides being saved:', data.outlineOverrides);
+            
             await plugin.saveData(this.STORAGE_KEY, data);
         } catch (error) {
             logger.error('[Callout Config] Error saving config:', error);
@@ -102,7 +138,8 @@ export class ConfigManager {
             gridColumns: 3,
             themeId: 'modern',
             outlineThemeId: 'modern',
-            themeOverrides: {}
+            themeOverrides: {},
+            outlineOverrides: {}
         };
     }
 

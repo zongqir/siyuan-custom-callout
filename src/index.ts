@@ -157,7 +157,34 @@ export default class CustomCalloutPlugin extends Plugin {
         // 如果大纲面板已经创建，更新其主题
         if (this.dockPanel) {
             this.dockPanel.$set({ themeId: themeId });
+            // 强制刷新样式
+            if (this.dockPanel.updateStyles) {
+                this.dockPanel.updateStyles();
+            }
         }
+    }
+    
+    /**
+     * 刷新大纲样式（用于样式微调变化时）
+     */
+    public async refreshOutlineStyles() {
+        console.log('refreshOutlineStyles called');
+        if (this.dockPanel && this.dockPanel.updateStyles) {
+            console.log('Calling dockPanel.updateStyles()');
+            this.dockPanel.updateStyles();
+        } else {
+            console.log('dockPanel or updateStyles not available:', {
+                dockPanel: !!this.dockPanel,
+                updateStyles: this.dockPanel?.updateStyles
+            });
+        }
+    }
+    
+    /**
+     * 获取当前大纲主题ID
+     */
+    public getCurrentOutlineThemeId(): string {
+        return this.currentOutlineThemeId;
     }
 
     /**

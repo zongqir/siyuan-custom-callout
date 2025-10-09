@@ -4,7 +4,7 @@
     import type CustomCalloutPlugin from '../index';
     import type { CalloutTypeConfig } from '../callout/types';
     import { DEFAULT_CALLOUT_TYPES } from '../callout/types';
-    import { ConfigManager, type CalloutConfig } from '../callout/config';
+    import { ConfigManager, type CalloutConfig, type OutlineOverrides } from '../callout/config';
     import { THEME_STYLES } from '../callout/themes/index';
     import { OUTLINE_THEME_STYLES, getDefaultOutlineTheme } from '../dock/themes';
     import EditDialog from './edit-dialog.svelte';
@@ -39,6 +39,16 @@
     let iconSize: string = 'default';
     let hideIcon: boolean = false;
     let hideTitle: boolean = false;
+    
+    // 大纲微调配置
+    let outlineCardSize: 'compact' | 'normal' | 'large' | 'default' = 'default';
+    let outlineColorSaturation: number = 1.0;
+    let outlineBackgroundOpacity: number = 1.0;
+    let outlineTitleFontSize: number = 14;         // 改为数字类型
+    let outlineContentFontSize: number = 13;      // 改为数字类型
+    let outlineIconSize: number = 20;             // 改为数字类型
+    let outlineCompactMode: boolean = false;
+    let outlineShowBorder: boolean = true;
     
     // 监听列数变化并保存
     $: if (config && gridColumns !== config.gridColumns) {
@@ -92,6 +102,17 @@
         iconSize = overrides.iconSize || 'default';
         hideIcon = overrides.hideIcon || false;
         hideTitle = overrides.hideTitle || false;
+        
+        // 加载大纲微调配置
+        const outlineOverrides = config.outlineOverrides || {};
+        outlineCardSize = outlineOverrides.cardSize || 'default';
+        outlineColorSaturation = outlineOverrides.colorSaturation || 1.0;
+        outlineBackgroundOpacity = outlineOverrides.backgroundOpacity || 1.0;
+        outlineTitleFontSize = outlineOverrides.titleFontSize || 14;
+        outlineContentFontSize = outlineOverrides.contentFontSize || 13;
+        outlineIconSize = outlineOverrides.iconSize || 20;
+        outlineCompactMode = outlineOverrides.compactMode || false;
+        outlineShowBorder = outlineOverrides.showBorder !== false;
     }
     
     async function handleGridColumnsChange(newColumns: number) {
@@ -118,6 +139,76 @@
         }
         
         showMessage(`大纲已切换到「${OUTLINE_THEME_STYLES.find(t => t.id === newThemeId)?.name}」风格`, 2000, 'info');
+    }
+    
+    async function handleOutlineOverrideChange() {
+        if (!config) return;
+        
+        console.log('Outline override change triggered:', {
+            cardSize: outlineCardSize,
+            colorSaturation: outlineColorSaturation,
+            backgroundOpacity: outlineBackgroundOpacity,
+            titleFontSize: outlineTitleFontSize,
+            contentFontSize: outlineContentFontSize,
+            iconSize: outlineIconSize,
+            compactMode: outlineCompactMode,
+            showBorder: outlineShowBorder
+        });
+        
+        // 构建大纲覆盖配置（只保存非默认值）
+        const outlineOverrides: OutlineOverrides = {};
+        
+        if (outlineCardSize !== 'default') outlineOverrides.cardSize = outlineCardSize as any;
+        if (outlineColorSaturation !== 1.0) outlineOverrides.colorSaturation = outlineColorSaturation;
+        if (outlineBackgroundOpacity !== 1.0) outlineOverrides.backgroundOpacity = outlineBackgroundOpacity;
+        if (outlineTitleFontSize !== 14) outlineOverrides.titleFontSize = outlineTitleFontSize;
+        if (outlineContentFontSize !== 13) outlineOverrides.contentFontSize = outlineContentFontSize;
+        if (outlineIconSize !== 20) outlineOverrides.iconSize = outlineIconSize;
+        if (outlineCompactMode) outlineOverrides.compactMode = outlineCompactMode;
+        if (!outlineShowBorder) outlineOverrides.showBorder = outlineShowBorder;
+        
+        console.log('Final outline overrides:', outlineOverrides);
+        
+        config = { ...config, outlineOverrides };
+        await saveConfig();
+        
+        console.log('Config saved, current config.outlineOverrides:', config.outlineOverrides);
+        
+        // 通知插件刷新大纲样式
+        if (plugin.refreshOutlineStyles) {
+            console.log('Calling refreshOutlineStyles...');
+            await plugin.refreshOutlineStyles();
+        } else if (plugin.updateOutlineTheme) {
+            console.log('Falling back to updateOutlineTheme...');
+            await plugin.updateOutlineTheme(config.outlineThemeId || 'modern');
+        }
+    }
+    
+    async function handleResetOutlineOverrides() {
+        if (confirm('确定要重置所有大纲样式微调吗？这将恢复为主题默认样式。')) {
+            // 重置所有微调变量
+            outlineCardSize = 'default';
+            outlineColorSaturation = 1.0;
+            outlineBackgroundOpacity = 1.0;
+            outlineTitleFontSize = 14;
+            outlineContentFontSize = 13;
+            outlineIconSize = 20;
+            outlineCompactMode = false;
+            outlineShowBorder = true;
+            
+            // 清空配置中的微调设置
+            config = { ...config, outlineOverrides: {} };
+            await saveConfig();
+            
+            // 通知插件刷新大纲样式
+            if (plugin.refreshOutlineStyles) {
+                await plugin.refreshOutlineStyles();
+            } else if (plugin.updateOutlineTheme) {
+                await plugin.updateOutlineTheme(config.outlineThemeId || 'modern');
+            }
+            
+            showMessage('大纲样式微调已重置', 2000, 'info');
+        }
     }
     
     async function handleOverrideChange() {
@@ -851,6 +942,146 @@
                         {/if}
                     </div>
                 {/each}
+            </div>
+            
+            <!-- 大纲样式微调 -->
+            <div class="outline-override-section">
+                <div class="override-header">
+                    <h4>🎛️ 大纲微调</h4>
+                    <button class="reset-override-btn" on:click={handleResetOutlineOverrides} title="重置大纲样式微调">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M21 3v5h-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M3 21v-5h5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        重置
+                    </button>
+                </div>
+                
+                <div class="outline-override-grid">
+                    <!-- 卡片大小 -->
+                    <div class="override-item">
+                        <label>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="vertical-align: -2px; margin-right: 6px;">
+                                <rect x="4" y="4" width="16" height="16" rx="2" stroke="currentColor" stroke-width="2"/>
+                                <rect x="8" y="8" width="8" height="8" rx="1" fill="currentColor" opacity="0.3"/>
+                            </svg>
+                            卡片大小
+                        </label>
+                        <select bind:value={outlineCardSize} on:change={handleOutlineOverrideChange}>
+                            <option value="default">⚙️ 默认</option>
+                            <option value="compact">🔹 紧凑</option>
+                            <option value="normal">🔸 标准</option>
+                            <option value="large">🔶 宽松</option>
+                        </select>
+                    </div>
+                    
+                    
+                    <!-- 颜色饱和度 -->
+                    <div class="override-item">
+                        <label>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="vertical-align: -2px; margin-right: 6px;">
+                                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5" fill="none"/>
+                                <circle cx="12" cy="12" r="6" fill="currentColor" opacity="0.5"/>
+                            </svg>
+                            颜色饱和度
+                        </label>
+                        <input 
+                            type="range" 
+                            min="0.5" max="1.5" step="0.1" 
+                            bind:value={outlineColorSaturation} 
+                            on:input={handleOutlineOverrideChange}
+                        />
+                        <span class="range-value">{outlineColorSaturation.toFixed(1)}</span>
+                    </div>
+                    
+                    <!-- 背景透明度 -->
+                    <div class="override-item">
+                        <label>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="vertical-align: -2px; margin-right: 6px;">
+                                <rect x="4" y="4" width="16" height="16" rx="2" stroke="currentColor" stroke-width="1.5" fill="none"/>
+                                <rect x="6" y="6" width="12" height="12" rx="1" fill="currentColor" opacity="0.3"/>
+                            </svg>
+                            背景透明度
+                        </label>
+                        <input 
+                            type="range" 
+                            min="0.3" max="1.0" step="0.1" 
+                            bind:value={outlineBackgroundOpacity} 
+                            on:input={handleOutlineOverrideChange}
+                        />
+                        <span class="range-value">{(outlineBackgroundOpacity * 100).toFixed(0)}%</span>
+                    </div>
+                    
+                    <!-- 标题字体大小 -->
+                    <div class="override-item">
+                        <label>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="vertical-align: -2px; margin-right: 6px;">
+                                <text x="4" y="16" font-size="12" fill="currentColor" font-weight="bold">T</text>
+                            </svg>
+                            标题字体
+                        </label>
+                        <input
+                            type="range"
+                            min="10" max="18" step="1"
+                            bind:value={outlineTitleFontSize}
+                            on:input={handleOutlineOverrideChange}
+                        />
+                        <span class="range-value">{outlineTitleFontSize}px</span>
+                    </div>
+                    
+                    <!-- 内容字体大小 -->
+                    <div class="override-item">
+                        <label>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="vertical-align: -2px; margin-right: 6px;">
+                                <text x="4" y="16" font-size="10" fill="currentColor">t</text>
+                            </svg>
+                            内容字体
+                        </label>
+                        <input
+                            type="range"
+                            min="9" max="16" step="1"
+                            bind:value={outlineContentFontSize}
+                            on:input={handleOutlineOverrideChange}
+                        />
+                        <span class="range-value">{outlineContentFontSize}px</span>
+                    </div>
+                    
+                    <!-- 图标大小 -->
+                    <div class="override-item">
+                        <label>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="vertical-align: -2px; margin-right: 6px;">
+                                <circle cx="12" cy="12" r="6" stroke="currentColor" stroke-width="1.5"/>
+                            </svg>
+                            图标大小
+                        </label>
+                        <input
+                            type="range"
+                            min="14" max="24" step="1"
+                            bind:value={outlineIconSize}
+                            on:input={handleOutlineOverrideChange}
+                        />
+                        <span class="range-value">{outlineIconSize}px</span>
+                    </div>
+                    
+                    <!-- 紧凑模式 -->
+                    <div class="override-item override-checkbox">
+                        <label>
+                            <input type="checkbox" bind:checked={outlineCompactMode} on:change={handleOutlineOverrideChange} />
+                            <span>紧凑模式</span>
+                        </label>
+                    </div>
+                    
+                    
+                    <!-- 显示边框 -->
+                    <div class="override-item override-checkbox">
+                        <label>
+                            <input type="checkbox" bind:checked={outlineShowBorder} on:change={handleOutlineOverrideChange} />
+                            <span>显示边框</span>
+                        </label>
+                    </div>
+                </div>
             </div>
             {/if}
         </div>
@@ -1775,6 +2006,99 @@
         font-size: 12px;
         color: #6b7280;
         line-height: 1.5;
+    }
+
+    /* 大纲微调样式 */
+    .outline-override-section {
+        margin-top: 16px;
+        padding: 16px;
+        background: var(--b3-theme-surface);
+        border-radius: 8px;
+        border: 1px solid var(--b3-border-color);
+    }
+
+    .override-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+    }
+
+    .override-header h4 {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--b3-theme-on-surface);
+    }
+
+    .outline-override-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+    }
+
+    .outline-override-grid .override-item {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .outline-override-grid .override-item label {
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--b3-theme-on-surface);
+        display: flex;
+        align-items: center;
+    }
+
+    .outline-override-grid .override-item select {
+        padding: 6px 8px;
+        border: 1px solid var(--b3-border-color);
+        border-radius: 4px;
+        background: var(--b3-theme-background);
+        font-size: 12px;
+    }
+
+    .outline-override-grid .override-item input[type="range"] {
+        width: 100%;
+        height: 4px;
+        background: var(--b3-border-color);
+        border-radius: 2px;
+        outline: none;
+        -webkit-appearance: none;
+    }
+
+    .outline-override-grid .override-item input[type="range"]::-webkit-slider-thumb {
+        appearance: none;
+        width: 16px;
+        height: 16px;
+        background: var(--b3-theme-primary);
+        border-radius: 50%;
+        cursor: pointer;
+    }
+
+    .range-value {
+        font-size: 11px;
+        color: var(--b3-theme-on-surface-light);
+        text-align: center;
+        min-width: 40px;
+    }
+
+    .outline-override-grid .override-checkbox {
+        flex-direction: row;
+        align-items: center;
+    }
+
+    .outline-override-grid .override-checkbox label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
+    }
+
+    .outline-override-grid .override-checkbox input[type="checkbox"] {
+        width: 14px;
+        height: 14px;
     }
 
 </style>
