@@ -27,6 +27,9 @@ export class CalloutManager {
     
     // 简单的删除检测
     private lastDeleteTime: number = 0;
+    
+    // 🔧 焦点防抖定时器，避免系统操作触发菜单
+    private focusDebounceTimer: number = 0;
 
     constructor(plugin?: any) {
         this.plugin = plugin;
@@ -253,8 +256,17 @@ export class CalloutManager {
                 if (blockquote && this.processor.isBlockQuoteEmpty(blockquote)) {
                     const nodeId = blockquote.getAttribute('data-node-id');
                     if (nodeId && !this.processor.isRecentlyCreated(nodeId)) {
-                        const rect = blockquote.getBoundingClientRect();
-                        this.menu.showMenu(rect.left, rect.top, blockquote);
+                        // 🔧 添加延迟，避免系统操作（如切换只读模式）触发菜单
+                        // 只有当焦点真正停留在空blockquote上时才显示菜单
+                        clearTimeout(this.focusDebounceTimer);
+                        this.focusDebounceTimer = window.setTimeout(() => {
+                            // 再次检查菜单是否已显示，以及元素是否仍然有焦点
+                            if (!this.menu.isVisible() && document.activeElement && 
+                                blockquote.contains(document.activeElement)) {
+                                const rect = blockquote.getBoundingClientRect();
+                                this.menu.showMenu(rect.left, rect.top, blockquote);
+                            }
+                        }, 200); // 200ms延迟，足以避免系统快速焦点切换
                     }
                 }
             }
@@ -388,6 +400,9 @@ export class CalloutManager {
             document.removeEventListener('keydown', this.keydownHandler, true);
             this.keydownHandler = null;
         }
+        
+        // 清理焦点防抖定时器
+        clearTimeout(this.focusDebounceTimer);
 
         // 销毁处理器（包括清理 callout 元素上的事件监听器）
         this.processor.destroy();
