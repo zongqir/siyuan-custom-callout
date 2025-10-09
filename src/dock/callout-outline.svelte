@@ -230,11 +230,43 @@
         
         // 监听点击事件，检测文档切换
         document.addEventListener('click', handleDocumentSwitch);
+        
+        // 🎯 监听callout命令面板关闭事件，刷新大纲
+        document.addEventListener('callout-menu-closed', handleMenuClosed);
+        
+        // 🎯 监听callout删除事件，刷新大纲
+        document.addEventListener('callout-deleted', handleCalloutDeleted);
     });
 
     onDestroy(() => {
         document.removeEventListener('click', handleDocumentSwitch);
+        document.removeEventListener('callout-menu-closed', handleMenuClosed);
+        document.removeEventListener('callout-deleted', handleCalloutDeleted);
     });
+    
+    /**
+     * 处理命令面板关闭事件
+     */
+    function handleMenuClosed() {
+        // 延迟刷新，确保callout已经处理完成
+        setTimeout(() => {
+            lastUpdateTime = 0; // 重置防抖时间
+            currentDocId = ''; // 重置文档ID，强制刷新
+            loadCallouts();
+        }, 500);
+    }
+    
+    /**
+     * 处理callout删除事件
+     */
+    function handleCalloutDeleted() {
+        // 延迟刷新，确保删除操作已完成
+        setTimeout(() => {
+            lastUpdateTime = 0; // 重置防抖时间
+            currentDocId = ''; // 重置文档ID，强制刷新
+            loadCallouts();
+        }, 500);
+    }
 
     function handleDocumentSwitch() {
         // 短暂延迟后重新加载，确保文档已切换

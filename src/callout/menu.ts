@@ -955,6 +955,13 @@ export class CalloutMenu {
         this.filterText = '';
         this.filterInput = null;
 
+        // 🎯 触发菜单关闭事件，通知大纲刷新
+        const menuCloseEvent = new CustomEvent('callout-menu-closed', {
+            bubbles: true,
+            detail: { immediate }
+        });
+        document.dispatchEvent(menuCloseEvent);
+
         if (immediate) {
             this.commandMenu.remove();
             this.commandMenu = null;

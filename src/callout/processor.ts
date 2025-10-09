@@ -899,6 +899,15 @@ export class CalloutProcessor {
             if (activeEl) {
                 activeEl.dispatchEvent(new KeyboardEvent('keydown', { key: 'Backspace', keyCode: 8, bubbles: true }));
             }
+            
+            // 🎯 删除完成后，触发大纲刷新事件
+            setTimeout(() => {
+                const deleteCompleteEvent = new CustomEvent('callout-deleted', {
+                    bubbles: true,
+                    detail: { nodeId }
+                });
+                document.dispatchEvent(deleteCompleteEvent);
+            }, 300); // 延迟触发，确保删除操作完成
         } catch (error) {
             logger.error('[Callout] 删除按钮处理出错:', error);
         }
