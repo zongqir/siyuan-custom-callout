@@ -38,7 +38,8 @@
     let hideContent: boolean = false;
     
     // 🎯 显示密度模式（纯前端临时状态，不持久化）
-    let densityMode: 'normal' | 'compact' | 'minimal' = 'normal';
+    // auto = 使用设置配置, minimal = 只标题, compact = 1行, full = 显示全部
+    let densityMode: 'auto' | 'minimal' | 'compact' | 'full' = 'auto';
     
     // 响应式更新主题
     $: updateTheme(themeId);
@@ -483,15 +484,17 @@
     }
     
     /**
-     * 切换显示密度：正常 → 紧凑 → 极简 → 正常
+     * 切换显示密度：自动 → 极简 → 紧凑 → 全部 → 极简...
      */
     function toggleDensity() {
-        if (densityMode === 'normal') {
+        if (densityMode === 'auto') {
+            densityMode = 'minimal';
+        } else if (densityMode === 'minimal') {
             densityMode = 'compact';
         } else if (densityMode === 'compact') {
-            densityMode = 'minimal';
+            densityMode = 'full';
         } else {
-            densityMode = 'normal';
+            densityMode = 'minimal';
         }
     }
 </script>
@@ -507,12 +510,36 @@
             <button 
                 class="density-btn" 
                 on:click={toggleDensity}
-                title={densityMode === 'normal' ? '正常视图 → 紧凑视图' : (densityMode === 'compact' ? '紧凑视图 → 极简视图' : '极简视图 → 正常视图')}
+                title={
+                    densityMode === 'auto' ? `使用设置(${contentMaxLines}行) → 切换密度` :
+                    densityMode === 'minimal' ? '仅标题 → 1行' : 
+                    densityMode === 'compact' ? '1行 → 全部显示' : 
+                    '全部显示 → 仅标题'
+                }
             >
-                {#if densityMode === 'normal'}
-                    <!-- 正常：三条线 -->
+                {#if densityMode === 'auto'}
+                    <!-- 自动：根据设置显示对应图标 -->
+                    {#if hideContent}
+                        <svg viewBox="0 0 24 24">
+                            <path fill="currentColor" d="M3 11h18v2H3v-2z"/>
+                        </svg>
+                    {:else if contentMaxLines <= 1}
+                        <svg viewBox="0 0 24 24">
+                            <path fill="currentColor" d="M3 11h18v2H3v-2z"/>
+                        </svg>
+                    {:else if contentMaxLines <= 3}
+                        <svg viewBox="0 0 24 24">
+                            <path fill="currentColor" d="M3 7h18v2H3V7zm0 8h18v2H3v-2z"/>
+                        </svg>
+                    {:else}
+                        <svg viewBox="0 0 24 24">
+                            <path fill="currentColor" d="M3 6h18v2H3V6zm0 5h18v2H3v-2zm0 5h18v2H3v-2z"/>
+                        </svg>
+                    {/if}
+                {:else if densityMode === 'minimal'}
+                    <!-- 极简：一条线 -->
                     <svg viewBox="0 0 24 24">
-                        <path fill="currentColor" d="M3 6h18v2H3V6zm0 5h18v2H3v-2zm0 5h18v2H3v-2z"/>
+                        <path fill="currentColor" d="M3 11h18v2H3v-2z"/>
                     </svg>
                 {:else if densityMode === 'compact'}
                     <!-- 紧凑：两条线 -->
@@ -520,9 +547,9 @@
                         <path fill="currentColor" d="M3 7h18v2H3V7zm0 8h18v2H3v-2z"/>
                     </svg>
                 {:else}
-                    <!-- 极简：一条线 -->
+                    <!-- 全部：三条线 -->
                     <svg viewBox="0 0 24 24">
-                        <path fill="currentColor" d="M3 11h18v2H3v-2z"/>
+                        <path fill="currentColor" d="M3 6h18v2H3V6zm0 5h18v2H3v-2zm0 5h18v2H3v-2z"/>
                     </svg>
                 {/if}
             </button>
@@ -595,18 +622,21 @@
                         <div class="callout-title">{callout.title}</div>
                     {/if}
                     
-                    <!-- 密度模式优先级高于持久化配置 -->
+                    <!-- 密度模式：4档切换 -->
                     {#if callout.content}
-                        {#if densityMode === 'minimal'}
-                            <!-- 极简模式：不显示内容 -->
+                        {#if densityMode === 'auto'}
+                            <!-- 自动模式：使用设置配置 -->
+                            {#if !hideContent}
+                                <div class="callout-preview" style="-webkit-line-clamp: {contentMaxLines}; line-clamp: {contentMaxLines};">{callout.content}</div>
+                            {/if}
+                        {:else if densityMode === 'minimal'}
+                            <!-- 极简模式：不显示内容（仅标题） -->
                         {:else if densityMode === 'compact'}
-                            <!-- 紧凑模式：固定显示1行 -->
+                            <!-- 紧凑模式：固定1行 -->
                             <div class="callout-preview" style="-webkit-line-clamp: 1; line-clamp: 1;">{callout.content}</div>
                         {:else}
-                            <!-- 正常模式：显示至少3行（确保能展开，同时尊重用户设置更多行的需求） -->
-                            {#if !hideContent}
-                                <div class="callout-preview" style="-webkit-line-clamp: {Math.max(contentMaxLines, 3)}; line-clamp: {Math.max(contentMaxLines, 3)};">{callout.content}</div>
-                            {/if}
+                            <!-- 全部模式：显示全部内容（99行，基本无限制） -->
+                            <div class="callout-preview" style="-webkit-line-clamp: 99; line-clamp: 99;">{callout.content}</div>
                         {/if}
                     {/if}
                 </div>
