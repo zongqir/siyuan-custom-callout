@@ -252,26 +252,16 @@ export function generateCalloutStyles(customTypes?: CalloutTypeConfig[], themeId
 
 /* 修复Callout内列表样式 - 针对思源笔记的NodeList结构 */
 
-/* 传统HTML列表样式 */
-.protyle-wysiwyg .bq[custom-callout] ul {
-    list-style-type: disc !important;
-    list-style-position: outside !important;
-    margin-left: 0 !important;
-    padding-left: var(--callout-list-indent, 12px) !important;
-}
-
+/* 传统HTML列表样式（极少使用，主要是 NodeList 系统） */
+.protyle-wysiwyg .bq[custom-callout] ul,
 .protyle-wysiwyg .bq[custom-callout] ol {
-    list-style-type: decimal !important;
-    list-style-position: outside !important;
     margin-left: 0 !important;
-    padding-left: var(--callout-list-indent, 12px) !important;
+    padding-left: 24px !important; /* 与 .protyle-action 宽度保持一致 */
 }
 
 .protyle-wysiwyg .bq[custom-callout] li {
-    display: list-item !important;
-    margin: 4px 0 !important;
+    margin: 2px 0 !important;
     padding-left: 0px !important;
-    list-style-type: inherit !important;
 }
 
 /* 思源笔记的NodeList结构样式 */
@@ -282,29 +272,81 @@ export function generateCalloutStyles(customTypes?: CalloutTypeConfig[], themeId
 }
 
 .protyle-wysiwyg .bq[custom-callout] div[data-type="NodeListItem"] {
-    display: list-item !important;
-    list-style-type: disc !important;
-    list-style-position: outside !important;
-    margin: 4px 0 4px var(--callout-list-indent, 12px) !important;
-    padding-left: 0px !important;
+    padding: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    /* 使用紧凑的间距：4px 代替原生的 8px */
+    min-height: calc(1.625em + 4px) !important;
+    margin: 2px 0 !important;
 }
 
-/* 核心修复：NodeListItem内的NodeParagraph间距 */
+/* 🔥 核心修复：使用思源原生系统（点和线是整体），只调整尺寸以适应紧凑布局 */
+/* 
+ * 思源原生系统（保持不变的逻辑）：
+ *   - .protyle-action 显示项目符号
+ *   - 子元素有 margin-left 为 .protyle-action 腾出空间
+ *   - 竖线在 .protyle-action 的中间（left: action宽度 / 2）
+ * 
+ * Callout 紧凑调整（只改尺寸）：
+ *   - .protyle-action 宽度从 34px 缩小到 24px
+ *   - 竖线对应在 12px（24px 的中间）
+ *   - 间距从 8px 缩小到 4px
+ */
+
+/* 竖线样式：位置在缩小后的 .protyle-action 中间 */
+.protyle-wysiwyg .bq[custom-callout] div[data-type="NodeListItem"]::before {
+    content: "" !important;
+    position: absolute !important;
+    border-left: 0.5px solid var(--b3-theme-background-light) !important;
+    /* 24px 宽度的一半 = 12px */
+    left: 12px !important;
+    /* 紧凑间距：4px 代替 12px */
+    height: calc(100% - 1em * 1.625 - 4px) !important;
+    top: calc(1em * 1.625 + 4px) !important;
+}
+
+/* 悬停时高亮竖线 */
+.protyle-wysiwyg .bq[custom-callout] div[data-type="NodeListItem"]:hover::before {
+    border-left-color: var(--b3-scroll-color) !important;
+}
+
+/* 折叠状态下隐藏竖线 */
+.protyle-wysiwyg .bq[custom-callout] div[data-type="NodeListItem"][fold="1"]::before {
+    content: none !important;
+}
+
+/* .protyle-action：显示项目符号的容器，缩小尺寸 */
+.protyle-wysiwyg .bq[custom-callout] div[data-type="NodeListItem"] > .protyle-action {
+    left: 0 !important;
+    position: absolute !important;
+    /* 从 34px 缩小到 24px */
+    width: 24px !important;
+    top: 0 !important;
+    transition: var(--b3-transition) !important;
+    color: var(--b3-theme-on-surface) !important;
+    justify-content: center !important;
+    display: flex !important;
+    align-items: center !important;
+    word-break: keep-all !important;
+    /* 高度适应紧凑间距 */
+    height: calc(1.625em + 4px) !important;
+    line-height: calc(1.625em + 4px) !important;
+}
+
+/* 子元素左边距：为缩小后的 .protyle-action 腾出空间 */
+.protyle-wysiwyg .bq[custom-callout] div[data-type="NodeListItem"] > [data-node-id] {
+    margin-left: 24px !important;
+}
+
+/* NodeParagraph 不需要额外的 margin-left（已经通过父规则设置） */
 .protyle-wysiwyg .bq[custom-callout] div[data-type="NodeListItem"] > div[data-type="NodeParagraph"] {
-    margin-left: 0px !important;
+    margin-left: 24px !important;
     padding-left: 0px !important;
 }
 
 
-/* 有序列表的NodeList */
-.protyle-wysiwyg .bq[custom-callout] div[data-type="NodeList"][data-subtype="o"] div[data-type="NodeListItem"] {
-    list-style-type: decimal !important;
-}
-
-/* 任务列表的NodeList */
-.protyle-wysiwyg .bq[custom-callout] div[data-type="NodeList"][data-subtype="t"] div[data-type="NodeListItem"] {
-    list-style-type: none !important;
-}
+/* 有序列表、任务列表等：保持思源原生行为，通过 .protyle-action 显示标记 */
+/* 不再使用 CSS 的 list-style-type，而是依赖思源的 JavaScript 和 .protyle-action 系统 */
 
 /* 确保容器不会裁剪列表项目符号 */
 .protyle-wysiwyg .bq[custom-callout] div[data-type="NodeList"],
@@ -312,36 +354,31 @@ export function generateCalloutStyles(customTypes?: CalloutTypeConfig[], themeId
     overflow: visible !important;
 }
 
-/* 嵌套列表样式 */
-.protyle-wysiwyg .bq[custom-callout] ul ul {
-    list-style-type: circle !important;
-    margin: 4px 0 4px calc(var(--callout-list-indent, 12px) + 4px) !important;
+/* 嵌套列表样式（HTML ul/ol - 极少使用） */
+.protyle-wysiwyg .bq[custom-callout] ul ul,
+.protyle-wysiwyg .bq[custom-callout] ol ol {
+    margin: 2px 0 !important;
 }
 
-.protyle-wysiwyg .bq[custom-callout] ul ul ul {
-    list-style-type: square !important;
-}
-
-/* 特别针对标题行中的列表 - 确保项目符号可见 */
-.protyle-wysiwyg .bq[custom-callout] [data-callout-title="true"] ul {
-    margin: 8px 0 !important;
-    padding-left: var(--callout-list-indent, 12px) !important;
+/* 特别针对标题行中的列表 - 使用思源原生系统 */
+.protyle-wysiwyg .bq[custom-callout] [data-callout-title="true"] ul,
+.protyle-wysiwyg .bq[custom-callout] [data-callout-title="true"] ol {
+    margin: 4px 0 !important;
+    padding-left: 24px !important;
 }
 
 .protyle-wysiwyg .bq[custom-callout] [data-callout-title="true"] li {
-    margin: 2px 0 !important;
+    margin: 1px 0 !important;
     padding-left: 0px !important;
 }
 
 .protyle-wysiwyg .bq[custom-callout] [data-callout-title="true"] div[data-type="NodeListItem"] {
-    display: list-item !important;
-    list-style-type: disc !important;
-    margin: 2px 0 2px var(--callout-list-indent, 12px) !important;
-    padding-left: 0px !important;
+    margin: 1px 0 !important;
+    padding: 0 !important;
 }
 
 .protyle-wysiwyg .bq[custom-callout] [data-callout-title="true"] div[data-type="NodeListItem"] > div[data-type="NodeParagraph"] {
-    margin-left: 0px !important;
+    margin-left: 24px !important;
     padding-left: 0px !important;
 }
 
