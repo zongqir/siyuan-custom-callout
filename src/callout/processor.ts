@@ -358,49 +358,57 @@ export class CalloutProcessor {
     }
 
     /**
-     * 添加标题编辑功能（仅双击编辑，移除单击折叠）
+     * 添加标题只读样式（标题不可编辑，但允许回车添加新行）
      */
     private addTitleEditFunction(blockquote: HTMLElement, titleDiv: HTMLElement) {
-        // 移除旧的监听器
+        // 移除旧的双击监听器（如果存在）
         if ((titleDiv as any)._titleDblClickHandler) {
             titleDiv.removeEventListener('dblclick', (titleDiv as any)._titleDblClickHandler, true);
+            (titleDiv as any)._titleDblClickHandler = null;
         }
 
-        // 创建双击处理器（用于编辑）
+        // 阻止双击选中文本
         const dblClickHandler = (e: MouseEvent) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // 清除任何文本选择
+            const selection = window.getSelection();
+            if (selection) {
+                selection.removeAllRanges();
+            }
+        };
+
+        // 阻止鼠标选择文本（mousedown 时）
+        const mouseDownHandler = (e: MouseEvent) => {
+            // 只在标题区域（不是图标区域）阻止选择
             const rect = titleDiv.getBoundingClientRect();
             const clickX = e.clientX - rect.left;
-
-            // 点击图标区域（0-40px）不处理编辑
-            if (clickX >= 0 && clickX <= 40) {
-                return;
+            
+            if (clickX > 40) {
+                e.preventDefault();
             }
+        };
 
-            logger.log('[Callout] 双击标题，进入编辑模式');
-            
-            // 双击：进入编辑模式
-            // 不阻止默认行为，让contenteditable正常工作
-            titleDiv.focus();
-            
-            // 选中所有文本以便编辑
-            setTimeout(() => {
-                const selection = window.getSelection();
-                const range = document.createRange();
-                range.selectNodeContents(titleDiv);
-                selection?.removeAllRanges();
-                selection?.addRange(range);
-            }, 10);
+        // 阻止选择变化（selectstart）
+        const selectStartHandler = (e: Event) => {
+            e.preventDefault();
         };
 
         // 保存引用
         (titleDiv as any)._titleDblClickHandler = dblClickHandler;
+        (titleDiv as any)._titleMouseDownHandler = mouseDownHandler;
+        (titleDiv as any)._titleSelectStartHandler = selectStartHandler;
 
         // 添加监听器
         titleDiv.addEventListener('dblclick', dblClickHandler, true);
-        
-        // 设置光标样式提示用户可以双击编辑
-        titleDiv.style.cursor = 'text';
-        titleDiv.title = '双击编辑';
+        titleDiv.addEventListener('mousedown', mouseDownHandler, true);
+        titleDiv.addEventListener('selectstart', selectStartHandler, false);
+
+        // 保持 contenteditable="true"，这样才能按回车添加新行
+        // 使用事件监听器来限制文本选择
+        titleDiv.style.cursor = 'default';
+        titleDiv.title = 'Callout 标题（只读，按回车添加新行）';
     }
 
     /**
@@ -672,13 +680,28 @@ export class CalloutProcessor {
     }
 
     /**
-     * 移除标题编辑功能
+     * 移除标题只读功能（恢复为可编辑）
      */
     private removeTitleEditFunction(titleDiv: HTMLElement) {
+        // 移除双击监听器
         if ((titleDiv as any)._titleDblClickHandler) {
             titleDiv.removeEventListener('dblclick', (titleDiv as any)._titleDblClickHandler, true);
             (titleDiv as any)._titleDblClickHandler = null;
         }
+        
+        // 移除 mousedown 监听器
+        if ((titleDiv as any)._titleMouseDownHandler) {
+            titleDiv.removeEventListener('mousedown', (titleDiv as any)._titleMouseDownHandler, true);
+            (titleDiv as any)._titleMouseDownHandler = null;
+        }
+        
+        // 移除 selectstart 监听器
+        if ((titleDiv as any)._titleSelectStartHandler) {
+            titleDiv.removeEventListener('selectstart', (titleDiv as any)._titleSelectStartHandler, false);
+            (titleDiv as any)._titleSelectStartHandler = null;
+        }
+        
+        // 恢复默认样式
         titleDiv.style.cursor = '';
         titleDiv.title = '';
     }

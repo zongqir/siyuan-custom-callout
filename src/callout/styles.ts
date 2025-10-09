@@ -28,9 +28,9 @@ export function generateCalloutStyles(customTypes?: CalloutTypeConfig[], themeId
 
 /* ==================== Callout 通用样式 ==================== */
 
-/* 标题图标区域可点击提示 */
+/* 标题区域只读样式 */
 .protyle-wysiwyg .bq[custom-callout] [data-callout-title="true"] {
-    cursor: pointer !important;
+    cursor: default !important;
     position: relative;
 }
 
