@@ -87,6 +87,39 @@ export function generateCalloutStyles(customTypes?: CalloutTypeConfig[], themeId
     display: none !important;
 }
 
+/* 只让有橙色callout高亮按钮附近的段落按钮变得极不明显，避免误触 */
+.protyle-gutters button.callout-gutter-highlight + button.ariaLabel[data-type="NodeParagraph"],
+.protyle-gutters button.ariaLabel[data-type="NodeParagraph"] + button.callout-gutter-highlight ~ button.ariaLabel[data-type="NodeParagraph"] {
+    opacity: 0.005 !important;  /* 几乎完全透明 */
+    transition: opacity 0.4s ease !important;
+    pointer-events: auto !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* 悬停有橙色按钮的块标区域时稍微增加一点可见度 */
+.protyle-gutters:has(button.callout-gutter-highlight):hover button.callout-gutter-highlight + button.ariaLabel[data-type="NodeParagraph"] {
+    opacity: 0.015 !important;   /* 悬停时稍微增加一点点透明度 */
+}
+
+/* 直接悬停callout附近的段落按钮时需要长时间才会更明显 */
+.protyle-gutters button.callout-gutter-highlight + button.ariaLabel[data-type="NodeParagraph"]:hover {
+    opacity: 0.05 !important;   /* 直接悬停按钮时稍微增加透明度 */
+    transition-delay: 1.5s !important;  /* 延迟1.5秒才生效，避免误触 */
+}
+
+/* 特别针对callout附近段落按钮的图标 */
+.protyle-gutters button.callout-gutter-highlight + button.ariaLabel[data-type="NodeParagraph"] svg use[xlink:href="#iconParagraph"] {
+    opacity: 0.005 !important;
+    transition: opacity 0.4s ease !important;
+}
+
+.protyle-gutters button.callout-gutter-highlight + button.ariaLabel[data-type="NodeParagraph"]:hover svg use[xlink:href="#iconParagraph"] {
+    opacity: 0.05 !important;
+    transition-delay: 1.5s !important;
+}
+
 /* 删除按钮样式 */
 .protyle-wysiwyg .bq[custom-callout] .callout-delete-button {
     opacity: 0 !important;
