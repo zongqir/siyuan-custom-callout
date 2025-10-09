@@ -48,7 +48,7 @@
     let outlineCardSize: 'compact' | 'normal' | 'large' | 'default' = 'default';
     let outlineColorVibrancy: number = 1.0;
     let outlineBackgroundOpacity: number = 1.0;
-    let outlineCardBackgroundStyle: 'default' | 'solid' | 'gradient' | 'colorful' = 'default';
+    let outlineCardBackgroundStyle: 'default' | 'solid' | 'gradient' | 'colorful' | 'vivid' = 'default';
     let outlineTitleFontSize: number = 14;         // 改为数字类型
     let outlineContentFontSize: number = 13;      // 改为数字类型
     let outlineIconSize: number = 20;             // 改为数字类型
@@ -1069,6 +1069,7 @@
                             <option value="solid">⬜ 纯色风格</option>
                             <option value="gradient">🌈 渐变风格</option>
                             <option value="colorful">🎨 色彩风格</option>
+                            <option value="vivid">🔥 浓烈风格</option>
                         </select>
                     </div>
                     

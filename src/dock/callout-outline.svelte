@@ -31,7 +31,7 @@
     // 主题相关
     let currentTheme: OutlineThemeStyle = getDefaultOutlineTheme();
     let themeCSS: string = '';
-    let cardBackgroundStyle: 'default' | 'solid' | 'gradient' | 'colorful' = 'default';
+    let cardBackgroundStyle: 'default' | 'solid' | 'gradient' | 'colorful' | 'vivid' = 'default';
     let colorVibrancy: number = 1.0;
     
     // 响应式更新主题
@@ -84,6 +84,9 @@
             const adjustedColor = adjustColorVibrancy(callout.config.color, colorVibrancy);
             const rgb = hexToRgb(adjustedColor);
             return `rgba(${rgb}, 0.15)`;
+        } else if (cardBackgroundStyle === 'vivid') {
+            // 浓烈：纯主题色（不透明），应用鲜艳度
+            return adjustColorVibrancy(callout.config.color, colorVibrancy);
         } else {
             // 默认：使用当前的var(--callout-color)，由CSS控制
             return '';
@@ -710,6 +713,15 @@
             border-color: rgba(255, 255, 255, 0.5) !important;
         }
     }
+    
+    // 浓烈风格：纯主题色背景，使用白色边框
+    .callout-card[data-background-style="vivid"] {
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        
+        &:hover {
+            border-color: rgba(255, 255, 255, 0.5) !important;
+        }
+    }
 
     .callout-card-header {
         display: flex;
@@ -777,6 +789,26 @@
             fill: var(--callout-color) !important;
         }
     }
+    
+    // 浓烈风格：深色背景，使用白色文字和图标
+    .callout-card[data-background-style="vivid"] {
+        .callout-icon {
+            :global(svg) {
+                filter: brightness(0) invert(1) !important; // 白色图标
+            }
+        }
+        
+        .callout-type-label {
+            background: transparent !important;
+            color: #ffffff !important;
+            padding: 0 !important;
+            font-weight: 700 !important;
+        }
+
+        .collapse-indicator {
+            fill: #ffffff !important;
+        }
+    }
 
     .callout-title {
         font-size: var(--outline-title-size, 14px);
@@ -815,6 +847,17 @@
             color: #6b7280 !important;
         }
     }
+    
+    // 浓烈风格下的标题和内容样式 - 使用白色文字
+    .callout-card[data-background-style="vivid"] {
+        .callout-title {
+            color: #ffffff !important;
+        }
+        
+        .callout-preview {
+            color: rgba(255, 255, 255, 0.9) !important;
+        }
+    }
 
     .callout-card-footer {
         display: flex;
@@ -844,7 +887,8 @@
     // 浅色背景下的footer样式
     .callout-card[data-background-style="solid"],
     .callout-card[data-background-style="gradient"],
-    .callout-card[data-background-style="colorful"] {
+    .callout-card[data-background-style="colorful"],
+    .callout-card[data-background-style="vivid"] {
         .callout-card-footer {
             border-top: 1px solid rgba(255, 255, 255, 0.3) !important;
             
