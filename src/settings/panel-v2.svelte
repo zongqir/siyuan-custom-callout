@@ -54,6 +54,7 @@
     let outlineIconSize: number = 20;             // 改为数字类型
     let outlineCompactMode: boolean = false;
     let outlineShowBorder: boolean = true;
+    let outlineTextColor: 'auto' | 'dark' | 'light' = 'auto'; // 文字颜色
     
     // 监听列数变化并保存
     $: if (config && gridColumns !== config.gridColumns) {
@@ -147,6 +148,7 @@
         outlineIconSize = outlineOverrides.iconSize || 20;
         outlineCompactMode = outlineOverrides.compactMode || false;
         outlineShowBorder = outlineOverrides.showBorder !== false;
+        outlineTextColor = outlineOverrides.textColor || 'auto';
     }
     
     async function handleGridColumnsChange(newColumns: number) {
@@ -187,7 +189,8 @@
             contentFontSize: outlineContentFontSize,
             iconSize: outlineIconSize,
             compactMode: outlineCompactMode,
-            showBorder: outlineShowBorder
+            showBorder: outlineShowBorder,
+            textColor: outlineTextColor
         });
         
         // 构建大纲覆盖配置（只保存非默认值）
@@ -202,6 +205,7 @@
         if (outlineIconSize !== 20) outlineOverrides.iconSize = outlineIconSize;
         if (outlineCompactMode) outlineOverrides.compactMode = outlineCompactMode;
         if (!outlineShowBorder) outlineOverrides.showBorder = outlineShowBorder;
+        if (outlineTextColor !== 'auto') outlineOverrides.textColor = outlineTextColor;
         
         console.log('Final outline overrides:', outlineOverrides);
         
@@ -232,6 +236,7 @@
             outlineIconSize = 20;
             outlineCompactMode = false;
             outlineShowBorder = true;
+            outlineTextColor = 'auto';
             
             // 清空配置中的微调设置
             config = { ...config, outlineOverrides: {} };
@@ -1175,6 +1180,21 @@
                             <input type="checkbox" bind:checked={outlineShowBorder} on:change={handleOutlineOverrideChange} />
                             <span>显示边框</span>
                         </label>
+                    </div>
+                    
+                    <!-- 文字颜色 -->
+                    <div class="override-item">
+                        <label>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="vertical-align: -2px; margin-right: 6px;">
+                                <text x="4" y="18" font-size="16" fill="currentColor" font-weight="bold">A</text>
+                            </svg>
+                            文字颜色
+                        </label>
+                        <select bind:value={outlineTextColor} on:change={handleOutlineOverrideChange}>
+                            <option value="auto">⚙️ 自动</option>
+                            <option value="dark">⚫ 黑色</option>
+                            <option value="light">⚪ 白色</option>
+                        </select>
                     </div>
                 </div>
                 

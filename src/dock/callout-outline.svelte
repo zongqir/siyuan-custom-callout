@@ -33,6 +33,7 @@
     let themeCSS: string = '';
     let cardBackgroundStyle: 'default' | 'solid' | 'gradient' | 'colorful' | 'vivid' = 'default';
     let colorVibrancy: number = 1.0;
+    let textColor: 'auto' | 'dark' | 'light' = 'auto';
     
     // 响应式更新主题
     $: updateTheme(themeId);
@@ -49,14 +50,16 @@
             const config = await ConfigManager.load(plugin);
             const outlineOverrides = config.outlineOverrides;
             
-            // 获取卡片背景样式配置和色彩鲜艳度
+            // 获取卡片背景样式配置、色彩鲜艳度和文字颜色
             cardBackgroundStyle = outlineOverrides?.cardBackgroundStyle || 'default';
             colorVibrancy = outlineOverrides?.colorVibrancy || 1.0;
+            textColor = outlineOverrides?.textColor || 'auto';
             
             console.log('Loaded config in outline component:', config);
             console.log('Loaded outlineOverrides:', outlineOverrides);
             console.log('Card background style:', cardBackgroundStyle);
             console.log('Color vibrancy:', colorVibrancy);
+            console.log('Text color:', textColor);
             
             themeCSS = generateOutlineThemeCSS(currentTheme, outlineOverrides);
         } catch (error) {
@@ -478,6 +481,7 @@
                         {getCardBackground(callout) ? `background: ${getCardBackground(callout)} !important;` : ''}
                     "
                     data-background-style={cardBackgroundStyle}
+                    data-text-color={textColor}
                     on:click={(e) => jumpToCallout(callout.id, e)}
                     on:keydown={(e) => e.key === 'Enter' && jumpToCallout(callout.id)}
                     role="button"
@@ -856,6 +860,64 @@
         
         .callout-preview {
             color: rgba(255, 255, 255, 0.9) !important;
+        }
+    }
+    
+    // 文字颜色：黑色
+    .callout-card[data-text-color="dark"] {
+        .callout-icon {
+            :global(svg) {
+                filter: none !important;
+            }
+        }
+        
+        .callout-type-label {
+            color: #374151 !important;
+        }
+        
+        .callout-title {
+            color: #374151 !important;
+        }
+        
+        .callout-preview {
+            color: #6b7280 !important;
+        }
+        
+        .collapse-indicator {
+            fill: #374151 !important;
+        }
+        
+        .jump-icon {
+            color: #6b7280 !important;
+        }
+    }
+    
+    // 文字颜色：白色
+    .callout-card[data-text-color="light"] {
+        .callout-icon {
+            :global(svg) {
+                filter: brightness(0) invert(1) !important;
+            }
+        }
+        
+        .callout-type-label {
+            color: #ffffff !important;
+        }
+        
+        .callout-title {
+            color: #ffffff !important;
+        }
+        
+        .callout-preview {
+            color: rgba(255, 255, 255, 0.9) !important;
+        }
+        
+        .collapse-indicator {
+            fill: #ffffff !important;
+        }
+        
+        .jump-icon {
+            color: #ffffff !important;
         }
     }
 
