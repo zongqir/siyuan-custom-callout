@@ -9,7 +9,7 @@
  */
 
 class Logger {
-    private enabled: boolean = false;
+    private enabled: boolean = true;  // 默认开启日志（V2 调试）
     private prefix: string = '[Custom Callout]';
 
     constructor() {

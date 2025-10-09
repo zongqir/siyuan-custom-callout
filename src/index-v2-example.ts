@@ -1,9 +1,18 @@
+/**
+ * 这是一个使用 V2 系统的示例入口文件
+ * 
+ * 使用方法：
+ * 1. 将此文件内容复制到 src/index.ts
+ * 2. 或者直接将 src/index.ts 重命名为 src/index-v1-backup.ts
+ * 3. 然后将此文件重命名为 src/index.ts
+ */
+
 import {
     Plugin,
 } from "siyuan";
 import "./index.scss";
 
-import { CalloutManagerV2 } from "./callout";
+import { CalloutManagerV2 } from "./callout/manager-v2"; // 使用 V2 管理器
 import SettingPanel from "./settings/panel-v2.svelte";
 import CalloutOutlineDock from "./dock/callout-outline.svelte";
 import { Dialog } from "siyuan";
@@ -14,13 +23,13 @@ const STORAGE_NAME = "callout-config";
 const DOCK_TYPE = "callout-outline-dock";
 
 export default class CustomCalloutPlugin extends Plugin {
-    private calloutManager: CalloutManagerV2 | null = null;
+    private calloutManager: CalloutManagerV2 | null = null; // 改用 V2
     private isMobile: boolean;
     private dockPanel: CalloutOutlineDock | null = null;
     private currentOutlineThemeId: string = 'modern';
 
     async onload() {
-        logger.log("Plugin loading...");
+        logger.log("[Plugin V2] 插件加载中...");
 
         const frontEnd = this.getFrontEnd();
         this.isMobile = frontEnd === "mobile" || frontEnd === "browser-mobile";
@@ -31,21 +40,22 @@ export default class CustomCalloutPlugin extends Plugin {
 <path d="M2 4v24h2V4H2zm26 0v24h2V4h-28z" fill="currentColor" opacity="0.5"/>
 </symbol>`);
 
-        // 初始化Callout管理器 (V2 - 基于块属性)
+        // 初始化 Callout 管理器 V2
         this.calloutManager = new CalloutManagerV2(this);
         await this.calloutManager.initialize();
 
         // 加载大纲主题配置
         await this.loadOutlineTheme();
 
-        logger.log("Plugin loaded successfully");
+        logger.log("[Plugin V2] 插件加载完成 ✅");
+        logger.log("[Plugin V2] 使用新的基于块属性的架构");
     }
 
     onLayoutReady() {
         // 添加顶栏按钮
         this.addTopBar({
             icon: "iconCallout",
-            title: this.i18n.name,
+            title: this.i18n.name + " (V2)",
             position: "right",
             callback: () => {
                 this.openSettings();
@@ -58,7 +68,7 @@ export default class CustomCalloutPlugin extends Plugin {
                 position: "RightBottom",
                 size: { width: 320, height: 0 },
                 icon: "iconCallout",
-                title: this.i18n.calloutOutline || "Callout 大纲",
+                title: (this.i18n.calloutOutline || "Callout 大纲") + " (V2)",
             },
             data: {
                 text: ""
@@ -85,10 +95,12 @@ export default class CustomCalloutPlugin extends Plugin {
                 }
             }
         });
+
+        logger.log("[Plugin V2] 布局就绪");
     }
 
     async onunload() {
-        logger.log("Plugin unloading...");
+        logger.log("[Plugin V2] 插件卸载中...");
 
         // 销毁 Dock 面板
         if (this.dockPanel) {
@@ -96,13 +108,13 @@ export default class CustomCalloutPlugin extends Plugin {
             this.dockPanel = null;
         }
 
-        // 销毁Callout管理器
+        // 销毁 Callout 管理器
         if (this.calloutManager) {
             this.calloutManager.destroy();
             this.calloutManager = null;
         }
 
-        logger.log("Plugin unloaded");
+        logger.log("[Plugin V2] 插件已卸载 ✅");
     }
 
     /**
@@ -110,7 +122,7 @@ export default class CustomCalloutPlugin extends Plugin {
      */
     openSetting(): void {
         const dialog = new Dialog({
-            title: this.i18n.name + " - " + this.i18n.settings,
+            title: this.i18n.name + " - " + this.i18n.settings + " (V2)",
             content: `<div id="CustomCalloutSettingPanel" style="height: 100%;"></div>`,
             width: "800px",
             height: "600px",
@@ -121,7 +133,7 @@ export default class CustomCalloutPlugin extends Plugin {
 
         const panel = new SettingPanel({
             target: dialog.element.querySelector("#CustomCalloutSettingPanel") as HTMLElement,
-                    props: {
+            props: {
                 plugin: this,
                 calloutManager: this.calloutManager
             }
@@ -132,8 +144,8 @@ export default class CustomCalloutPlugin extends Plugin {
      * 打开设置面板（别名方法）
      */
     openSettings() {
-                this.openSetting();
-            }
+        this.openSetting();
+    }
 
     /**
      * 加载大纲主题配置
@@ -142,8 +154,9 @@ export default class CustomCalloutPlugin extends Plugin {
         try {
             const config = await ConfigManager.load(this);
             this.currentOutlineThemeId = config.outlineThemeId || 'modern';
+            logger.log('[Plugin V2] 大纲主题已加载:', this.currentOutlineThemeId);
         } catch (error) {
-            logger.error('[Plugin] Failed to load outline theme config:', error);
+            logger.error('[Plugin V2] 加载大纲主题配置失败:', error);
             this.currentOutlineThemeId = 'modern';
         }
     }
@@ -162,21 +175,17 @@ export default class CustomCalloutPlugin extends Plugin {
                 this.dockPanel.updateStyles();
             }
         }
+        
+        logger.log('[Plugin V2] 大纲主题已更新:', themeId);
     }
     
     /**
      * 刷新大纲样式（用于样式微调变化时）
      */
     public async refreshOutlineStyles() {
-        console.log('refreshOutlineStyles called');
         if (this.dockPanel && this.dockPanel.updateStyles) {
-            console.log('Calling dockPanel.updateStyles()');
             this.dockPanel.updateStyles();
-        } else {
-            console.log('dockPanel or updateStyles not available:', {
-                dockPanel: !!this.dockPanel,
-                updateStyles: this.dockPanel?.updateStyles
-            });
+            logger.log('[Plugin V2] 大纲样式已刷新');
         }
     }
     
@@ -200,4 +209,32 @@ export default class CustomCalloutPlugin extends Plugin {
         }
         return 'desktop';
     }
+
+    /**
+     * 获取 Callout 管理器（用于外部访问）
+     */
+    public getCalloutManager(): CalloutManagerV2 | null {
+        return this.calloutManager;
+    }
+
+    /**
+     * 刷新 Callout 样式（配置变化后调用）
+     */
+    public async refreshCalloutStyles() {
+        if (this.calloutManager) {
+            await this.calloutManager.refreshStyles();
+            logger.log('[Plugin V2] Callout 样式已刷新');
+        }
+    }
+
+    /**
+     * 重新加载 Callout 配置
+     */
+    public async reloadCalloutConfig() {
+        if (this.calloutManager) {
+            await this.calloutManager.reloadConfig();
+            logger.log('[Plugin V2] Callout 配置已重新加载');
+        }
+    }
 }
+
