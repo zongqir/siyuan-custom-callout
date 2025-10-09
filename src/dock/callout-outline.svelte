@@ -31,6 +31,7 @@
     // 主题相关
     let currentTheme: OutlineThemeStyle = getDefaultOutlineTheme();
     let themeCSS: string = '';
+    let cardBackgroundStyle: 'default' | 'solid' | 'gradient' | 'colorful' = 'default';
     
     // 响应式更新主题
     $: updateTheme(themeId);
@@ -47,8 +48,12 @@
             const config = await ConfigManager.load(plugin);
             const outlineOverrides = config.outlineOverrides;
             
+            // 获取卡片背景样式配置
+            cardBackgroundStyle = outlineOverrides?.cardBackgroundStyle || 'default';
+            
             console.log('Loaded config in outline component:', config);
             console.log('Loaded outlineOverrides:', outlineOverrides);
+            console.log('Card background style:', cardBackgroundStyle);
             
             themeCSS = generateOutlineThemeCSS(currentTheme, outlineOverrides);
         } catch (error) {
@@ -62,10 +67,42 @@
         updateTheme(themeId);
     }
     
-    // 获取背景样式
-    function getBackgroundStyle(): string {
-        // 这个函数返回背景样式，会被CSS中的data属性使用
-        return 'default';
+    // 获取卡片背景样式
+    function getCardBackground(callout: CalloutItem): string {
+        if (cardBackgroundStyle === 'solid') {
+            // 纯色：从渐变中提取第一个颜色
+            return extractSolidColorFromGradient(callout.config.bgGradient);
+        } else if (cardBackgroundStyle === 'gradient') {
+            // 渐变：使用预设渐变
+            return callout.config.bgGradient;
+        } else if (cardBackgroundStyle === 'colorful') {
+            // 色彩：主题色半透明
+            const rgb = hexToRgb(callout.config.color);
+            return `rgba(${rgb}, 0.15)`;
+        } else {
+            // 默认：使用当前的var(--callout-color)，由CSS控制
+            return '';
+        }
+    }
+    
+    // 辅助函数：将十六进制颜色转换为RGB
+    function hexToRgb(hex: string): string {
+        const r = parseInt(hex.slice(1, 3), 16);
+        const g = parseInt(hex.slice(3, 5), 16);
+        const b = parseInt(hex.slice(5, 7), 16);
+        return `${r}, ${g}, ${b}`;
+    }
+    
+    // 从渐变字符串中提取纯色
+    function extractSolidColorFromGradient(gradient: string): string {
+        // 从 "linear-gradient(to bottom, #eff6ff, #ffffff)" 中提取 "#eff6ff"
+        const match = gradient.match(/#[0-9a-fA-F]{6}/);
+        return match ? match[0] : '#f0f0f0';
+    }
+    
+    // 检查背景是否为浅色
+    function isLightBackground(): boolean {
+        return cardBackgroundStyle === 'solid' || cardBackgroundStyle === 'gradient';
     }
 
     // 创建类型映射
@@ -348,8 +385,12 @@
             {#each callouts as callout (callout.id)}
                 <div 
                     class="callout-card" 
-                    style="--callout-color: {callout.config.color}; --callout-bg-gradient: {callout.config.bgGradient};"
-                    data-background-style={getBackgroundStyle()}
+                    style="
+                        --callout-color: {callout.config.color}; 
+                        --callout-bg-gradient: {callout.config.bgGradient};
+                        {getCardBackground(callout) ? `background: ${getCardBackground(callout)} !important;` : ''}
+                    "
+                    data-background-style={cardBackgroundStyle}
                     on:click={(e) => jumpToCallout(callout.id, e)}
                     on:keydown={(e) => e.key === 'Enter' && jumpToCallout(callout.id)}
                     role="button"
@@ -575,6 +616,17 @@
             opacity: 0.95;
         }
     }
+    
+    // 浅色背景下使用柔和的边框
+    .callout-card[data-background-style="solid"],
+    .callout-card[data-background-style="gradient"],
+    .callout-card[data-background-style="colorful"] {
+        border: 1px solid rgba(0, 0, 0, 0.08) !important;
+        
+        &:hover {
+            border-color: rgba(0, 0, 0, 0.15) !important;
+        }
+    }
 
     .callout-card-header {
         display: flex;
@@ -596,6 +648,17 @@
                 filter: var(--outline-icon-filter, brightness(0) invert(1));
             }
         }
+    }
+    
+    // 浅色背景下的图标样式（纯色、渐变和色彩模式）
+    .callout-card[data-background-style="solid"],
+    .callout-card[data-background-style="gradient"],
+    .callout-card[data-background-style="colorful"] {
+        .callout-icon {
+            :global(svg) {
+                filter: none !important;
+            }
+        }
 
         .callout-title-section {
             flex: 1;
@@ -613,11 +676,22 @@
             background: var(--outline-label-bg, rgba(0, 0, 0, 0.15));
             white-space: nowrap;
         }
+    }
+    
+    // 浅色背景下的标签和折叠指示器样式（纯色、渐变和色彩模式）
+    .callout-card[data-background-style="solid"],
+    .callout-card[data-background-style="gradient"],
+    .callout-card[data-background-style="colorful"] {
+        .callout-type-label {
+            color: var(--callout-color) !important;
+            background: transparent !important;
+            padding: 0 !important;
+            font-weight: 700 !important;
+        }
 
         .collapse-indicator {
-            opacity: 0.8;
-            margin-left: 4px;
-            filter: var(--outline-icon-filter, brightness(0) invert(1));
+            filter: none !important;
+            fill: var(--callout-color) !important;
         }
     }
 
@@ -645,6 +719,19 @@
         overflow: hidden;
         margin-bottom: var(--outline-content-margin-bottom, 8px);
     }
+    
+    // 浅色背景下的标题和内容样式（纯色、渐变和色彩模式）
+    .callout-card[data-background-style="solid"],
+    .callout-card[data-background-style="gradient"],
+    .callout-card[data-background-style="colorful"] {
+        .callout-title {
+            color: #374151 !important;
+        }
+        
+        .callout-preview {
+            color: #6b7280 !important;
+        }
+    }
 
     .callout-card-footer {
         display: flex;
@@ -668,6 +755,19 @@
         .jump-icon {
             opacity: var(--outline-footer-icon-hover-opacity, 1);
             transform: var(--outline-footer-icon-transform, translateX(2px));
+        }
+    }
+    
+    // 浅色背景下的footer样式
+    .callout-card[data-background-style="solid"],
+    .callout-card[data-background-style="gradient"],
+    .callout-card[data-background-style="colorful"] {
+        .callout-card-footer {
+            border-top: 1px solid rgba(0, 0, 0, 0.1) !important;
+            
+            .jump-icon {
+                color: var(--callout-color) !important;
+            }
         }
     }
 </style>

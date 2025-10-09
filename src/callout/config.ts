@@ -32,6 +32,7 @@ export interface OutlineOverrides {
     // 颜色样式
     colorSaturation?: number;                        // 颜色饱和度 (0.5-1.5)
     backgroundOpacity?: number;                      // 背景透明度 (0.3-1.0)
+    cardBackgroundStyle?: 'default' | 'solid' | 'gradient' | 'colorful';  // 卡片背景样式
 
     // 字体样式 - 改为数字类型，支持滑块调整
     titleFontSize?: number;                          // 标题字体大小 (10-18)

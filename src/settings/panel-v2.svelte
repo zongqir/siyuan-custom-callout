@@ -48,6 +48,7 @@
     let outlineCardSize: 'compact' | 'normal' | 'large' | 'default' = 'default';
     let outlineColorSaturation: number = 1.0;
     let outlineBackgroundOpacity: number = 1.0;
+    let outlineCardBackgroundStyle: 'default' | 'solid' | 'gradient' | 'colorful' = 'default';
     let outlineTitleFontSize: number = 14;         // 改为数字类型
     let outlineContentFontSize: number = 13;      // 改为数字类型
     let outlineIconSize: number = 20;             // 改为数字类型
@@ -140,6 +141,7 @@
         outlineCardSize = outlineOverrides.cardSize || 'default';
         outlineColorSaturation = outlineOverrides.colorSaturation || 1.0;
         outlineBackgroundOpacity = outlineOverrides.backgroundOpacity || 1.0;
+        outlineCardBackgroundStyle = outlineOverrides.cardBackgroundStyle || 'default';
         outlineTitleFontSize = outlineOverrides.titleFontSize || 14;
         outlineContentFontSize = outlineOverrides.contentFontSize || 13;
         outlineIconSize = outlineOverrides.iconSize || 20;
@@ -180,6 +182,7 @@
             cardSize: outlineCardSize,
             colorSaturation: outlineColorSaturation,
             backgroundOpacity: outlineBackgroundOpacity,
+            cardBackgroundStyle: outlineCardBackgroundStyle,
             titleFontSize: outlineTitleFontSize,
             contentFontSize: outlineContentFontSize,
             iconSize: outlineIconSize,
@@ -193,6 +196,7 @@
         if (outlineCardSize !== 'default') outlineOverrides.cardSize = outlineCardSize as any;
         if (outlineColorSaturation !== 1.0) outlineOverrides.colorSaturation = outlineColorSaturation;
         if (outlineBackgroundOpacity !== 1.0) outlineOverrides.backgroundOpacity = outlineBackgroundOpacity;
+        if (outlineCardBackgroundStyle !== 'default') outlineOverrides.cardBackgroundStyle = outlineCardBackgroundStyle;
         if (outlineTitleFontSize !== 14) outlineOverrides.titleFontSize = outlineTitleFontSize;
         if (outlineContentFontSize !== 13) outlineOverrides.contentFontSize = outlineContentFontSize;
         if (outlineIconSize !== 20) outlineOverrides.iconSize = outlineIconSize;
@@ -222,6 +226,7 @@
             outlineCardSize = 'default';
             outlineColorSaturation = 1.0;
             outlineBackgroundOpacity = 1.0;
+            outlineCardBackgroundStyle = 'default';
             outlineTitleFontSize = 14;
             outlineContentFontSize = 13;
             outlineIconSize = 20;
@@ -1050,6 +1055,22 @@
                         </select>
                     </div>
                     
+                    <!-- 卡片背景样式 -->
+                    <div class="override-item">
+                        <label>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="vertical-align: -2px; margin-right: 6px;">
+                                <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
+                                <path d="M3 12h18" stroke="currentColor" stroke-width="2"/>
+                            </svg>
+                            卡片背景
+                        </label>
+                        <select bind:value={outlineCardBackgroundStyle} on:change={handleOutlineOverrideChange}>
+                            <option value="default">⚙️ 默认（主题）</option>
+                            <option value="solid">⬜ 纯色风格</option>
+                            <option value="gradient">🌈 渐变风格</option>
+                            <option value="colorful">🎨 色彩风格</option>
+                        </select>
+                    </div>
                     
                     <!-- 颜色饱和度 -->
                     <div class="override-item">
