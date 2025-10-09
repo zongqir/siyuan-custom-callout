@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount, onDestroy } from 'svelte';
-    import { DEFAULT_CALLOUT_TYPES, type CalloutTypeConfig } from '../callout/types';
+    import { type CalloutTypeConfig } from '../callout/types';
     import type { Plugin } from 'siyuan';
     import { logger } from '../libs/logger';
     import { getAllEditor } from 'siyuan';
@@ -69,7 +69,9 @@
     }
     
     // 添加一个专门的更新样式函数，供外部调用
-    export function updateStyles() {
+    export async function updateStyles() {
+        // 重新加载类型映射（包括配置更新）
+        await initializeTypeMap();
         updateTheme(themeId);
     }
     
@@ -189,19 +191,23 @@
         
         return gradient.replace(/#[0-9a-fA-F]{6}/g, (match) => adjustColorVibrancy(match, vibrancy));
     }
+
+    // 创建类型映射（包括自定义类型）
+    let typeMap = new Map<string, CalloutTypeConfig>();
     
-    // 检查背景是否为浅色
-    function isLightBackground(): boolean {
-        return cardBackgroundStyle === 'solid' || cardBackgroundStyle === 'gradient';
+    // 初始化类型映射
+    async function initializeTypeMap() {
+        const config = await ConfigManager.load(plugin);
+        const allTypes = ConfigManager.getAllTypes(config);
+        typeMap.clear();
+        allTypes.forEach(type => {
+            typeMap.set(type.type, type);
+        });
     }
 
-    // 创建类型映射
-    const typeMap = new Map<string, CalloutTypeConfig>();
-    DEFAULT_CALLOUT_TYPES.forEach(config => {
-        typeMap.set(config.type, config);
-    });
-
-    onMount(() => {
+    onMount(async () => {
+        // 首先初始化类型映射
+        await initializeTypeMap();
         // 初始化主题
         updateTheme(themeId);
         
@@ -430,7 +436,9 @@
         return config.icon;
     }
 
-    function handleRefresh() {
+    async function handleRefresh() {
+        // 重新加载类型映射（包括新添加的自定义类型）
+        await initializeTypeMap();
         lastUpdateTime = 0; // 重置防抖时间
         currentDocId = ''; // 重置文档ID，强制刷新
         loadCallouts();
