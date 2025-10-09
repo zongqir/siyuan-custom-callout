@@ -46,7 +46,7 @@
     
     // 大纲微调配置
     let outlineCardSize: 'compact' | 'normal' | 'large' | 'default' = 'default';
-    let outlineColorSaturation: number = 1.0;
+    let outlineColorVibrancy: number = 1.0;
     let outlineBackgroundOpacity: number = 1.0;
     let outlineCardBackgroundStyle: 'default' | 'solid' | 'gradient' | 'colorful' = 'default';
     let outlineTitleFontSize: number = 14;         // 改为数字类型
@@ -139,7 +139,7 @@
         // 加载大纲微调配置
         const outlineOverrides = config.outlineOverrides || {};
         outlineCardSize = outlineOverrides.cardSize || 'default';
-        outlineColorSaturation = outlineOverrides.colorSaturation || 1.0;
+        outlineColorVibrancy = outlineOverrides.colorVibrancy || 1.0;
         outlineBackgroundOpacity = outlineOverrides.backgroundOpacity || 1.0;
         outlineCardBackgroundStyle = outlineOverrides.cardBackgroundStyle || 'default';
         outlineTitleFontSize = outlineOverrides.titleFontSize || 14;
@@ -180,7 +180,7 @@
         
         console.log('Outline override change triggered:', {
             cardSize: outlineCardSize,
-            colorSaturation: outlineColorSaturation,
+            colorVibrancy: outlineColorVibrancy,
             backgroundOpacity: outlineBackgroundOpacity,
             cardBackgroundStyle: outlineCardBackgroundStyle,
             titleFontSize: outlineTitleFontSize,
@@ -194,7 +194,7 @@
         const outlineOverrides: OutlineOverrides = {};
         
         if (outlineCardSize !== 'default') outlineOverrides.cardSize = outlineCardSize as any;
-        if (outlineColorSaturation !== 1.0) outlineOverrides.colorSaturation = outlineColorSaturation;
+        if (outlineColorVibrancy !== 1.0) outlineOverrides.colorVibrancy = outlineColorVibrancy;
         if (outlineBackgroundOpacity !== 1.0) outlineOverrides.backgroundOpacity = outlineBackgroundOpacity;
         if (outlineCardBackgroundStyle !== 'default') outlineOverrides.cardBackgroundStyle = outlineCardBackgroundStyle;
         if (outlineTitleFontSize !== 14) outlineOverrides.titleFontSize = outlineTitleFontSize;
@@ -224,7 +224,7 @@
         if (confirm('确定要重置所有大纲样式微调吗？这将恢复为主题默认样式。')) {
             // 重置所有微调变量
             outlineCardSize = 'default';
-            outlineColorSaturation = 1.0;
+            outlineColorVibrancy = 1.0;
             outlineBackgroundOpacity = 1.0;
             outlineCardBackgroundStyle = 'default';
             outlineTitleFontSize = 14;
@@ -1072,22 +1072,22 @@
                         </select>
                     </div>
                     
-                    <!-- 颜色饱和度 -->
+                    <!-- 色彩鲜艳度 -->
                     <div class="override-item">
                         <label>
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="vertical-align: -2px; margin-right: 6px;">
                                 <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5" fill="none"/>
-                                <circle cx="12" cy="12" r="6" fill="currentColor" opacity="0.5"/>
+                                <circle cx="12" cy="12" r="6" fill="currentColor" opacity="0.8"/>
                             </svg>
-                            颜色饱和度
+                            色彩鲜艳度
                         </label>
                         <input 
                             type="range" 
                             min="0.5" max="1.5" step="0.1" 
-                            bind:value={outlineColorSaturation} 
+                            bind:value={outlineColorVibrancy} 
                             on:input={handleOutlineOverrideChange}
                         />
-                        <span class="range-value">{outlineColorSaturation.toFixed(1)}</span>
+                        <span class="range-value">{outlineColorVibrancy.toFixed(1)}</span>
                     </div>
                     
                     <!-- 背景透明度 -->
@@ -1175,6 +1175,15 @@
                             <span>显示边框</span>
                         </label>
                     </div>
+                </div>
+                
+                <!-- 提示信息 -->
+                <div class="outline-hint">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="flex-shrink: 0;">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                        <path d="M12 16v-4M12 8h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    <span>修改卡片背景样式后，请点击大纲面板右上角的刷新按钮以查看效果</span>
                 </div>
             </div>
             {/if}
@@ -2051,6 +2060,30 @@
     .outline-override-grid .override-checkbox input[type="checkbox"] {
         width: 14px;
         height: 14px;
+    }
+    
+    /* 大纲提示样式 */
+    .outline-hint {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 12px 16px;
+        margin-top: 16px;
+        background: var(--b3-theme-primary-lighter);
+        border-left: 3px solid var(--b3-theme-primary);
+        border-radius: 6px;
+        font-size: 13px;
+        color: var(--b3-theme-on-surface);
+        line-height: 1.6;
+    }
+    
+    .outline-hint svg {
+        margin-top: 2px;
+        color: var(--b3-theme-primary);
+    }
+    
+    .outline-hint span {
+        flex: 1;
     }
 
 </style>

@@ -7,16 +7,6 @@ import type { OutlineOverrides } from '../../callout/config';
 export function generateOutlineThemeCSS(theme: OutlineThemeStyle, overrides?: OutlineOverrides): string {
     // 应用样式覆盖
     const finalTheme = applyOutlineOverrides(theme, overrides);
-    
-    // 添加额外的CSS变量来支持颜色饱和度等效果
-    let extraCSS = '';
-    
-    // 颜色饱和度
-    if (overrides?.colorSaturation && overrides.colorSaturation !== 1.0) {
-        extraCSS += `--outline-saturation-filter: saturate(${overrides.colorSaturation});`;
-    } else {
-        extraCSS += `--outline-saturation-filter: saturate(1);`;
-    }
 
     return `
         --outline-container-bg: ${finalTheme.containerBackground};
@@ -90,8 +80,6 @@ export function generateOutlineThemeCSS(theme: OutlineThemeStyle, overrides?: Ou
         --outline-loading-text-color: ${finalTheme.loadingTextColor};
         --outline-empty-icon-opacity: ${finalTheme.emptyIconOpacity};
         --outline-empty-text-color: ${finalTheme.emptyTextColor};
-        
-        ${extraCSS}
     `.trim();
 }
 
@@ -231,11 +219,6 @@ function applyOutlineOverrides(theme: OutlineThemeStyle, overrides?: OutlineOver
     if (overrides.cardGap) result.listGap = overrides.cardGap;
     if (overrides.listPadding) result.listPadding = overrides.listPadding;
     if (overrides.headerPadding) result.headerPadding = overrides.headerPadding;
-    
-    // 颜色饱和度调整
-    if (overrides.colorSaturation && overrides.colorSaturation !== 1.0) {
-        console.log('Applied color saturation:', overrides.colorSaturation);
-    }
     
     // 视觉效果
     if (overrides.showBorder === false) {

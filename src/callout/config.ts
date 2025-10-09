@@ -30,7 +30,7 @@ export interface OutlineOverrides {
     cardGap?: string;                               // 卡片间距
 
     // 颜色样式
-    colorSaturation?: number;                        // 颜色饱和度 (0.5-1.5)
+    colorVibrancy?: number;                          // 色彩鲜艳度 (0.5-1.5, 调整HSL饱和度)
     backgroundOpacity?: number;                      // 背景透明度 (0.3-1.0)
     cardBackgroundStyle?: 'default' | 'solid' | 'gradient' | 'colorful';  // 卡片背景样式
 
