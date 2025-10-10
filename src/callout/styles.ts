@@ -206,37 +206,6 @@ export function generateCalloutStyles(customTypes?: CalloutTypeConfig[], themeId
     overflow: visible !important;
 }
 
-/* 清除 blockquote 直接子元素（NodeParagraph等）的额外间距 */
-.protyle-wysiwyg .bq[custom-callout] > div[data-type="NodeParagraph"],
-.protyle-wysiwyg .bq[custom-callout] > div[contenteditable] {
-    padding-left: 0 !important;
-    padding-right: 0 !important;
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-    text-indent: 0 !important;  /* 清除文本缩进 */
-}
-
-/* 🔥 精确清零：清除 NodeParagraph 内部所有可能的子元素的左右间距 */
-.protyle-wysiwyg .bq[custom-callout] > div[data-type="NodeParagraph"] *:not([data-callout-title="true"]),
-.protyle-wysiwyg .bq[custom-callout] > div[contenteditable] *:not([data-callout-title="true"]) {
-    padding-left: 0 !important;
-    padding-right: 0 !important;
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-    text-indent: 0 !important;  /* 清除文本缩进 */
-}
-
-/* 清除 span, p, div 等内联和块级元素的左右间距 */
-.protyle-wysiwyg .bq[custom-callout] > div > span,
-.protyle-wysiwyg .bq[custom-callout] > div > p,
-.protyle-wysiwyg .bq[custom-callout] > div > div:not([data-type]) {
-    padding-left: 0 !important;
-    padding-right: 0 !important;
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-    text-indent: 0 !important;  /* 清除文本缩进 */
-}
-
 /* 标题行样式 */
 .protyle-wysiwyg .bq[custom-callout] [data-callout-title="true"] {
     font-weight: var(--callout-title-font-weight) !important;
@@ -360,43 +329,9 @@ export function generateCalloutStyles(customTypes?: CalloutTypeConfig[], themeId
     margin: 2px 0 !important;
 }
 
-/* 特别针对标题行中的列表 - 使用思源原生系统 */
-.protyle-wysiwyg .bq[custom-callout] [data-callout-title="true"] ul,
-.protyle-wysiwyg .bq[custom-callout] [data-callout-title="true"] ol {
-    margin: 4px 0 !important;
-    padding-left: 24px !important;
-}
-
-.protyle-wysiwyg .bq[custom-callout] [data-callout-title="true"] li {
-    margin: 1px 0 !important;
-    padding-left: 0px !important;
-}
-
-.protyle-wysiwyg .bq[custom-callout] [data-callout-title="true"] div[data-type="NodeListItem"] {
-    margin: 1px 0 !important;
-    padding: 0 !important;
-}
-
-.protyle-wysiwyg .bq[custom-callout] [data-callout-title="true"] div[data-type="NodeListItem"] > div[data-type="NodeParagraph"] {
-    margin-left: 24px !important;
-    padding-left: 0px !important;
-}
-
 /* 隐藏原始命令文本 - 只针对文本节点，不影响用户添加的HTML元素 */
 .protyle-wysiwyg .bq[custom-callout] [data-callout-title="true"] {
     color: transparent !important;
-}
-
-/* 确保用户添加的内容（如列表）在标题行能够正常显示 */
-.protyle-wysiwyg .bq[custom-callout] [data-callout-title="true"] ul,
-.protyle-wysiwyg .bq[custom-callout] [data-callout-title="true"] ol,
-.protyle-wysiwyg .bq[custom-callout] [data-callout-title="true"] li,
-.protyle-wysiwyg .bq[custom-callout] [data-callout-title="true"] p,
-.protyle-wysiwyg .bq[custom-callout] [data-callout-title="true"] span,
-.protyle-wysiwyg .bq[custom-callout] [data-callout-title="true"] div {
-    display: initial !important;
-    visibility: visible !important;
-    color: var(--b3-theme-on-background) !important;
 }
 
 /* 显示友好的标题名称 */
