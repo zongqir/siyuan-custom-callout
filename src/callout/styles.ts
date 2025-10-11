@@ -59,12 +59,6 @@ export function generateCalloutStyles(customTypes?: CalloutTypeConfig[], themeId
     display: none !important;
 }
 
-/* 但是确保按钮始终显示 */
-.protyle-wysiwyg .bq[custom-callout][data-collapsed="true"] .callout-delete-button,
-.protyle-wysiwyg .bq[custom-callout][data-collapsed="true"] .callout-collapse-button,
-.protyle-wysiwyg .bq[custom-callout][data-collapsed="true"] .callout-insert-button {
-    display: flex !important;
-}
 
 /* 折叠状态下的视觉效果 */
 .protyle-wysiwyg .bq[custom-callout][data-collapsed="true"] {
@@ -123,77 +117,6 @@ export function generateCalloutStyles(customTypes?: CalloutTypeConfig[], themeId
 .protyle-gutters button.callout-gutter-highlight + button.ariaLabel[data-type="NodeParagraph"]:hover svg use[xlink:href="#iconParagraph"] {
     opacity: 0.05 !important;
     transition-delay: 1.5s !important;
-}
-
-/* 删除按钮样式 */
-.protyle-wysiwyg .bq[custom-callout] .callout-delete-button {
-    opacity: 0 !important;
-    pointer-events: none !important;
-    transition: opacity 0.2s ease !important;
-}
-
-.protyle-wysiwyg .bq[custom-callout]:hover .callout-delete-button {
-    opacity: 1 !important;
-    pointer-events: auto !important;
-}
-
-/* 折叠状态下删除按钮也要可见 */
-.protyle-wysiwyg .bq[custom-callout][data-collapsed="true"] .callout-delete-button {
-    opacity: 0.6 !important;
-    pointer-events: auto !important;
-}
-
-.protyle-wysiwyg .bq[custom-callout][data-collapsed="true"]:hover .callout-delete-button {
-    opacity: 1 !important;
-}
-
-/* 折叠按钮样式 */
-.protyle-wysiwyg .bq[custom-callout] .callout-collapse-button {
-    opacity: 0 !important;
-    pointer-events: none !important;
-    transition: opacity 0.2s ease !important;
-}
-
-.protyle-wysiwyg .bq[custom-callout]:hover .callout-collapse-button {
-    opacity: 1 !important;
-    pointer-events: auto !important;
-}
-
-/* 折叠状态下的折叠按钮始终可见 - 使用更高优先级 */
-.protyle-wysiwyg .bq[custom-callout][data-collapsed="true"] .callout-collapse-button {
-    opacity: 0.8 !important;
-    pointer-events: auto !important;
-    display: flex !important;
-    visibility: visible !important;
-}
-
-.protyle-wysiwyg .bq[custom-callout][data-collapsed="true"]:hover .callout-collapse-button {
-    opacity: 1 !important;
-    pointer-events: auto !important;
-    display: flex !important;
-    visibility: visible !important;
-}
-
-/* 插入按钮样式 */
-.protyle-wysiwyg .bq[custom-callout] .callout-insert-button {
-    opacity: 0 !important;
-    pointer-events: none !important;
-    transition: opacity 0.2s ease !important;
-}
-
-.protyle-wysiwyg .bq[custom-callout]:hover .callout-insert-button {
-    opacity: 1 !important;
-    pointer-events: auto !important;
-}
-
-/* 折叠状态下插入按钮也要可见 */
-.protyle-wysiwyg .bq[custom-callout][data-collapsed="true"] .callout-insert-button {
-    opacity: 0.6 !important;
-    pointer-events: auto !important;
-}
-
-.protyle-wysiwyg .bq[custom-callout][data-collapsed="true"]:hover .callout-insert-button {
-    opacity: 1 !important;
 }
 
 /* 覆盖思源原生引述块的边框样式 */
