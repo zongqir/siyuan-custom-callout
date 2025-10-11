@@ -438,7 +438,7 @@ function generateDragResizeCSS(): string {
     width: 16px !important;
     height: 40px !important;
     cursor: ew-resize !important;
-    z-index: 10 !important;
+    z-index: 2 !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
