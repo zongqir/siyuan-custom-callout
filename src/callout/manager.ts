@@ -142,15 +142,20 @@ export class CalloutManager {
                     uniqueBlockquotes.forEach(bq => {
                         const nodeId = bq.getAttribute('data-node-id');
 
-                        // 标记为已跟踪
+                        // 🔧 改进的新建检测逻辑
+                        // 只有当blockquote是真正新建的（之前未被跟踪），且为空时，才显示菜单
+                        const isFirstTimeSeen = nodeId && !this.processor.isTracked(nodeId);
+                        const isEmpty = this.processor.isBlockQuoteEmpty(bq);
+                        const notInInitialLoad = !this.processor.isInInitialLoad();
+                        
+                        // 标记为已跟踪（必须在检查isFirstTimeSeen之后）
                         if (nodeId) {
                             this.processor.trackBlockQuote(nodeId);
                         }
 
-                        // 如果不是初始加载且是空的blockquote，显示菜单
-                        if (!this.processor.isInInitialLoad() &&
-                            this.processor.isBlockQuoteEmpty(bq) &&
-                            nodeId && !this.processor.isRecentlyCreated(nodeId)) {
+                        // 🎯 只在真正新建的空blockquote时显示菜单
+                        // 如果已经被跟踪过，说明是DOM重建/撤销/复制等操作，不显示菜单
+                        if (notInInitialLoad && isFirstTimeSeen && isEmpty) {
                             const rect = bq.getBoundingClientRect();
                             if (rect.width > 0 && rect.height > 0) {
                                 this.menu.showMenu(rect.left, rect.top, bq);
@@ -245,34 +250,31 @@ export class CalloutManager {
         
         document.addEventListener('click', this.clickEventHandler, true);
 
-        // 焦点事件监听
-        this.focusinEventHandler = (e) => {
-            if (this.processor.isInInitialLoad()) return;
+        // 🔧 焦点事件监听 - 已禁用，仅通过新建和点击图标触发菜单
+        // this.focusinEventHandler = (e) => {
+        //     if (this.processor.isInInitialLoad()) return;
 
-            const target = e.target as HTMLElement;
-            if (target.contentEditable === 'true') {
-                const blockquote = target.closest('[data-type="NodeBlockquote"], .bq') as HTMLElement;
+        //     const target = e.target as HTMLElement;
+        //     if (target.contentEditable === 'true') {
+        //         const blockquote = target.closest('[data-type="NodeBlockquote"], .bq') as HTMLElement;
 
-                if (blockquote && this.processor.isBlockQuoteEmpty(blockquote)) {
-                    const nodeId = blockquote.getAttribute('data-node-id');
-                    if (nodeId && !this.processor.isRecentlyCreated(nodeId)) {
-                        // 🔧 添加延迟，避免系统操作（如切换只读模式）触发菜单
-                        // 只有当焦点真正停留在空blockquote上时才显示菜单
-                        clearTimeout(this.focusDebounceTimer);
-                        this.focusDebounceTimer = window.setTimeout(() => {
-                            // 再次检查菜单是否已显示，以及元素是否仍然有焦点
-                            if (!this.menu.isVisible() && document.activeElement && 
-                                blockquote.contains(document.activeElement)) {
-                                const rect = blockquote.getBoundingClientRect();
-                                this.menu.showMenu(rect.left, rect.top, blockquote);
-                            }
-                        }, 200); // 200ms延迟，足以避免系统快速焦点切换
-                    }
-                }
-            }
-        };
+        //         if (blockquote && this.processor.isBlockQuoteEmpty(blockquote)) {
+        //             const nodeId = blockquote.getAttribute('data-node-id');
+        //             if (nodeId && !this.processor.isRecentlyCreated(nodeId)) {
+        //                 clearTimeout(this.focusDebounceTimer);
+        //                 this.focusDebounceTimer = window.setTimeout(() => {
+        //                     if (!this.menu.isVisible() && document.activeElement && 
+        //                         blockquote.contains(document.activeElement)) {
+        //                         const rect = blockquote.getBoundingClientRect();
+        //                         this.menu.showMenu(rect.left, rect.top, blockquote);
+        //                     }
+        //                 }, 200);
+        //             }
+        //         }
+        //     }
+        // };
         
-        document.addEventListener('focusin', this.focusinEventHandler);
+        // document.addEventListener('focusin', this.focusinEventHandler);
     }
 
     /**
@@ -391,10 +393,11 @@ export class CalloutManager {
             this.clickEventHandler = null;
         }
         
-        if (this.focusinEventHandler) {
-            document.removeEventListener('focusin', this.focusinEventHandler);
-            this.focusinEventHandler = null;
-        }
+        // 🔧 focusin监听器已禁用
+        // if (this.focusinEventHandler) {
+        //     document.removeEventListener('focusin', this.focusinEventHandler);
+        //     this.focusinEventHandler = null;
+        // }
         
         if (this.keydownHandler) {
             document.removeEventListener('keydown', this.keydownHandler, true);

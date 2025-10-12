@@ -478,6 +478,13 @@ export class CalloutProcessor {
     }
 
     /**
+     * 检查引述块是否已被跟踪
+     */
+    isTracked(nodeId: string): boolean {
+        return this.trackedBlockQuotes.has(nodeId);
+    }
+
+    /**
      * 标记引述块为最近创建
      */
     markAsRecentlyCreated(nodeId: string, timeout: number = 3000) {
