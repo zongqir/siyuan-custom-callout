@@ -487,6 +487,12 @@ body.dragging-callout {
     user-select: none !important;
 }
 
+/* 只读模式下隐藏拖拽手柄 */
+.protyle-wysiwyg[contenteditable="false"] .callout-resize-handle,
+.protyle--readonly .callout-resize-handle {
+    display: none !important;
+}
+
 /* 响应式：在小屏幕上隐藏拖拽手柄 */
 @media (max-width: 768px) {
     .callout-resize-handle {

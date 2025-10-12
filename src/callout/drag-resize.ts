@@ -187,6 +187,11 @@ export class CalloutDragResizer {
      * 为callout添加拖拽手柄 - 强化版
      */
     private addResizeHandle(blockquote: HTMLElement) {
+        // 🚫 检查是否为只读模式
+        if (this.isReadOnlyMode(blockquote)) {
+            return; // 只读模式下不添加拖拽手柄
+        }
+
         // 🔧 强化blockquote定位设置
         blockquote.style.setProperty('position', 'relative', 'important');
         blockquote.setAttribute('data-drag-container', 'true');
@@ -1210,6 +1215,38 @@ export class CalloutDragResizer {
                 }
             }
         });
+    }
+
+    /**
+     * 检查是否为只读模式
+     */
+    private isReadOnlyMode(blockquote: HTMLElement): boolean {
+        // 方法1：检查最近的 protyle-wysiwyg 容器的 contenteditable 属性
+        const wysiwyg = blockquote.closest('.protyle-wysiwyg') as HTMLElement;
+        if (wysiwyg) {
+            const contenteditable = wysiwyg.getAttribute('contenteditable');
+            if (contenteditable === 'false') {
+                return true;
+            }
+        }
+
+        // 方法2：检查 blockquote 自身或父元素的 contenteditable
+        let element: HTMLElement | null = blockquote;
+        while (element && element !== document.body) {
+            const attr = element.getAttribute('contenteditable');
+            if (attr === 'false') {
+                return true;
+            }
+            element = element.parentElement;
+        }
+
+        // 方法3：检查是否在只读的 protyle 容器中
+        const protyle = blockquote.closest('.protyle');
+        if (protyle && protyle.classList.contains('protyle--readonly')) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
