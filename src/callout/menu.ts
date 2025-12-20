@@ -657,13 +657,111 @@ export class CalloutMenu {
     }
 
     /**
-     * 处理选择Callout - 简化版
+     * 处理选择Callout - 直接插入文本
      */
     private handleSelectCallout(command: string, isEdit: boolean) {
-        if (this.currentTargetBlockQuote) {
-            this.insertCommand(command, this.currentTargetBlockQuote, isEdit);
+        // 查找对应的类型配置
+        const typeConfig = this.calloutTypes.find(t => t.command === command);
+        const displayName = typeConfig?.displayName || command;
+        
+        // 🔥 格式固定：[!INFO] + 用户配置的中文名称
+        const textToInsert = `[!INFO] ${displayName}`;
+        
+        console.log('[Callout Menu] 📝 将插入文本:', textToInsert);
+        
+        // 使用 document.execCommand 插入文本
+        document.execCommand('insertText', false, textToInsert);
+        
+        console.log('[Callout Menu] ✅ 文本已插入');
+        
+        // 隐藏菜单
+        this.hideMenu(true);
+    }
+    
+    /**
+     * 🆕 插入 Markdown 文本并自动触发转换（模式 B）
+     */
+    private insertMarkdownAndConvert(markdown: string, range: Range) {
+        try {
+            // 1. 删除当前选区内容
+            range.deleteContents();
+            
+            // 2. 插入 Markdown 文本
+            const textNode = document.createTextNode(markdown);
+            range.insertNode(textNode);
+            
+            // 3. 设置光标位置（在文本末尾）
+            range.setStart(textNode, markdown.length);
+            range.collapse(true);
+            
+            const selection = window.getSelection();
+            selection?.removeAllRanges();
+            selection?.addRange(range);
+            
+            console.log('[Callout Menu] ✅ Markdown 已插入，准备触发转换');
+            
+            // 4. 自动触发回车（模式 B）
+            setTimeout(() => {
+                this.triggerEnterKey();
+            }, 100); // 稍微延迟确保 DOM 更新
+            
+        } catch (error) {
+            console.error('[Callout Menu] ❌ 插入 Markdown 失败:', error);
         }
-        setTimeout(() => this.hideMenu(true), 300);
+    }
+    
+    /**
+     * 🆕 触发回车键事件（模拟用户按回车）
+     */
+    private triggerEnterKey() {
+        const activeElement = document.activeElement as HTMLElement;
+        if (!activeElement) {
+            console.log('[Callout Menu] ⚠️ 没有激活元素，无法触发回车');
+            return;
+        }
+        
+        console.log('[Callout Menu] 🔑 触发 Enter 键事件于:', activeElement.tagName);
+        
+        // 创建并触发 keydown 事件
+        const keydownEvent = new KeyboardEvent('keydown', {
+            key: 'Enter',
+            code: 'Enter',
+            keyCode: 13,
+            which: 13,
+            bubbles: true,
+            cancelable: true,
+            composed: true
+        });
+        
+        activeElement.dispatchEvent(keydownEvent);
+        
+        // 触发 keypress 事件（某些框架可能需要）
+        const keypressEvent = new KeyboardEvent('keypress', {
+            key: 'Enter',
+            code: 'Enter',
+            keyCode: 13,
+            which: 13,
+            bubbles: true,
+            cancelable: true,
+            composed: true
+        });
+        
+        activeElement.dispatchEvent(keypressEvent);
+        
+        // 触发 keyup 事件
+        const keyupEvent = new KeyboardEvent('keyup', {
+            key: 'Enter',
+            code: 'Enter',
+            keyCode: 13,
+            which: 13,
+            bubbles: true,
+            cancelable: true,
+            composed: true
+        });
+        
+        activeElement.dispatchEvent(keyupEvent);
+        
+        console.log('[Callout Menu] ✅ Enter 键事件已触发');
     }
 
     /**
@@ -889,15 +987,23 @@ export class CalloutMenu {
 
         requestAnimationFrame(() => {
             const menuRect = menu.getBoundingClientRect();
-            const blockRect = blockQuoteElement.getBoundingClientRect();
+            
+            let menuX = 100;
+            let menuY = 100;
+            
+            // 如果有 blockQuoteElement，使用它的位置
+            if (blockQuoteElement) {
+                const blockRect = blockQuoteElement.getBoundingClientRect();
+                menuX = blockRect.left;
+                menuY = blockRect.top - menuRect.height - 10;
 
-            let menuX = blockRect.left;
-            let menuY = blockRect.top - menuRect.height - 10;
-
-            // 边界检查
-            if (menuY < 10) {
-                menuY = blockRect.bottom + 10;
+                // 边界检查
+                if (menuY < 10) {
+                    menuY = blockRect.bottom + 10;
+                }
             }
+            
+            // 通用边界检查
             if (menuX + menuRect.width > window.innerWidth) {
                 menuX = window.innerWidth - menuRect.width - 10;
             }

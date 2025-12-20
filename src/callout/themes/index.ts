@@ -1,9 +1,9 @@
 /**
- * Callout 主题系统
+ * Callout 主题系统（简化版）
  * 
  * 使用说明：
- * 1. 选择预设主题：直接从 THEME_STYLES 数组中选择
- * 2. 自定义主题：复制任一主题文件，修改参数后导入
+ * 1. 当前只保留 Craft 主题作为默认主题
+ * 2. 自定义主题：复制 craft.ts，修改参数后导入
  * 3. 分享主题：使用 exportTheme() 导出为JSON，或 exportThemeAsCode() 导出为代码
  * 4. 导入主题：使用 importTheme() 从JSON导入
  */
@@ -11,24 +11,8 @@
 // 类型定义
 export type { ThemeStyle, ThemeExport } from './types';
 
-// 导入所有预设主题
-import { modernTheme } from './modern';
-import { cardTheme } from './card';
-import { flatTheme } from './flat';
-import { classicTheme } from './classic';
-import { minimalTheme } from './minimal';
-import { glassmorphismTheme } from './glassmorphism';
-import { neumorphismTheme } from './neumorphism';
-import { neonTheme } from './neon';
-// 新增风格主题
+// 导入 Craft 主题（唯一保留的预设主题）
 import { craftTheme } from './craft';
-import { macosTheme } from './macos';
-import { solidTheme } from './solid';
-import { notionTheme } from './notion';
-import { materialTheme } from './material';
-import { githubTheme } from './github';
-import { paperTheme } from './paper';
-import { auroraTheme } from './aurora';
 
 // 工具函数
 export {
@@ -42,45 +26,20 @@ export {
 import type { ThemeStyle } from './types';
 
 /**
- * 所有预设主题
+ * 所有预设主题（简化版）
  * 
- * 分类说明：
- * - 基础风格：现代简约、卡片、扁平、经典、极简
- * - 纯色风格：Craft、macOS、纯色、Notion、GitHub
- * - 效果风格：毛玻璃、新拟态、霓虹、纸质
- * - 设计系统：Material Design
+ * 当前只保留 Craft 主题作为唯一预设主题
+ * 如需更多主题，请自定义或导入
  */
 export const THEME_STYLES: ThemeStyle[] = [
-    // 基础通用风格
-    modernTheme,
-    cardTheme,
-    flatTheme,
-    classicTheme,
-    minimalTheme,
-    
-    // 纯色风格（无渐变）
-    craftTheme,
-    macosTheme,
-    solidTheme,
-    notionTheme,
-    githubTheme,
-    
-    // 设计系统
-    materialTheme,
-    
-    // 特效风格
-    glassmorphismTheme,
-    neumorphismTheme,
-    neonTheme,
-    paperTheme,
-    auroraTheme
+    craftTheme
 ];
 
 /**
  * 获取默认主题
  */
 export function getDefaultTheme(): ThemeStyle {
-    return modernTheme;
+    return craftTheme;
 }
 
 /**

@@ -34,6 +34,9 @@ export default class CustomCalloutPlugin extends Plugin {
         // 初始化Callout管理器
         this.calloutManager = new CalloutManager(this);
         await this.calloutManager.initialize();
+        
+        // 🔥 新版：使用输入监听，不再使用快捷键命令
+        console.log('🔥 [Plugin] Callout 管理器已初始化，输入监听器已设置！');
 
         // 加载大纲主题配置
         await this.loadOutlineTheme();

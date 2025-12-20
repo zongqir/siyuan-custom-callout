@@ -52,9 +52,11 @@ export class CalloutManager {
     }
 
     /**
-     * 初始化Callout功能
+     * 初始化Callout功能（新版：基于输入监听）
      */
     async initialize() {
+        console.log('🔥 [Callout Manager] 开始初始化...');
+        
         // 加载配置
         if (this.plugin) {
             this.currentConfig = await ConfigManager.load(this.plugin);
@@ -64,23 +66,79 @@ export class CalloutManager {
             this.menu.updateGridColumns(this.currentConfig.gridColumns || 3);
         }
 
-        // 注入样式
+        // 注入样式（仅用于面板 UI 和自定义类型补充样式）
         this.injectStyles();
 
-        // 初始化拖拽调整功能
-        this.initializeDragResize();
-
-        // 初始化块标高亮功能
-        this.initializeGutterHighlight();
-
-        // 处理现有的blockquote
-        this.processor.processAllBlockquotes();
-
-        // 设置监听器
-        this.setupObserver();
-        this.setupEventListeners();
+        // 🆕 监听输入事件，检测 `>` 输入
+        this.setupInputListener();
+        
+        console.log('🔥 [Callout Manager] 初始化完成！');
     }
 
+    /**
+     * 🆕 设置输入监听器
+     * 监听用户输入 `>` 后弹出 Callout 选择面板
+     */
+    setupInputListener() {
+        console.log('🔥🔥🔥 [Callout Manager] 设置输入监听器...');
+        
+        // 监听键盘输入事件
+        document.addEventListener('keyup', (event: KeyboardEvent) => {
+            // 只关注 `>` 键（Shift + .）
+            if (event.key === '>') {
+                console.log('🔥🔥🔥 [Callout Manager] 检测到 `>` 输入！');
+                
+                // 检查是否在编辑器中
+                const activeElement = document.activeElement as HTMLElement;
+                const protyle = activeElement?.closest('.protyle-wysiwyg');
+                if (!protyle) {
+                    console.log('[Callout Manager] ⚠️ 不在编辑器中，忽略');
+                    return;
+                }
+                
+                console.log('🎉🎉🎉 [Callout Manager] 在编辑器中，直接显示 Callout 面板！');
+                
+                // 直接显示面板，不做任何判断！
+                setTimeout(() => {
+                    this.showCalloutMenu();
+                }, 100);
+            }
+        }, true); // 使用捕获阶段
+        
+        console.log('✅ [Callout Manager] 输入监听器已设置！');
+    }
+
+    /**
+     * 🎯 显示 Callout 选择菜单
+     */
+    showCalloutMenu() {
+        console.log('[Callout Manager] 🎯 尝试显示 Callout 菜单...');
+        
+        const selection = window.getSelection();
+        if (!selection || selection.rangeCount === 0) {
+            console.log('[Callout Manager] ⚠️ 没有选区，无法显示菜单');
+            return;
+        }
+
+        const range = selection.getRangeAt(0);
+        if (!range) {
+            console.log('[Callout Manager] ⚠️ range 为 null，无法显示菜单');
+            return;
+        }
+        
+        // 获取光标位置
+        const rect = range.getBoundingClientRect();
+        
+        // 如果 rect 无效，使用默认位置
+        const x = rect && rect.left > 0 ? rect.left : 100;
+        const y = rect && rect.top > 0 ? rect.top : 100;
+
+        // 显示菜单（使用现有的 menu.showMenu 方法）
+        // 注意：这里传入 null 作为 blockquote，因为我们不再修改现有块
+        this.menu.showMenu(x, y, null, false, false);
+
+        console.log('[Callout Manager] ✅ 菜单已显示于:', { x, y });
+    }
     /**
      * 注入CSS样式
      */
