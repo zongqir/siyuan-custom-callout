@@ -33,6 +33,12 @@ export function generateCalloutStyles(customTypes?: CalloutTypeConfig[], themeId
 
 /* ==================== Callout 通用样式 ==================== */
 
+/* 移除原生 callout 的左边竖线 */
+.callout::before {
+    background: transparent !important;
+    width: 0 !important;
+}
+
 /* 标题区域只读样式 */
 .protyle-wysiwyg .bq[custom-callout] [data-callout-title="true"] {
     cursor: default !important;
@@ -282,7 +288,7 @@ export function generateCalloutStyles(customTypes?: CalloutTypeConfig[], themeId
 
         styles.push(`
 /* ${config.displayName} - ${config.color} */
-.protyle-wysiwyg .bq[custom-callout="${config.type}"] {
+.callout[data-subtype="${config.type}"] {
     background: ${background} !important;
     border: var(--callout-border-width) solid #e5e7eb !important;
     border-left: var(--callout-left-border-width) solid ${config.borderColor} !important;
@@ -295,7 +301,7 @@ export function generateCalloutStyles(customTypes?: CalloutTypeConfig[], themeId
 }
 
 /* 确保没有内边框，并且不裁剪列表项目符号 */
-.protyle-wysiwyg .bq[custom-callout="${config.type}"] > div {
+.callout[data-subtype="${config.type}"] > div {
     border: none !important;
     overflow: visible !important;
     padding-left: 0 !important;
@@ -304,30 +310,17 @@ export function generateCalloutStyles(customTypes?: CalloutTypeConfig[], themeId
     margin-right: 0 !important;
 }
 
-.protyle-wysiwyg .bq[custom-callout="${config.type}"] > div::before {
+.callout[data-subtype="${config.type}"] > div::before {
     display: none !important;
 }
 
-.protyle-wysiwyg .bq[custom-callout="${config.type}"]:hover {
+.callout[data-subtype="${config.type}"]:hover {
     transform: var(--callout-hover-transform) !important;
     box-shadow: 0 4px 12px ${hexToRgba(config.color, 0.12)} !important;
 }
 
-.protyle-wysiwyg .bq[custom-callout="${config.type}"] [data-callout-title="true"]::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    width: var(--callout-icon-size);
-    height: var(--callout-icon-size);
-    background: url('data:image/svg+xml,${encodedIcon}') center/contain no-repeat;
-}
-
-.protyle-wysiwyg .bq[custom-callout="${config.type}"] [data-callout-title="true"]::after {
+.callout[data-subtype="${config.type}"] .callout-info {
     color: ${config.color} !important;
-    font-size: var(--callout-title-font-size) !important;
-    font-weight: var(--callout-title-font-weight) !important;
 }
 `);
     });

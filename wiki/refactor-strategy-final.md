@@ -17,7 +17,7 @@
 // 选择类型后的处理流程
 applyCallout(type: CalloutTypeConfig, range: Range) {
     // 1. 插入 Markdown 文本
-    const markdown = `> [!${type.command.toUpperCase()}] ${type.displayName}\n> `;
+    const markdown = `> [!${type.type}] ${type.displayName}\n> `;
     this.insertMarkdown(markdown, range);
     
     // 2. 自动触发回车，让思源 Lute 转换
@@ -479,7 +479,7 @@ private applyCallout(type: CalloutTypeConfig) {
     // titleDiv.textContent = `[!${type.command}] ${type.displayName}`;
     
     // ✅ 新逻辑：插入 Markdown + 自动转换
-    const markdown = `> [!${type.command.toUpperCase()}] ${type.displayName}\n> `;
+    const markdown = `> [!${type.type}] ${type.displayName}\n> `;
     this.insertMarkdownAndConvert(markdown);
     this.hide();
 }

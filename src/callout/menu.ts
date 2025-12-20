@@ -664,8 +664,8 @@ export class CalloutMenu {
         const typeConfig = this.calloutTypes.find(t => t.command === command);
         const displayName = typeConfig?.displayName || command;
         
-        // 🔥 格式固定：[!INFO] + 用户配置的中文名称
-        const textToInsert = `[!INFO] ${displayName}`;
+        // 🔥 使用配置的 type 作为 callout 类型
+        const textToInsert = `[!${typeConfig?.type || 'info'}] ${displayName}`;
         
         console.log('[Callout Menu] 📝 将插入文本:', textToInsert);
         
