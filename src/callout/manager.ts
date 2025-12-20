@@ -114,30 +114,96 @@ export class CalloutManager {
     showCalloutMenu() {
         console.log('[Callout Manager] 🎯 尝试显示 Callout 菜单...');
         
-        const selection = window.getSelection();
-        if (!selection || selection.rangeCount === 0) {
-            console.log('[Callout Manager] ⚠️ 没有选区，无法显示菜单');
-            return;
-        }
-
-        const range = selection.getRangeAt(0);
-        if (!range) {
-            console.log('[Callout Manager] ⚠️ range 为 null，无法显示菜单');
-            return;
-        }
-        
         // 获取光标位置
-        const rect = range.getBoundingClientRect();
+        const cursorPos = this.getCursorPosition();
+        console.log('[Callout Manager] 光标位置:', cursorPos);
         
-        // 如果 rect 无效，使用默认位置
-        const x = rect && rect.left > 0 ? rect.left : 100;
-        const y = rect && rect.top > 0 ? rect.top : 100;
-
-        // 显示菜单（使用现有的 menu.showMenu 方法）
-        // 注意：这里传入 null 作为 blockquote，因为我们不再修改现有块
-        this.menu.showMenu(x, y, null, false, false);
-
-        console.log('[Callout Manager] ✅ 菜单已显示于:', { x, y });
+        // 显示菜单
+        this.menu.showMenu(cursorPos.x, cursorPos.y, null, false, false);
+    }
+    
+    /**
+     * 获取光标在视口中的位置
+     * 返回的坐标是相对于视口的，可以直接用于 position: fixed 的元素
+     */
+    private getCursorPosition(): { x: number; y: number } {
+        try {
+            const selection = window.getSelection();
+            if (!selection || selection.rangeCount === 0) {
+                console.log('[Callout Manager] 没有选区');
+                return this.getFallbackPosition();
+            }
+            
+            const range = selection.getRangeAt(0);
+            if (!range) {
+                console.log('[Callout Manager] range 无效');
+                return this.getFallbackPosition();
+            }
+            
+            const rect = range.getBoundingClientRect();
+            console.log('[Callout Manager] range.getBoundingClientRect():', {
+                left: rect.left,
+                top: rect.top,
+                right: rect.right,
+                bottom: rect.bottom,
+                width: rect.width,
+                height: rect.height
+            });
+            
+            // 检查 rect 是否有效（在视口内）
+            // rect.left/top 为 0 可能是有效的（光标在左上角）
+            // 但如果所有值都是 0，通常表示无效
+            const isValidRect = !(rect.left === 0 && rect.top === 0 && rect.right === 0 && rect.bottom === 0);
+            
+            if (isValidRect) {
+                // 返回光标位置（使用 left 和 bottom，这样菜单会在光标下方）
+                return { x: rect.left, y: rect.bottom };
+            }
+            
+            console.log('[Callout Manager] rect 无效，尝试使用 focusNode');
+            
+            // 备选：使用 focusNode 的位置
+            if (selection.focusNode) {
+                const focusElement = selection.focusNode.nodeType === Node.TEXT_NODE
+                    ? selection.focusNode.parentElement
+                    : selection.focusNode as HTMLElement;
+                    
+                if (focusElement && focusElement.getBoundingClientRect) {
+                    const focusRect = focusElement.getBoundingClientRect();
+                    if (focusRect.width > 0 || focusRect.height > 0) {
+                        console.log('[Callout Manager] 使用 focusNode 位置:', focusRect);
+                        return { x: focusRect.left, y: focusRect.bottom };
+                    }
+                }
+            }
+            
+            return this.getFallbackPosition();
+        } catch (e) {
+            console.error('[Callout Manager] 获取光标位置失败:', e);
+            return this.getFallbackPosition();
+        }
+    }
+    
+    /**
+     * 获取备选位置（当无法获取光标位置时）
+     */
+    private getFallbackPosition(): { x: number; y: number } {
+        // 尝试使用当前活动元素的位置
+        const activeElement = document.activeElement as HTMLElement;
+        if (activeElement && activeElement.getBoundingClientRect) {
+            const rect = activeElement.getBoundingClientRect();
+            if (rect.width > 0 || rect.height > 0) {
+                console.log('[Callout Manager] 使用 activeElement 位置');
+                return { x: rect.left + 20, y: rect.top + 30 };
+            }
+        }
+        
+        // 最后备选：屏幕中心偏上
+        console.log('[Callout Manager] 使用屏幕中心位置');
+        return {
+            x: Math.max(100, window.innerWidth / 2 - 200),
+            y: Math.max(100, window.innerHeight / 3)
+        };
     }
     /**
      * 注入CSS样式
@@ -285,6 +351,7 @@ export class CalloutManager {
         // 点击callout标题图标区域切换类型
         this.clickEventHandler = (e) => {
             const target = e.target as HTMLElement;
+            const mouseEvent = e as MouseEvent;
 
             if (target.contentEditable === 'true' &&
                 target.getAttribute('data-callout-title') === 'true') {
@@ -292,15 +359,15 @@ export class CalloutManager {
 
                 if (blockquote && blockquote.hasAttribute('custom-callout')) {
                     const rect = target.getBoundingClientRect();
-                    const clickX = (e as MouseEvent).clientX - rect.left;
+                    const clickX = mouseEvent.clientX - rect.left;
 
                     // 点击图标区域（0-40px），显示/隐藏切换主题菜单（toggle）
                     if (clickX >= 0 && clickX <= 40) {
                         e.preventDefault();
                         e.stopPropagation();
 
-                        const bqRect = blockquote.getBoundingClientRect();
-                        this.menu.showMenu(bqRect.left, bqRect.top, blockquote, true, true); // 最后一个参数为 allowToggle
+                        // 🔧 使用鼠标点击的实际位置，而不是 blockquote 的位置
+                        this.menu.showMenu(mouseEvent.clientX, mouseEvent.clientY, blockquote, true, true);
                     }
                 }
             }

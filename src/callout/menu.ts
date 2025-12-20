@@ -966,8 +966,13 @@ export class CalloutMenu {
 
     /**
      * 显示菜单
+     * @param cursorX 光标/触发点的 X 坐标
+     * @param cursorY 光标/触发点的 Y 坐标
+     * @param blockQuoteElement 关联的 blockquote 元素（可为 null）
+     * @param isEdit 是否为编辑模式
+     * @param allowToggle 是否允许切换显示/隐藏
      */
-    showMenu(_x: number, _y: number, blockQuoteElement: HTMLElement, isEdit: boolean = false, allowToggle: boolean = false) {
+    showMenu(cursorX: number, cursorY: number, blockQuoteElement: HTMLElement | null, isEdit: boolean = false, allowToggle: boolean = false) {
         // 如果允许toggle且菜单已显示，则隐藏菜单
         if (allowToggle && this.isMenuVisible && this.currentTargetBlockQuote === blockQuoteElement) {
             this.hideMenu(true);
@@ -976,7 +981,7 @@ export class CalloutMenu {
         
         if (this.isMenuVisible) return;
 
-        const menu = this.createCommandMenu(blockQuoteElement, isEdit);
+        const menu = this.createCommandMenu(blockQuoteElement!, isEdit);
 
         // 计算位置
         menu.style.left = '0px';
@@ -987,37 +992,44 @@ export class CalloutMenu {
 
         requestAnimationFrame(() => {
             const menuRect = menu.getBoundingClientRect();
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
             
-            let menuX = 100;
-            let menuY = 100;
+            console.log('[Callout Menu] 定位计算:', {
+                cursorX,
+                cursorY,
+                menuWidth: menuRect.width,
+                menuHeight: menuRect.height,
+                viewportWidth,
+                viewportHeight
+            });
             
-            // 如果有 blockQuoteElement，使用它的位置
-            if (blockQuoteElement) {
-                const blockRect = blockQuoteElement.getBoundingClientRect();
-                menuX = blockRect.left;
-                menuY = blockRect.top - menuRect.height - 10;
-
-                // 边界检查
-                if (menuY < 10) {
-                    menuY = blockRect.bottom + 10;
-                }
+            // 简单的定位逻辑：菜单显示在光标位置，确保不超出视口
+            let menuX = cursorX;
+            let menuY = cursorY;
+            
+            // 确保菜单不超出右边界
+            if (menuX + menuRect.width > viewportWidth - 20) {
+                menuX = viewportWidth - menuRect.width - 20;
             }
             
-            // 通用边界检查
-            if (menuX + menuRect.width > window.innerWidth) {
-                menuX = window.innerWidth - menuRect.width - 10;
+            // 确保菜单不超出下边界
+            if (menuY + menuRect.height > viewportHeight - 20) {
+                // 在光标上方显示（菜单底部在光标位置）
+                menuY = cursorY - menuRect.height - 10;
             }
-            if (menuY + menuRect.height > window.innerHeight) {
-                menuY = window.innerHeight - menuRect.height - 10;
-            }
-            if (menuX < 10) menuX = 10;
-            if (menuY < 10) menuY = 10;
-
+            
+            // 确保菜单不超出左边界和上边界
+            if (menuX < 20) menuX = 20;
+            if (menuY < 20) menuY = 20;
+            
+            console.log('[Callout Menu] 最终位置:', { menuX, menuY });
+            
             menu.style.left = menuX + 'px';
             menu.style.top = menuY + 'px';
             menu.style.visibility = 'visible';
             menu.style.opacity = '0';
-            menu.style.transform = 'translateY(-10px)';
+            menu.style.transform = 'translateY(-5px)';
 
             this.updateMenuSelection();
 
@@ -1037,9 +1049,11 @@ export class CalloutMenu {
             document.addEventListener('mousemove', enableMouseHoverOnMove, { once: true });
 
             // 标记为最近创建
-            const nodeId = blockQuoteElement.getAttribute('data-node-id');
-            if (nodeId) {
-                this.processor.markAsRecentlyCreated(nodeId);
+            if (blockQuoteElement) {
+                const nodeId = blockQuoteElement.getAttribute('data-node-id');
+                if (nodeId) {
+                    this.processor.markAsRecentlyCreated(nodeId);
+                }
             }
         });
     }
