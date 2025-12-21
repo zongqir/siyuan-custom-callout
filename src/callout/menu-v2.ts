@@ -165,12 +165,26 @@ export class CalloutMenuV2 {
      * 隐藏菜单
      */
     hide() {
+        const bq = this.currentBlockquote;
         if (this.menu) {
             this.menu.remove();
             this.menu = null;
         }
         // 菜单隐藏时移除监听器，避免无关按键触发
         this.teardownGlobalListeners();
+
+        // 若存在当前编辑块，优先恢复到首段编辑区，避免光标丢失
+        try {
+            if (bq) {
+                const firstPara = bq.querySelector('div[data-type="NodeParagraph"]') as HTMLElement | null;
+                const firstEditable = firstPara?.querySelector('div[contenteditable]') as HTMLElement | null;
+                if (firstEditable) {
+                    firstEditable.focus();
+                    this.placeCaretAtEnd(firstEditable);
+                }
+            }
+        } catch {}
+
         this.currentBlockquote = null;
         this.isEdit = false;
         
@@ -618,7 +632,18 @@ export class CalloutMenuV2 {
         if (!this.currentBlockquote) return;
 
         try {
-            await this.processor.removeCallout(this.currentBlockquote);
+            const blockquote = this.currentBlockquote;
+            await this.processor.removeCallout(blockquote);
+
+            // 还原编辑焦点到首段，避免因菜单拦截 Enter 导致光标丢失
+            const firstPara = blockquote.querySelector('div[data-type="NodeParagraph"]') as HTMLElement | null;
+            const firstEditable = firstPara?.querySelector('div[contenteditable]') as HTMLElement | null;
+            if (firstEditable) {
+                firstEditable.focus();
+                this.placeCaretAtEnd(firstEditable);
+                this.emitInput(firstEditable);
+            }
+
             this.hide();
             logger.log('[MenuV2] 已取消 callout，恢复原生样式');
         } catch (error) {
