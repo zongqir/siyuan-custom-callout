@@ -21,6 +21,7 @@ export class CalloutProcessorV2 {
     private processedBlocks: Set<string> = new Set();
     private isInitialLoad: boolean = true;
     private processingNow: WeakSet<HTMLElement> = new WeakSet();
+    private aliasIndex: Map<string, CalloutTypeConfig> = new Map();
     
     // 新建 blockquote 自动显示菜单的回调
     public onNewBlockquoteCreated: ((blockquote: HTMLElement) => void) | null = null;
@@ -41,9 +42,10 @@ export class CalloutProcessorV2 {
         DEFAULT_CALLOUT_TYPES.forEach(config => {
             this.calloutTypes.set(config.type, config);
         });
+        this.rebuildAliasIndex();
     }
 
-    // 仅负责图标兜底：处理原生 .callout 结构，必要时创建并填充图标
+    // 负责图标兜底并按类型渲染：处理原生 .callout 结构，创建/更新类型图标
     private ensureNativeIcon(blockquote: HTMLElement) {
         try {
             const callout = blockquote.classList.contains('callout')
@@ -54,16 +56,78 @@ export class CalloutProcessorV2 {
             const info = callout.querySelector('.callout-info') as HTMLElement | null;
             if (!info) return;
 
+            // 解析原生 data-subtype，并通过别名索引解析到配置
+            let subtypeRaw = callout.getAttribute('data-subtype') || '';
+            const subtype = this.normalizeAlias(subtypeRaw);
+            const mapped = subtype === 'note' ? 'info' : subtype; // 原生 note 归并为 info
+            const cfg = this.getConfigBySubtype(mapped);
+
+            // 优先使用配置图标，否则按原生类型提供 fallback
+            const desiredIcon = (cfg && cfg.icon) ? cfg.icon : (this.getFallbackIconFor(mapped) || FIXED_CALLOUT_SVG);
+
             let icon = info.querySelector('.callout-icon') as HTMLElement | null;
             if (!icon) {
                 icon = document.createElement('span');
                 icon.className = 'callout-icon';
                 info.insertBefore(icon, info.firstChild);
             }
-            if (!icon.innerHTML || icon.innerHTML.trim() === '') {
-                icon.innerHTML = FIXED_CALLOUT_SVG;
+
+            // 仅当不同才更新，避免不必要的 DOM 变化
+            const current = (icon.innerHTML || '').trim();
+            if (current !== desiredIcon.trim()) {
+                icon.innerHTML = desiredIcon;
             }
         } catch {}
+    }
+
+    // 将别名标准化：去掉 [! ]、去空格、小写
+    private normalizeAlias(s: string): string {
+        return (s || '')
+            .replace(/^\[!|\]$/g, '')
+            .replace(/\s+/g, '')
+            .trim()
+            .toLowerCase();
+    }
+
+    // 重建别名索引（type、zhCommand 去括号、displayName）
+    private rebuildAliasIndex() {
+        const idx = new Map<string, CalloutTypeConfig>();
+        this.calloutTypes.forEach(cfg => {
+            idx.set(this.normalizeAlias(cfg.type), cfg);
+            const zh = (cfg.zhCommand || '').replace(/^\[!|\]$/g, '');
+            if (zh) idx.set(this.normalizeAlias(zh), cfg);
+            if (cfg.displayName) idx.set(this.normalizeAlias(cfg.displayName), cfg);
+        });
+        // 原生 note 归并 info
+        const infoCfg = this.calloutTypes.get('info');
+        if (infoCfg && !idx.has('note')) idx.set('note', infoCfg);
+        this.aliasIndex = idx;
+    }
+
+    // 根据 data-subtype 获取配置（支持别名）
+    private getConfigBySubtype(sub: string): CalloutTypeConfig | null {
+        const key = this.normalizeAlias(sub === 'note' ? 'info' : sub);
+        return this.aliasIndex.get(key) || null;
+    }
+
+    // 原生 fallback 图标（使用 currentColor 以匹配 CSS 配色）
+    private getFallbackIconFor(sub: string): string {
+        const key = this.normalizeAlias(sub);
+        switch (key) {
+            case 'info':
+            case 'note':
+                return FIXED_CALLOUT_SVG; // 信息图标
+            case 'tip':
+                return '<svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M9 18h6m-5 2h4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M8 10a4 4 0 018 0c0 1.657-.895 2.5-1.6 3.2-.42.414-.8.79-.953 1.3H10.55c-.154-.51-.534-.886-.954-1.3C8.895 12.5 8 11.657 8 10z" fill="currentColor"/></svg>';
+            case 'important':
+                return '<svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 7v7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="12" cy="17" r="1.2" fill="currentColor"/></svg>';
+            case 'warning':
+                return '<svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 4l9 16H3l9-16z" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 10v4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="12" cy="17" r="1.2" fill="currentColor"/></svg>';
+            case 'caution':
+                return '<svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M7 4h10l3 7-3 9H7L4 11l3-7z" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 9v5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="12" cy="17" r="1.2" fill="currentColor"/></svg>';
+            default:
+                return FIXED_CALLOUT_SVG;
+        }
     }
 
     /**
@@ -74,6 +138,7 @@ export class CalloutProcessorV2 {
         types.forEach(config => {
             this.calloutTypes.set(config.type, config);
         });
+        this.rebuildAliasIndex();
     }
 
     /**

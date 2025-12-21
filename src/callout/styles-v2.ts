@@ -275,6 +275,20 @@ export function generateCalloutStylesV2(
     box-shadow: none !important;
 }
 
+/* 原生 callout 标题图标容器（与 .callout-info 文本并排） */
+.protyle-wysiwyg .callout .callout-info .callout-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    margin-right: 6px;
+}
+.protyle-wysiwyg .callout .callout-info .callout-icon svg {
+    width: 20px;
+    height: 20px;
+}
+
 /* === Note/Info —— 蓝色系 === */
 .protyle-wysiwyg .callout[data-subtype="note" i],
 .protyle-wysiwyg .callout[data-subtype="info" i] {
