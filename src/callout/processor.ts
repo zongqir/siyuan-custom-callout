@@ -1,4 +1,4 @@
-import { DEFAULT_CALLOUT_TYPES, CalloutTypeConfig, ParsedCalloutCommand } from './types';
+import { DEFAULT_CALLOUT_TYPES, CalloutTypeConfig, ParsedCalloutCommand, FIXED_CALLOUT_SVG } from './types';
 import { logger } from '../libs/logger';
 
 /**
@@ -195,6 +195,30 @@ export class CalloutProcessor {
             // 添加标题只读功能
             this.addTitleEditFunction(blockquote, titleDiv);
 
+            // 注入图标（确保存在一个可见图标）
+            try {
+                const oldIcon = titleDiv.querySelector('.callout-icon');
+                if (oldIcon) oldIcon.remove();
+                titleDiv.style.position = 'relative';
+                const icon = document.createElement('span');
+                icon.className = 'callout-icon';
+                icon.innerHTML = parsedCommand.config.icon || FIXED_CALLOUT_SVG;
+                icon.style.cssText = `
+                    position: absolute;
+                    left: 0;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    width: var(--callout-icon-size);
+                    height: var(--callout-icon-size);
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    pointer-events: none;
+                    color: ${parsedCommand.config.color};
+                `;
+                titleDiv.insertBefore(icon, titleDiv.firstChild);
+            } catch {}
+
             return true;
         }
 
@@ -214,6 +238,30 @@ export class CalloutProcessor {
 
                 // 添加标题只读功能
                 this.addTitleEditFunction(blockquote, titleDiv);
+
+                // 注入图标（确保存在一个可见图标）
+                try {
+                    const oldIcon = titleDiv.querySelector('.callout-icon');
+                    if (oldIcon) oldIcon.remove();
+                    titleDiv.style.position = 'relative';
+                    const icon = document.createElement('span');
+                    icon.className = 'callout-icon';
+                    icon.innerHTML = config.icon || FIXED_CALLOUT_SVG;
+                    icon.style.cssText = `
+                        position: absolute;
+                        left: 0;
+                        top: 50%;
+                        transform: translateY(-50%);
+                        width: var(--callout-icon-size);
+                        height: var(--callout-icon-size);
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
+                        pointer-events: none;
+                        color: ${config.color};
+                    `;
+                    titleDiv.insertBefore(icon, titleDiv.firstChild);
+                } catch {}
 
                 return true;
             }
@@ -292,6 +340,8 @@ export class CalloutProcessor {
         
         titleDiv.removeAttribute('data-callout-title');
         titleDiv.removeAttribute('data-callout-display-name');
+        const oldIcon = titleDiv.querySelector('.callout-icon');
+        if (oldIcon) oldIcon.remove();
         this.removeCollapseToggle(titleDiv);
     }
 
@@ -307,6 +357,8 @@ export class CalloutProcessor {
         
         titleDiv.removeAttribute('data-callout-title');
         titleDiv.removeAttribute('data-callout-display-name');
+        const oldIcon = titleDiv.querySelector('.callout-icon');
+        if (oldIcon) oldIcon.remove();
         this.removeCollapseToggle(titleDiv);
     }
 

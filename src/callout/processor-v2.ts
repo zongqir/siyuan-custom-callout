@@ -1,4 +1,4 @@
-import { DEFAULT_CALLOUT_TYPES, CalloutTypeConfig } from './types';
+import { DEFAULT_CALLOUT_TYPES, CalloutTypeConfig, FIXED_CALLOUT_SVG } from './types';
 import { setBlockAttrs, getBlockAttrs } from '../api';
 import { logger } from '../libs/logger';
 
@@ -314,7 +314,7 @@ export class CalloutProcessorV2 {
         // 最后添加图标（确保在最前面）
         const icon = document.createElement('span');
         icon.className = 'callout-icon';
-        icon.innerHTML = config.icon;
+        icon.innerHTML = config.icon || FIXED_CALLOUT_SVG;
         icon.style.cssText = `
             position: absolute;
             left: 0;

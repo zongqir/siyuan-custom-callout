@@ -670,10 +670,18 @@ export class CalloutMenu {
         console.log('[Callout Menu] 📝 将插入文本:', textToInsert);
         
         // 使用 document.execCommand 插入文本
-        document.execCommand('insertText', false, textToInsert);
+        document.execCommand('insertText', false, ' ' + textToInsert);
         
         console.log('[Callout Menu] ✅ 文本已插入');
         
+        // 触发一次 Enter 让编辑器将 "> " 开头的行转换为引述块
+        setTimeout(() => {
+            this.triggerEnterKey();
+            setTimeout(() => {
+                this.processor.processAllBlockquotes();
+            }, 120);
+        }, 60);
+
         // 隐藏菜单
         this.hideMenu(true);
     }

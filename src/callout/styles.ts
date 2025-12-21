@@ -288,7 +288,8 @@ export function generateCalloutStyles(customTypes?: CalloutTypeConfig[], themeId
 
         styles.push(`
 /* ${config.displayName} - ${config.color} */
-.callout[data-subtype="${config.type}"] {
+.callout[data-subtype="${config.type}"],
+.protyle-wysiwyg .bq[custom-callout="${config.type}"] {
     background: ${background} !important;
     border: var(--callout-border-width) solid #e5e7eb !important;
     border-left: var(--callout-left-border-width) solid ${config.borderColor} !important;
@@ -301,7 +302,8 @@ export function generateCalloutStyles(customTypes?: CalloutTypeConfig[], themeId
 }
 
 /* 确保没有内边框，并且不裁剪列表项目符号 */
-.callout[data-subtype="${config.type}"] > div {
+.callout[data-subtype="${config.type}"] > div,
+.protyle-wysiwyg .bq[custom-callout="${config.type}"] > div {
     border: none !important;
     overflow: visible !important;
     padding-left: 0 !important;
@@ -310,16 +312,24 @@ export function generateCalloutStyles(customTypes?: CalloutTypeConfig[], themeId
     margin-right: 0 !important;
 }
 
-.callout[data-subtype="${config.type}"] > div::before {
+.callout[data-subtype="${config.type}"] > div::before,
+.protyle-wysiwyg .bq[custom-callout="${config.type}"] > div::before {
     display: none !important;
 }
 
-.callout[data-subtype="${config.type}"]:hover {
+.callout[data-subtype="${config.type}"]:hover,
+.protyle-wysiwyg .bq[custom-callout="${config.type}"]:hover {
     transform: var(--callout-hover-transform) !important;
     box-shadow: 0 4px 12px ${hexToRgba(config.color, 0.12)} !important;
 }
 
-.callout[data-subtype="${config.type}"] .callout-info {
+.callout[data-subtype="${config.type}"] .callout-info,
+.protyle-wysiwyg .bq[custom-callout="${config.type}"] .callout-info {
+    color: ${config.color} !important;
+}
+
+/* 标题可见色（避免继承透明色） */
+.protyle-wysiwyg .bq[custom-callout="${config.type}"] [data-callout-title="true"]::after {
     color: ${config.color} !important;
 }
 `);

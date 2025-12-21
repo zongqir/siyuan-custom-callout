@@ -158,3 +158,5 @@ export const DEFAULT_CALLOUT_TYPES: CalloutTypeConfig[] = [
     }
 ];
 
+export const FIXED_CALLOUT_SVG = '<svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.7"/><rect x="11" y="10" width="2" height="6" rx="1" fill="currentColor"/><circle cx="12" cy="7" r="1.2" fill="currentColor"/></svg>';
+
