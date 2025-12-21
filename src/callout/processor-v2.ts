@@ -1,5 +1,5 @@
 import { DEFAULT_CALLOUT_TYPES, CalloutTypeConfig, FIXED_CALLOUT_SVG } from './types';
-import { setBlockAttrs, getBlockAttrs, appendBlock } from '../api';
+import { appendBlock } from '../api';
 import { logger } from '../libs/logger';
 
 /**
@@ -20,7 +20,6 @@ export class CalloutProcessorV2 {
     private observer: MutationObserver | null = null;
     private processedBlocks: Set<string> = new Set();
     private isInitialLoad: boolean = true;
-    private textChangeTimers: Map<string, number> = new Map();
     
     // 新建 blockquote 自动显示菜单的回调
     public onNewBlockquoteCreated: ((blockquote: HTMLElement) => void) | null = null;
@@ -43,87 +42,27 @@ export class CalloutProcessorV2 {
         });
     }
 
-    // 仅提取纯文本（忽略子元素）
-    private getPlainTextContent(element: HTMLElement): string {
-        let text = '';
-        element.childNodes.forEach(node => {
-            if (node.nodeType === Node.TEXT_NODE) {
-                text += node.textContent || '';
+    // 仅负责图标兜底：处理原生 .callout 结构，必要时创建并填充图标
+    private ensureNativeIcon(blockquote: HTMLElement) {
+        try {
+            const callout = blockquote.classList.contains('callout')
+                ? blockquote
+                : (blockquote.querySelector('.callout') as HTMLElement | null);
+            if (!callout) return;
+
+            const info = callout.querySelector('.callout-info') as HTMLElement | null;
+            if (!info) return;
+
+            let icon = info.querySelector('.callout-icon') as HTMLElement | null;
+            if (!icon) {
+                icon = document.createElement('span');
+                icon.className = 'callout-icon';
+                info.insertBefore(icon, info.firstChild);
             }
-        });
-        return text.trim();
-    }
-
-    // 根据 token 解析类型：支持 type、本地化命令和英文命令
-    private resolveTypeFromToken(token: string): CalloutTypeConfig | null {
-        const t = token.trim().toLowerCase();
-        for (const cfg of this.calloutTypes.values()) {
-            if (cfg.type?.toLowerCase() === t) return cfg;
-            if ((cfg.command && cfg.command.replace(/^\[!|\]$/g, '').toLowerCase() === t)) return cfg;
-            if ((cfg.zhCommand && cfg.zhCommand.replace(/^\[!|\]$/g, '').toLowerCase() === t)) return cfg;
-        }
-        return null;
-    }
-
-    // 解析形如 [!type|params]+/- 后可跟标题文本
-    private parseBracketCommand(text: string): { token: string; collapsed: boolean | null; title: string } | null {
-        const trimmed = text.trim();
-        const m = trimmed.match(/^\[!([^|\]]+)(\|[^\]]+)?\]([+-])?\s*(.*)$/);
-        if (!m) return null;
-        const token = m[1].trim();
-        const collapseMarker = m[3];
-        const title = (m[4] || '').trim();
-        const collapsed = collapseMarker === '-' ? true : (collapseMarker === '+' ? false : null);
-        return { token, collapsed, title };
-    }
-
-    // 检查并解析标题中的命令文本，设置块属性并清理命令
-    private async checkTextCommand(blockquote: HTMLElement): Promise<boolean> {
-        const nodeId = blockquote.getAttribute('data-node-id');
-        if (!nodeId) return false;
-
-        // 找到标题编辑区
-        const firstParagraph = blockquote.querySelector('div[data-type="NodeParagraph"]');
-        const titleDiv = firstParagraph?.querySelector('div[contenteditable]') as HTMLElement | null;
-        if (!titleDiv) return false;
-
-        const rawText = this.getPlainTextContent(titleDiv);
-        const parsed = this.parseBracketCommand(rawText);
-        if (!parsed) return false;
-
-        const cfg = this.resolveTypeFromToken(parsed.token);
-        if (!cfg) return false;
-
-        // 更新块属性
-        const attrsToSet: Record<string, string> = { 'custom-callout-type': cfg.type };
-        if (parsed.title) attrsToSet['custom-callout-title'] = parsed.title;
-        if (parsed.collapsed !== null) attrsToSet['custom-callout-collapsed'] = parsed.collapsed ? 'true' : 'false';
-
-        try {
-            await setBlockAttrs(nodeId, attrsToSet);
-        } catch {}
-
-        // 清理命令文本，仅保留标题
-        try {
-            // 移除所有纯文本节点
-            const texts: ChildNode[] = [];
-            titleDiv.childNodes.forEach(n => { if (n.nodeType === Node.TEXT_NODE) texts.push(n); });
-            texts.forEach(n => n.remove());
-            if (parsed.title) {
-                titleDiv.appendChild(document.createTextNode(parsed.title));
+            if (!icon.innerHTML || icon.innerHTML.trim() === '') {
+                icon.innerHTML = FIXED_CALLOUT_SVG;
             }
         } catch {}
-
-        // 立即应用样式，避免等待属性变更回调
-        const mergedAttrs: Record<string, string> = { ...attrsToSet };
-        if (parsed.collapsed !== null) mergedAttrs['custom-callout-collapsed'] = parsed.collapsed ? 'true' : 'false';
-        this.applyCalloutStyle(blockquote, cfg.type, mergedAttrs);
-        return true;
-    }
-
-    // 暴露给菜单：当菜单插入命令文本后触发解析
-    public async parseTextCommandOn(blockquote: HTMLElement): Promise<boolean> {
-        return this.checkTextCommand(blockquote);
     }
 
     /**
@@ -183,9 +122,9 @@ export class CalloutProcessorV2 {
     private processAllBlockquotes() {
         const editors = document.querySelectorAll('.protyle-wysiwyg');
         editors.forEach(editor => {
-            const blockquotes = editor.querySelectorAll('.bq[data-node-id]');
-            blockquotes.forEach(bq => {
-                this.processBlockquote(bq as HTMLElement);
+            const nodes = editor.querySelectorAll('.bq[data-node-id], .callout[data-node-id]');
+            nodes.forEach(el => {
+                this.processBlockquote(el as HTMLElement);
             });
         });
     }
@@ -198,48 +137,28 @@ export class CalloutProcessorV2 {
             const newBlockquotes: HTMLElement[] = [];
             
             for (const mutation of mutations) {
-                // 监听文字变化，尝试解析命令（轻量防抖）
-                if (mutation.type === 'characterData' && mutation.target) {
-                    const textNode = mutation.target as CharacterData;
-                    const parentEl = (textNode.parentElement || (textNode as any).parentNode) as HTMLElement;
-                    const bq = parentEl?.closest?.('.bq[data-node-id]') as HTMLElement | null;
-                    if (bq) {
-                        const nodeId = bq.getAttribute('data-node-id');
-                        if (nodeId) {
-                            const existing = this.textChangeTimers.get(nodeId);
-                            if (existing) {
-                                clearTimeout(existing);
-                            }
-                            const timer = window.setTimeout(() => {
-                                try { this.checkTextCommand(bq); } catch {}
-                                this.textChangeTimers.delete(nodeId);
-                            }, 150);
-                            this.textChangeTimers.set(nodeId, timer);
-                        }
-                    }
-                }
                 // 处理新增的节点
                 mutation.addedNodes.forEach(node => {
                     if (node.nodeType === Node.ELEMENT_NODE) {
                         const element = node as HTMLElement;
                         
-                        // 如果是 blockquote 本身
-                        if (element.classList?.contains('bq')) {
+                        // 如果是 blockquote 或原生 callout 本身
+                        if (element.classList?.contains('bq') || element.classList?.contains('callout')) {
                             newBlockquotes.push(element);
                         }
                         
-                        // 如果包含 blockquote
-                        const blockquotes = element.querySelectorAll?.('.bq[data-node-id]');
-                        blockquotes?.forEach(bq => {
-                            newBlockquotes.push(bq as HTMLElement);
+                        // 如果包含 blockquote 或原生 callout
+                        const nodes = element.querySelectorAll?.('.bq[data-node-id], .callout[data-node-id]');
+                        nodes?.forEach(n => {
+                            newBlockquotes.push(n as HTMLElement);
                         });
                     }
                 });
 
-                // 处理属性变化
+                // 处理属性变化（用于当原生完成解析并设置结构时我们兜底图标）
                 if (mutation.type === 'attributes' && mutation.target) {
                     const element = mutation.target as HTMLElement;
-                    if (element.classList?.contains('bq')) {
+                    if (element.classList?.contains('bq') || element.classList?.contains('callout')) {
                         this.processBlockquote(element);
                     }
                 }
@@ -277,9 +196,7 @@ export class CalloutProcessorV2 {
         this.observer.observe(document.body, {
             childList: true,
             subtree: true,
-            attributes: true,
-            attributeFilter: ['custom-callout-type', 'custom-callout-collapsed'],
-            characterData: true
+            attributes: true
         });
     }
 
@@ -287,339 +204,110 @@ export class CalloutProcessorV2 {
      * 处理单个 blockquote 元素
      */
     private async processBlockquote(blockquote: HTMLElement) {
-        const nodeId = blockquote.getAttribute('data-node-id');
-        if (!nodeId) return;
-
-        try {
-            // 获取块属性
-            const attrs = await getBlockAttrs(nodeId);
-            const calloutType = attrs['custom-callout-type'];
-            
-            if (calloutType) {
-                // 这是一个 callout
-                this.applyCalloutStyle(blockquote, calloutType, attrs);
-            } else {
-                // 不是 callout，移除相关样式
-                this.removeCalloutStyle(blockquote);
-            }
-        } catch (error) {
-            logger.error('[ProcessorV2] 处理 blockquote 失败:', error);
-        }
-    }
-
-    /**
-     * 应用 callout 样式
-     */
-    private applyCalloutStyle(blockquote: HTMLElement, type: string, attrs: Record<string, string>) {
-        const config = this.getTypeConfig(type);
-        if (!config) {
-            logger.warn('[ProcessorV2] 未知的 callout 类型:', type);
-            return;
-        }
-
-        // 设置 DOM 属性（用于 CSS 选择器）
-        blockquote.setAttribute('custom-callout', '');
-        blockquote.setAttribute('custom-callout-type', type);
-        
-        // 设置折叠状态
-        const collapsed = attrs['custom-callout-collapsed'] === 'true';
-        if (collapsed) {
-            blockquote.setAttribute('data-collapsed', 'true');
-        } else {
-            blockquote.removeAttribute('data-collapsed');
-        }
-
-        // 处理标题
-        this.processCalloutTitle(blockquote, config, attrs);
-        
-        // 添加折叠按钮
-        this.addCollapseButton(blockquote);
-        
-        // 隐藏内部段落的侧边栏按钮
-        this.hideInnerGutterButtons(blockquote);
+        // 仅做图标兜底，不干预原生解析与样式
+        this.ensureNativeIcon(blockquote);
     }
 
     /**
      * 移除 callout 样式
      */
     private removeCalloutStyle(blockquote: HTMLElement) {
-        blockquote.removeAttribute('custom-callout');
-        blockquote.removeAttribute('custom-callout-type');
-        blockquote.removeAttribute('data-collapsed');
-        
-        // 移除标题标记
+        // 不再移除任何原生样式，仅清理我们可能注入的标题标记与图标
         const titleDiv = blockquote.querySelector('[data-callout-title]');
         if (titleDiv) {
             titleDiv.removeAttribute('data-callout-title');
             const icon = titleDiv.querySelector('.callout-icon');
             icon?.remove();
         }
-        
-        // 移除折叠按钮
-        const collapseBtn = blockquote.querySelector('.callout-collapse-button');
-        collapseBtn?.remove();
-        
-        // 恢复内部段落的侧边栏按钮
-        this.showInnerGutterButtons(blockquote);
     }
 
-    /**
-     * 处理 callout 标题
-     */
-    private processCalloutTitle(blockquote: HTMLElement, config: CalloutTypeConfig, attrs: Record<string, string>) {
-        // 找到第一个段落作为标题
-        const firstParagraph = blockquote.querySelector('div[data-type="NodeParagraph"]');
-        if (!firstParagraph) return;
-
-        const titleDiv = firstParagraph.querySelector('div[contenteditable]') as HTMLElement;
-        if (!titleDiv) return;
-
-        // 标记为标题
-        titleDiv.setAttribute('data-callout-title', 'true');
-        
-        // 设置样式
-        titleDiv.style.position = 'relative';
-        titleDiv.style.paddingLeft = '28px';
-        
-        // 移除旧图标
-        const oldIcon = titleDiv.querySelector('.callout-icon');
-        oldIcon?.remove();
-
-        // 先处理文本内容（不要用 textContent，它会清除所有子元素）
-        // 获取纯文本（排除 HTML 元素）
-        const getTextContent = (element: HTMLElement): string => {
-            let text = '';
-            element.childNodes.forEach(node => {
-                if (node.nodeType === Node.TEXT_NODE) {
-                    text += node.textContent || '';
-                }
-            });
-            return text.trim();
-        };
-        
-        const currentText = getTextContent(titleDiv);
-        
-        // 如果文本为空，设置默认标题
-        if (currentText === '') {
-            const customTitle = attrs['custom-callout-title'];
-            const defaultText = customTitle || config.displayName;
-            
-            // 清除现有文本节点，但保留其他元素
-            Array.from(titleDiv.childNodes).forEach(node => {
-                if (node.nodeType === Node.TEXT_NODE) {
-                    node.remove();
-                }
-            });
-            
-            // 添加新文本
-            const textNode = document.createTextNode(defaultText);
-            titleDiv.appendChild(textNode);
-        }
-
-        // 最后添加图标（确保在最前面）
-        const icon = document.createElement('span');
-        icon.className = 'callout-icon';
-        icon.innerHTML = config.icon || FIXED_CALLOUT_SVG;
-        icon.style.cssText = `
-            position: absolute;
-            left: 0;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 20px;
-            height: 20px;
-            pointer-events: none;
-        `;
-        
-        titleDiv.insertBefore(icon, titleDiv.firstChild);
-    }
-
-    /**
-     * 添加折叠按钮
-     */
-    private addCollapseButton(blockquote: HTMLElement) {
-        // 检查是否已存在
-        if (blockquote.querySelector('.callout-collapse-button')) {
-            return;
-        }
-
-        const button = document.createElement('button');
-        button.className = 'callout-collapse-button';
-        button.innerHTML = '▼';
-        button.title = '展开/折叠';
-        button.style.cssText = `
-            position: absolute;
-            right: 8px;
-            top: 8px;
-            width: 20px;
-            height: 20px;
-            border: none;
-            background: rgba(0, 0, 0, 0.1);
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
-            z-index: 1;
-        `;
-
-        button.addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.toggleCollapse(blockquote);
-        });
-
-        blockquote.style.position = 'relative';
-        blockquote.appendChild(button);
-    }
-
-    /**
-     * 切换折叠状态
-     */
-    private async toggleCollapse(blockquote: HTMLElement) {
-        const nodeId = blockquote.getAttribute('data-node-id');
-        if (!nodeId) return;
-
-        try {
-            const attrs = await getBlockAttrs(nodeId);
-            const isCollapsed = attrs['custom-callout-collapsed'] === 'true';
-            
-            // 更新块属性
-            await setBlockAttrs(nodeId, {
-                'custom-callout-collapsed': isCollapsed ? 'false' : 'true'
-            });
-
-            // 更新 DOM
-            if (isCollapsed) {
-                blockquote.removeAttribute('data-collapsed');
-            } else {
-                blockquote.setAttribute('data-collapsed', 'true');
-            }
-
-            // 更新按钮图标
-            const button = blockquote.querySelector('.callout-collapse-button');
-            if (button) {
-                button.innerHTML = isCollapsed ? '▼' : '▶';
-            }
-
-            logger.log('[ProcessorV2] 切换折叠状态:', { nodeId, isCollapsed: !isCollapsed });
-        } catch (error) {
-            logger.error('[ProcessorV2] 切换折叠状态失败:', error);
-        }
-    }
 
     /**
      * 创建新的 callout
      */
     async createCallout(blockquote: HTMLElement, type: string, title?: string) {
-        const nodeId = blockquote.getAttribute('data-node-id');
-        if (!nodeId) {
-            logger.error('[ProcessorV2] blockquote 没有 data-node-id');
-            return;
-        }
-
-        const config = this.getTypeConfig(type);
-        if (!config) {
-            logger.error('[ProcessorV2] 未知的 callout 类型:', type);
-            return;
-        }
-
+        const firstPara = blockquote.querySelector('div[data-type="NodeParagraph"]') as HTMLElement | null;
+        const firstEditable = firstPara?.querySelector('div[contenteditable]') as HTMLElement | null;
+        const cfg = this.getTypeConfig(type);
+        if (!firstEditable || !cfg) return;
         try {
-            // 设置块属性
-            const attrs: Record<string, string> = {
-                'custom-callout-type': type
-            };
-            
-            if (title) {
-                attrs['custom-callout-title'] = title;
-            }
-
-            await setBlockAttrs(nodeId, attrs);
-
-            // 应用样式
-            this.applyCalloutStyle(blockquote, type, attrs);
-
-            logger.log('[ProcessorV2] 创建 callout 成功:', { nodeId, type, title });
-        } catch (error) {
-            logger.error('[ProcessorV2] 创建 callout 失败:', error);
-        }
+            const displayTitle = title || cfg.displayName;
+            // 清空文本节点并写入命令行
+            const texts: ChildNode[] = [];
+            firstEditable.childNodes.forEach(n => { if (n.nodeType === Node.TEXT_NODE) texts.push(n); });
+            texts.forEach(n => n.remove());
+            firstEditable.appendChild(document.createTextNode(`[!${type}] ${displayTitle}`));
+            // 交给原生，通过回车解析
+            firstEditable.focus();
+            this.simulateEnter(firstEditable);
+        } catch {}
     }
 
     /**
      * 删除 callout
      */
     async removeCallout(blockquote: HTMLElement) {
-        const nodeId = blockquote.getAttribute('data-node-id');
-        if (!nodeId) return;
-
         try {
-            // 移除块属性
-            await setBlockAttrs(nodeId, {
-                'custom-callout-type': '',
-                'custom-callout-title': '',
-                'custom-callout-collapsed': ''
-            });
-
-            // 移除样式
-            this.removeCalloutStyle(blockquote);
-
-            logger.log('[ProcessorV2] 删除 callout 成功:', nodeId);
-        } catch (error) {
-            logger.error('[ProcessorV2] 删除 callout 失败:', error);
-        }
+            const firstPara = blockquote.querySelector('div[data-type="NodeParagraph"]') as HTMLElement | null;
+            const firstEditable = firstPara?.querySelector('div[contenteditable]') as HTMLElement | null;
+            if (firstEditable) {
+                // 清空首行文本，移除我们可能注入的图标标记
+                const texts: ChildNode[] = [];
+                firstEditable.childNodes.forEach(n => { if (n.nodeType === Node.TEXT_NODE) texts.push(n); });
+                texts.forEach(n => n.remove());
+                this.removeCalloutStyle(blockquote);
+            }
+        } catch {}
     }
 
     /**
      * 更新 callout 类型
      */
     async updateCalloutType(blockquote: HTMLElement, newType: string) {
-        const nodeId = blockquote.getAttribute('data-node-id');
-        if (!nodeId) return;
-
+        const cfg = this.getTypeConfig(newType);
+        const firstPara = blockquote.querySelector('div[data-type="NodeParagraph"]') as HTMLElement | null;
+        const firstEditable = firstPara?.querySelector('div[contenteditable]') as HTMLElement | null;
+        if (!cfg || !firstEditable) return;
         try {
-            // 更新块属性
-            await setBlockAttrs(nodeId, {
-                'custom-callout-type': newType
-            });
-
-            // 重新应用样式
-            const attrs = await getBlockAttrs(nodeId);
-            this.applyCalloutStyle(blockquote, newType, attrs);
-
-            logger.log('[ProcessorV2] 更新 callout 类型成功:', { nodeId, newType });
-        } catch (error) {
-            logger.error('[ProcessorV2] 更新 callout 类型失败:', error);
-        }
+            let titleText = '';
+            firstEditable.childNodes.forEach(n => { if (n.nodeType === Node.TEXT_NODE) titleText += n.textContent || ''; });
+            titleText = (titleText || '').trim();
+            if (!titleText) titleText = cfg.displayName;
+            const texts: ChildNode[] = [];
+            firstEditable.childNodes.forEach(n => { if (n.nodeType === Node.TEXT_NODE) texts.push(n); });
+            texts.forEach(n => n.remove());
+            firstEditable.appendChild(document.createTextNode(`[!${newType}] ${titleText}`));
+            firstEditable.focus();
+            this.simulateEnter(firstEditable);
+        } catch {}
     }
 
     /**
      * 检查一个 blockquote 是否是 callout
      */
     async isCallout(blockquote: HTMLElement): Promise<boolean> {
-        const nodeId = blockquote.getAttribute('data-node-id');
-        if (!nodeId) return false;
-
-        try {
-            const attrs = await getBlockAttrs(nodeId);
-            return !!attrs['custom-callout-type'];
-        } catch (error) {
-            return false;
-        }
+        // 以是否存在原生 .callout-icon 来粗略判断
+        const icon = blockquote.querySelector('.callout-icon');
+        return !!icon;
     }
 
     /**
      * 获取 callout 的类型
      */
-    async getCalloutType(blockquote: HTMLElement): Promise<string | null> {
-        const nodeId = blockquote.getAttribute('data-node-id');
-        if (!nodeId) return null;
+    async getCalloutType(_blockquote: HTMLElement): Promise<string | null> {
+        // 不干预原生，不提供类型解析
+        return null;
+    }
 
+    private simulateEnter(el: HTMLElement) {
         try {
-            const attrs = await getBlockAttrs(nodeId);
-            return attrs['custom-callout-type'] || null;
-        } catch (error) {
-            return null;
-        }
+            // 触发原生解析：先尝试 insertParagraph，再派发键盘事件
+            try { document.execCommand('insertParagraph', false); } catch {}
+            const opts: any = { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true, cancelable: true, composed: true };
+            el.dispatchEvent(new KeyboardEvent('keydown', opts));
+            el.dispatchEvent(new KeyboardEvent('keypress', opts));
+            el.dispatchEvent(new KeyboardEvent('keyup', opts));
+        } catch {}
     }
 
     /**
@@ -636,59 +324,6 @@ export class CalloutProcessorV2 {
         return text === '' || text === '\n';
     }
 
-    /**
-     * 隐藏 callout 内部段落的侧边栏拖拽按钮
-     */
-    private hideInnerGutterButtons(blockquote: HTMLElement) {
-        // 获取 blockquote 内所有的子块（段落、列表等）
-        const innerBlocks = blockquote.querySelectorAll('[data-node-id]');
-        
-        innerBlocks.forEach(block => {
-            const nodeId = block.getAttribute('data-node-id');
-            if (!nodeId) return;
-            
-            // 跳过 blockquote 本身
-            if (block === blockquote) return;
-            
-            // 查找对应的侧边栏按钮
-            const gutterButton = document.querySelector(
-                `.protyle-gutters button[data-node-id="${nodeId}"]`
-            ) as HTMLElement;
-            
-            if (gutterButton) {
-                // 隐藏内部块的拖拽按钮
-                gutterButton.style.display = 'none';
-                gutterButton.setAttribute('data-callout-inner', 'true');
-            }
-        });
-    }
-
-    /**
-     * 恢复 callout 内部段落的侧边栏拖拽按钮
-     */
-    private showInnerGutterButtons(blockquote: HTMLElement) {
-        // 获取 blockquote 内所有的子块
-        const innerBlocks = blockquote.querySelectorAll('[data-node-id]');
-        
-        innerBlocks.forEach(block => {
-            const nodeId = block.getAttribute('data-node-id');
-            if (!nodeId) return;
-            
-            // 跳过 blockquote 本身
-            if (block === blockquote) return;
-            
-            // 查找对应的侧边栏按钮
-            const gutterButton = document.querySelector(
-                `.protyle-gutters button[data-node-id="${nodeId}"]`
-            ) as HTMLElement;
-            
-            if (gutterButton && gutterButton.getAttribute('data-callout-inner') === 'true') {
-                // 恢复显示
-                gutterButton.style.display = '';
-                gutterButton.removeAttribute('data-callout-inner');
-            }
-        });
-    }
 
     async ensureSecondParagraphWithAPI(blockquote: HTMLElement) {
         const nodeId = blockquote.getAttribute('data-node-id');

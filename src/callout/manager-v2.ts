@@ -16,6 +16,7 @@ export class CalloutManagerV2 {
     private styleElement: HTMLStyleElement | null = null;
     private currentConfig: CalloutConfig | null = null;
     private plugin: any;
+    private awaitingBQFromGT: boolean = false;
     
     // 事件监听器
     private keydownHandler: ((e: KeyboardEvent) => void) | null = null;
@@ -32,6 +33,44 @@ export class CalloutManagerV2 {
         // 暴露到全局（用于调试和其他模块访问）
         (window as any).siyuanCalloutProcessorV2 = this.processor;
         (window as any).siyuanCalloutMenuV2 = this.menu;
+    }
+
+    private getEmptyEditableAtCaret(): HTMLElement | null {
+        const sel = window.getSelection();
+        if (!sel || sel.rangeCount === 0 || !sel.isCollapsed) return null;
+        let node: HTMLElement | null = sel.anchorNode as any;
+        if (node && node.nodeType !== Node.ELEMENT_NODE) node = node.parentElement;
+        let editable: HTMLElement | null = node;
+        while (editable && !(editable instanceof HTMLElement && editable.getAttribute('contenteditable') === 'true')) {
+            editable = editable.parentElement;
+        }
+        if (!editable) return null;
+        const text = editable.textContent?.replace(/\u200b/g, '').trim() || '';
+        return text === '' ? editable : null;
+    }
+    private getGTContext(): { blockquote: HTMLElement, editable: HTMLElement } | null {
+        const sel = window.getSelection();
+        if (!sel || sel.rangeCount === 0 || !sel.isCollapsed) return null;
+        // 找到当前光标所在的可编辑容器
+        let node: HTMLElement | null = sel.anchorNode as any;
+        if (node && node.nodeType !== Node.ELEMENT_NODE) node = node.parentElement;
+        let editable: HTMLElement | null = node;
+        while (editable && !(editable instanceof HTMLElement && editable.getAttribute('contenteditable') === 'true')) {
+            editable = editable.parentElement;
+        }
+        if (!editable) return null;
+        const text = editable.textContent?.replace(/\u200b/g, '').trim() || '';
+        if (text !== '') return null;
+        // 必须在 blockquote（.bq）内，且不是原生 .callout
+        let ancestor: HTMLElement | null = editable.parentElement;
+        let blockquote: HTMLElement | null = null;
+        while (ancestor) {
+            if (ancestor.classList?.contains('callout')) return null;
+            if (ancestor.classList?.contains('bq')) { blockquote = ancestor; break; }
+            ancestor = ancestor.parentElement;
+        }
+        if (!blockquote) return null;
+        return { blockquote, editable };
     }
 
     /**
@@ -73,10 +112,13 @@ export class CalloutManagerV2 {
         // 初始化处理器
         this.processor.initialize();
 
-        // 设置处理器回调 - 新建空 blockquote 时自动显示菜单
+        // 仅当由 '>' 空行触发时才自动显示菜单
         this.processor.onNewBlockquoteCreated = (blockquote: HTMLElement) => {
-            this.menu.show(blockquote, false);
-            logger.log('[ManagerV2] 检测到新 blockquote，自动显示菜单');
+            if (this.awaitingBQFromGT) {
+                this.awaitingBQFromGT = false;
+                this.menu.show(blockquote, false);
+                logger.log('[ManagerV2] 由 ">" 创建的 blockquote，自动显示菜单');
+            }
         };
 
         // 设置事件监听
@@ -136,10 +178,35 @@ export class CalloutManagerV2 {
     private setupEventListeners() {
         // 键盘快捷键
         this.keydownHandler = (e: KeyboardEvent) => {
-            // Ctrl/Cmd + Shift + C: 在当前 blockquote 上创建/编辑 callout
             if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'C') {
                 e.preventDefault();
                 this.handleQuickCreate();
+                return;
+            }
+
+            if (e.key === '>') {
+                const ctx = this.getGTContext();
+                if (ctx) {
+                    // 已在空的 blockquote 首行：直接拦截并弹出
+                    e.preventDefault();
+                    this.menu.show(ctx.blockquote, false);
+                } else {
+                    // 若当前为空行且不在 blockquote/callout 内：放行 '>'，等待原生创建 blockquote 后由回调弹出
+                    const emptyEditable = this.getEmptyEditableAtCaret();
+                    if (emptyEditable) {
+                        // 确保不在 callout 或已有 blockquote 中
+                        let anc: HTMLElement | null = emptyEditable.parentElement;
+                        let inBQ = false, inCallout = false;
+                        while (anc) {
+                            if (anc.classList?.contains('callout')) { inCallout = true; break; }
+                            if (anc.classList?.contains('bq')) { inBQ = true; break; }
+                            anc = anc.parentElement;
+                        }
+                        if (!inCallout && !inBQ) {
+                            this.awaitingBQFromGT = true;
+                        }
+                    }
+                }
             }
         };
 

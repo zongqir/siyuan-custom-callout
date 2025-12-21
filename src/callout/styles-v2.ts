@@ -26,7 +26,6 @@ export function generateCalloutStylesV2(
 
     // 处理隐藏选项
     const hideIcon = themeOverrides?.hideIcon || false;
-    const hideTitle = themeOverrides?.hideTitle || false;
 
     // ==================== 主题 CSS 变量 ====================
     styles.push(`
@@ -66,21 +65,7 @@ export function generateCalloutStylesV2(
     display: none !important;
 }
 
-/* 隐藏 callout 内部段落的侧边栏拖拽按钮（只保留 blockquote 层级的） */
-.protyle-gutters button[data-type="NodeParagraph"]:has(+ .bq[custom-callout]),
-.protyle-gutters .bq[custom-callout] ~ button[data-type="NodeParagraph"] {
-    display: none !important;
-}
-
-/* 更通用的方式：隐藏 callout 内所有子块的 gutter 按钮 */
-.protyle-wysiwyg .bq[custom-callout] > div[data-type="NodeParagraph"] {
-    /* 标记为 callout 内部段落 */
-}
-
-/* 通过属性选择器隐藏对应的 gutter 按钮 */
-.protyle-gutters button.protyle-icon--hidden {
-    display: none !important;
-}
+/* 保留原生的侧边栏拖拽按钮显示，不做额外隐藏 */
 
 /* Callout 标题样式 */
 .protyle-wysiwyg .bq[custom-callout] [data-callout-title="true"] {
@@ -108,43 +93,7 @@ export function generateCalloutStylesV2(
     pointer-events: none;
 }
 
-/* 折叠按钮 */
-.protyle-wysiwyg .bq[custom-callout] .callout-collapse-button {
-    position: absolute;
-    right: 8px;
-    top: 8px;
-    width: 24px;
-    height: 24px;
-    border: none;
-    background: rgba(0, 0, 0, 0.05);
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
-    z-index: 1;
-}
-
-.protyle-wysiwyg .bq[custom-callout] .callout-collapse-button:hover {
-    background: rgba(0, 0, 0, 0.1);
-    transform: scale(1.1);
-}
-
-/* 折叠状态 */
-.protyle-wysiwyg .bq[custom-callout][data-collapsed="true"] > div:not(:first-child) {
-    display: none !important;
-}
-
-.protyle-wysiwyg .bq[custom-callout][data-collapsed="true"] {
-    padding: 8px 12px !important;
-    margin: 4px 0 !important;
-}
-
-.protyle-wysiwyg .bq[custom-callout][data-collapsed="true"] [data-callout-title="true"] {
-    margin-bottom: 0 !important;
-}
+/* 不自定义折叠按钮与折叠状态，沿用思源原生能力 */
 
 /* Hover 效果 */
 .protyle-wysiwyg .bq[custom-callout]:hover {
@@ -314,15 +263,8 @@ export function generateCalloutStylesV2(
 
     // ==================== 打印样式 ====================
     styles.push(`
-/* 打印优化 */
+/* 打印优化（保持默认行为） */
 @media print {
-    .protyle-wysiwyg .bq[custom-callout] .callout-collapse-button {
-        display: none !important;
-    }
-    
-    .protyle-wysiwyg .bq[custom-callout][data-collapsed="true"] > div {
-        display: block !important;
-    }
 }
 `);
 

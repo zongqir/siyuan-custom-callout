@@ -588,20 +588,20 @@ export class CalloutMenuV2 {
                 if (!existingTitle) existingTitle = selectedType.displayName;
                 const textToInsert = `[!${selectedType.type}] ${existingTitle}`;
 
-                const texts: ChildNode[] = [];
-                firstEditable.childNodes.forEach(n => { if (n.nodeType === Node.TEXT_NODE) texts.push(n); });
-                texts.forEach(n => n.remove());
+                // 清空所有子节点，确保命令位于行首
+                while (firstEditable.firstChild) firstEditable.removeChild(firstEditable.firstChild);
                 firstEditable.appendChild(document.createTextNode(textToInsert));
 
-                await this.processor.parseTextCommandOn(blockquote);
+                // 不自动换行/不模拟回车：仅将光标置于首行末尾，等待用户自行回车
+                firstEditable.focus();
+                this.placeCaretAtEnd(firstEditable);
+                this.emitInput(firstEditable);
             }
 
             this.hide();
             logger.log('[MenuV2] 选择确认', { type: selectedType.type, isEdit: this.isEdit });
 
-            setTimeout(() => {
-                this.focusAfterSelection(blockquote);
-            }, 30);
+            // 不再自动创建第二段，交由用户自行回车
         } catch (error) {
             logger.error('[MenuV2] 确认选择失败:', error);
         }
@@ -708,6 +708,17 @@ export class CalloutMenuV2 {
             el.dispatchEvent(new KeyboardEvent('keypress', options));
             el.dispatchEvent(new KeyboardEvent('keyup', options));
         } catch {}
+    }
+
+    private emitInput(el: HTMLElement) {
+        try {
+            const ev = new InputEvent('input', { bubbles: true, cancelable: true, composed: true } as any);
+            el.dispatchEvent(ev);
+        } catch {
+            try {
+                el.dispatchEvent(new Event('input', { bubbles: true }));
+            } catch {}
+        }
     }
 
     /**
