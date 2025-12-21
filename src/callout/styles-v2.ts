@@ -40,6 +40,8 @@ export function generateCalloutStylesV2(
 }
 `);
 
+    // （移除自定义属性路径，统一走原生 data-subtype）
+
     // ==================== Callout 通用样式 ====================
     styles.push(`
 /* Callout 基础样式 */
@@ -184,17 +186,7 @@ export function generateCalloutStylesV2(
 }
 `);
 
-    // ==================== 每个类型的特定样式 ====================
-    types.forEach(config => {
-        styles.push(`
-/* Callout 类型: ${config.displayName} */
-.protyle-wysiwyg .bq[custom-callout-type="${config.type}"] {
-    --callout-border-color: ${config.borderColor};
-    --callout-bg-gradient: ${config.bgGradient};
-    --callout-title-color: ${config.color};
-}
-`);
-    });
+    // （动态类型样式将放到文件后部，确保覆盖基础 reset）
 
     // ==================== 菜单样式 ====================
     styles.push(`
@@ -267,6 +259,94 @@ export function generateCalloutStylesV2(
 @media print {
 }
 `);
+
+    // ==================== 原生 callout 样式（基于 data-subtype） ====================
+    styles.push(`
+/* === 通用 callout 样式 === */
+.callout {
+    display: block;
+    border-radius: 6px;
+    padding: 10px 16px;
+    margin: 8px 0;
+    position: relative;
+    background-color: white !important;
+    color: var(--b3-theme-on-background);
+    border-left: none !important;
+    box-shadow: none !important;
+}
+
+/* === Note/Info —— 蓝色系 === */
+.protyle-wysiwyg .callout[data-subtype="note" i],
+.protyle-wysiwyg .callout[data-subtype="info" i] {
+    border-left: 0.25em solid #1f6feb !important;
+    background-color: rgba(247, 250, 255, 0.8) !important;
+}
+.protyle-wysiwyg .callout[data-subtype="note" i] .callout-info,
+.protyle-wysiwyg .callout[data-subtype="info" i] .callout-info {
+    color: #1f6feb;
+}
+
+/* === Tip —— 绿色系 === */
+.protyle-wysiwyg .callout[data-subtype="tip" i] {
+    border-left: 0.25em solid #238636 !important;
+    background-color: rgba(238, 250, 240, 0.8) !important;
+}
+.protyle-wysiwyg .callout[data-subtype="tip" i] .callout-info {
+    color: #238636;
+}
+
+/* === IMPORTANT —— 全新紫色系 (#9E75E7) === */
+.protyle-wysiwyg .callout[data-subtype="important" i] {
+    border-left: 0.25em solid #9E75E7 !important;
+    background-color: rgba(158, 117, 231, 0.12) !important;
+}
+.protyle-wysiwyg .callout[data-subtype="important" i] .callout-info {
+    color: #9E75E7;
+}
+
+/* === Warning —— 橙色系 === */
+.protyle-wysiwyg .callout[data-subtype="warning" i] {
+    border-left: 0.25em solid #e3b341 !important;
+    background-color: rgba(255, 250, 235, 0.8) !important;
+}
+.protyle-wysiwyg .callout[data-subtype="warning" i] .callout-info {
+    color: #e3b341;
+}
+
+/* === Caution —— 红色系 === */
+.protyle-wysiwyg .callout[data-subtype="caution" i] {
+    border-left: 0.25em solid #d1242f !important;
+    background-color: rgba(255, 240, 240, 0.8) !important;
+}
+.protyle-wysiwyg .callout[data-subtype="caution" i] .callout-info {
+    color: #d1242f;
+}
+
+/* === 移除默认 ::before 竖线 === */
+.callout:before {
+    background: transparent !important;
+    width: 0 !important;
+}
+`);
+
+    // 动态类型样式（原生 data-subtype，后置覆盖基础 reset）
+    types.forEach(config => {
+        const zh = (config.zhCommand || '').replace(/^\[!|\]$/g, '');
+        const aliases: string[] = [config.type];
+        if (zh) aliases.push(zh);
+        if (config.displayName) aliases.push(config.displayName);
+        const calloutSel = aliases.map(a => `.protyle-wysiwyg .callout[data-subtype="${a}" i]`).join(',\n');
+        const calloutInfoSel = aliases.map(a => `.protyle-wysiwyg .callout[data-subtype="${a}" i] .callout-info`).join(',\n');
+        styles.push(`
+${calloutSel} {
+    border-left: 0.25em solid ${config.borderColor} !important;
+    background: ${config.bgGradient} !important;
+}
+${calloutInfoSel} {
+    color: ${config.color};
+}
+`);
+    });
 
     return styles.join('\n');
 }

@@ -20,6 +20,7 @@ export class CalloutProcessorV2 {
     private observer: MutationObserver | null = null;
     private processedBlocks: Set<string> = new Set();
     private isInitialLoad: boolean = true;
+    private processingNow: WeakSet<HTMLElement> = new WeakSet();
     
     // 新建 blockquote 自动显示菜单的回调
     public onNewBlockquoteCreated: ((blockquote: HTMLElement) => void) | null = null;
@@ -122,7 +123,8 @@ export class CalloutProcessorV2 {
     private processAllBlockquotes() {
         const editors = document.querySelectorAll('.protyle-wysiwyg');
         editors.forEach(editor => {
-            const nodes = editor.querySelectorAll('.bq[data-node-id], .callout[data-node-id]');
+            // 同时处理：有 data-node-id 的 .bq，以及任意 .callout（无论是否有 data-node-id）
+            const nodes = editor.querySelectorAll('.bq[data-node-id], .callout');
             nodes.forEach(el => {
                 this.processBlockquote(el as HTMLElement);
             });
@@ -152,6 +154,17 @@ export class CalloutProcessorV2 {
                         nodes?.forEach(n => {
                             newBlockquotes.push(n as HTMLElement);
                         });
+                    } else if (mutation.type === 'childList' && node.nodeType === Node.TEXT_NODE) {
+                        // 文本节点被添加：向上寻找最近的 bq/callout 并处理
+                        let el: HTMLElement | null = (mutation.target as HTMLElement) || null;
+                        while (el && el !== document.body) {
+                            if (el.classList?.contains('bq') || el.classList?.contains('callout')) {
+                                const bq = el.classList.contains('bq') ? el : (el.closest('.bq[data-node-id]') as HTMLElement | null);
+                                if (bq) this.processBlockquote(bq);
+                                break;
+                            }
+                            el = el.parentElement;
+                        }
                     }
                 });
 
@@ -159,7 +172,22 @@ export class CalloutProcessorV2 {
                 if (mutation.type === 'attributes' && mutation.target) {
                     const element = mutation.target as HTMLElement;
                     if (element.classList?.contains('bq') || element.classList?.contains('callout')) {
-                        this.processBlockquote(element);
+                        const bq = element.classList.contains('bq') ? element : (element.closest('.bq[data-node-id]') as HTMLElement | null);
+                        if (bq) this.processBlockquote(bq);
+                    }
+                }
+
+                // 处理文本变化：在编辑过程中同步自定义子类型
+                if (mutation.type === 'characterData' && mutation.target) {
+                    const node = mutation.target as Node;
+                    let el: HTMLElement | null = (node as any).parentElement || null;
+                    while (el && el !== document.body) {
+                        if (el.classList?.contains('bq') || el.classList?.contains('callout')) {
+                            const bq = el.classList.contains('bq') ? el : (el.closest('.bq[data-node-id]') as HTMLElement | null);
+                            if (bq) this.processBlockquote(bq);
+                            break;
+                        }
+                        el = el.parentElement;
                     }
                 }
             }
@@ -196,7 +224,8 @@ export class CalloutProcessorV2 {
         this.observer.observe(document.body, {
             childList: true,
             subtree: true,
-            attributes: true
+            attributes: true,
+            characterData: true
         });
     }
 
@@ -204,8 +233,13 @@ export class CalloutProcessorV2 {
      * 处理单个 blockquote 元素
      */
     private async processBlockquote(blockquote: HTMLElement) {
-        // 仅做图标兜底，不干预原生解析与样式
-        this.ensureNativeIcon(blockquote);
+        if (this.processingNow.has(blockquote)) return;
+        this.processingNow.add(blockquote);
+        try {
+            // 仅做图标兜底，不写入任何属性，完全交由原生 data-subtype
+            this.ensureNativeIcon(blockquote);
+        } catch {}
+        this.processingNow.delete(blockquote);
     }
 
     /**
@@ -323,6 +357,7 @@ export class CalloutProcessorV2 {
         const text = contentDiv.textContent?.trim() || '';
         return text === '' || text === '\n';
     }
+
 
 
     async ensureSecondParagraphWithAPI(blockquote: HTMLElement) {

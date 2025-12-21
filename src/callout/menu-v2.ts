@@ -596,14 +596,18 @@ export class CalloutMenuV2 {
                 firstEditable.focus();
                 this.placeCaretAtEnd(firstEditable);
                 this.emitInput(firstEditable);
+
+                // 不再设置任何自定义属性，完全交由原生解析后写入 data-subtype
             }
 
-            this.hide();
             logger.log('[MenuV2] 选择确认', { type: selectedType.type, isEdit: this.isEdit });
 
             // 不再自动创建第二段，交由用户自行回车
         } catch (error) {
             logger.error('[MenuV2] 确认选择失败:', error);
+        } finally {
+            // 确保无论成败都移除全局监听，避免按键被持续拦截造成假死
+            this.hide();
         }
     }
 
