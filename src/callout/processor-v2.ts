@@ -1,5 +1,5 @@
 import { DEFAULT_CALLOUT_TYPES, CalloutTypeConfig, FIXED_CALLOUT_SVG } from './types';
-import { setBlockAttrs, getBlockAttrs } from '../api';
+import { setBlockAttrs, getBlockAttrs, appendBlock } from '../api';
 import { logger } from '../libs/logger';
 
 /**
@@ -583,6 +583,16 @@ export class CalloutProcessorV2 {
                 gutterButton.removeAttribute('data-callout-inner');
             }
         });
+    }
+
+    async ensureSecondParagraphWithAPI(blockquote: HTMLElement) {
+        const nodeId = blockquote.getAttribute('data-node-id');
+        if (!nodeId) return;
+        const paras = blockquote.querySelectorAll('div[data-type="NodeParagraph"]');
+        if (paras.length >= 2) return;
+        try {
+            await appendBlock('markdown', ' ', nodeId as any);
+        } catch {}
     }
 }
 

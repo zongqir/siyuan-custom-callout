@@ -124,6 +124,13 @@ export class CalloutManagerV2 {
     }
 
     /**
+     * 刷新（与 V1 接口兼容）
+     */
+    public refresh() {
+        this.updateStyles();
+    }
+
+    /**
      * 设置事件监听
      */
     private setupEventListeners() {

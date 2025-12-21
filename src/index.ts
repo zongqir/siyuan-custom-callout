@@ -3,7 +3,7 @@ import {
 } from "siyuan";
 import "./index.scss";
 
-import { CalloutManager } from "./callout";
+import { CalloutManagerV2 } from "./callout";
 import SettingPanel from "./settings/panel-v2.svelte";
 import CalloutOutlineDock from "./dock/callout-outline.svelte";
 import { Dialog } from "siyuan";
@@ -14,7 +14,7 @@ const STORAGE_NAME = "callout-config";
 const DOCK_TYPE = "callout-outline-dock";
 
 export default class CustomCalloutPlugin extends Plugin {
-    private calloutManager: CalloutManager | null = null;
+    private calloutManager: CalloutManagerV2 | null = null;
     private isMobile: boolean;
     private dockPanel: CalloutOutlineDock | null = null;
     private currentOutlineThemeId: string = 'modern';
@@ -31,12 +31,11 @@ export default class CustomCalloutPlugin extends Plugin {
 <path d="M2 4v24h2V4H2zm26 0v24h2V4h-28z" fill="currentColor" opacity="0.5"/>
 </symbol>`);
 
-        // 初始化Callout管理器
-        this.calloutManager = new CalloutManager(this);
+        // 初始化Callout管理器（V2）
+        this.calloutManager = new CalloutManagerV2(this);
         await this.calloutManager.initialize();
         
-        // 🔥 新版：使用输入监听，不再使用快捷键命令
-        console.log('🔥 [Plugin] Callout 管理器已初始化，输入监听器已设置！');
+        console.log('🔥 [Plugin] Callout V2 管理器已初始化');
 
         // 加载大纲主题配置
         await this.loadOutlineTheme();

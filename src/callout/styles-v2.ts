@@ -61,6 +61,11 @@ export function generateCalloutStylesV2(
     display: none !important;
 }
 
+/* 隐藏原生 blockquote 的左侧竖线（伪元素）*/
+.protyle-wysiwyg .bq[custom-callout]::before {
+    display: none !important;
+}
+
 /* 隐藏 callout 内部段落的侧边栏拖拽按钮（只保留 blockquote 层级的） */
 .protyle-gutters button[data-type="NodeParagraph"]:has(+ .bq[custom-callout]),
 .protyle-gutters .bq[custom-callout] ~ button[data-type="NodeParagraph"] {

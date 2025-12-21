@@ -1,4 +1,4 @@
-import { DEFAULT_CALLOUT_TYPES, CalloutTypeConfig } from './types';
+import { DEFAULT_CALLOUT_TYPES, CalloutTypeConfig, FIXED_CALLOUT_SVG } from './types';
 import { CalloutProcessorV2 } from './processor-v2';
 import { logger } from '../libs/logger';
 
@@ -18,6 +18,7 @@ export class CalloutMenuV2 {
     private selectedIndex: number = 0;
     private menuItems: HTMLElement[] = [];  // 实际渲染的菜单项
     private isEdit: boolean = false;
+    private listenersAttached: boolean = false;
     
     // 网格布局配置
     private gridColumns: number = 3;
@@ -29,10 +30,8 @@ export class CalloutMenuV2 {
     constructor(processor: CalloutProcessorV2) {
         this.processor = processor;
         this.calloutTypes = [...DEFAULT_CALLOUT_TYPES];
-        this.setupGlobalListeners();
         
         logger.log('[MenuV2] ✅ 菜单系统已初始化');
-        console.log('[MenuV2 强制日志] 菜单系统已初始化');
     }
 
     /**
@@ -53,14 +52,9 @@ export class CalloutMenuV2 {
      * 设置全局事件监听
      */
     private setupGlobalListeners() {
+        if (this.listenersAttached) return;
         // 键盘事件监听
         this.keydownHandler = (e: KeyboardEvent) => {
-            // 强制输出，不依赖logger
-            console.log('[MenuV2 强制日志] 键盘事件触发', { 
-                key: e.key, 
-                menuExists: !!this.menu 
-            });
-            
             if (!this.menu) return;
             
             logger.log('[MenuV2] 键盘事件', { 
@@ -116,6 +110,21 @@ export class CalloutMenuV2 {
         // 使用捕获阶段监听，确保在思源笔记之前处理
         document.addEventListener('keydown', this.keydownHandler, true);
         document.addEventListener('click', this.clickHandler, true);
+        this.listenersAttached = true;
+    }
+
+    /**
+     * 移除全局监听器（仅在菜单隐藏时调用）
+     */
+    private teardownGlobalListeners() {
+        if (!this.listenersAttached) return;
+        if (this.keydownHandler) {
+            document.removeEventListener('keydown', this.keydownHandler, true);
+        }
+        if (this.clickHandler) {
+            document.removeEventListener('click', this.clickHandler, true);
+        }
+        this.listenersAttached = false;
     }
 
     /**
@@ -144,13 +153,12 @@ export class CalloutMenuV2 {
                 
                 // 聚焦菜单
                 this.menu.focus();
-                
-                console.log('[MenuV2 强制日志] ✅ 菜单已显示并聚焦');
             }
         });
         
         logger.log('[MenuV2] 显示菜单', { isEdit, selectedIndex: this.selectedIndex });
-        console.log('[MenuV2 强制日志] 显示菜单调用', { isEdit, selectedIndex: this.selectedIndex });
+        // 仅在菜单可见期间挂载监听器
+        this.setupGlobalListeners();
     }
 
     /**
@@ -161,6 +169,8 @@ export class CalloutMenuV2 {
             this.menu.remove();
             this.menu = null;
         }
+        // 菜单隐藏时移除监听器，避免无关按键触发
+        this.teardownGlobalListeners();
         this.currentBlockquote = null;
         this.isEdit = false;
         
@@ -256,12 +266,7 @@ export class CalloutMenuV2 {
 
         menu.appendChild(grid);
         
-        console.log('[MenuV2 强制日志] 菜单创建完成', {
-            totalTypes: this.calloutTypes.length,
-            actualMenuItems: this.menuItems.length,
-            gridColumns: this.gridColumns,
-            note: '包含1个"原生样式"选项'
-        });
+        // 菜单创建完成
 
         // 如果是编辑模式，添加删除按钮
         if (this.isEdit) {
@@ -374,7 +379,7 @@ export class CalloutMenuV2 {
 
         // 图标
         const icon = document.createElement('div');
-        icon.innerHTML = config.icon;
+        icon.innerHTML = config.icon || FIXED_CALLOUT_SVG;
         icon.style.cssText = `
             width: 24px;
             height: 24px;
@@ -482,25 +487,16 @@ export class CalloutMenuV2 {
         const cols = this.gridColumns;
         const totalItems = this.menuItems.length;  // 使用实际菜单项数量！
         
-        console.log('[MenuV2 强制日志] 移动前', {
-            delta,
-            currentIndex: this.selectedIndex,
-            cols,
-            totalItems
-        });
-        
         if (delta === this.gridColumns) {
             // 向下移动：加cols，但不超过最大索引
             const newIndex = this.selectedIndex + cols;
             this.selectedIndex = Math.min(newIndex, totalItems - 1);
-            console.log('[MenuV2 强制日志] ↓ 向下', { from: this.selectedIndex - cols, to: this.selectedIndex });
             this.updateSelection();
             
         } else if (delta === -this.gridColumns) {
             // 向上移动：减cols，但不小于0
             const newIndex = this.selectedIndex - cols;
             this.selectedIndex = Math.max(newIndex, 0);
-            console.log('[MenuV2 强制日志] ↑ 向上', { from: this.selectedIndex + cols, to: this.selectedIndex });
             this.updateSelection();
             
         } else if (delta === 1) {
@@ -515,16 +511,11 @@ export class CalloutMenuV2 {
                 // 确保下一个位置仍在同一行
                 if (nextRow === currentRow) {
                     this.selectedIndex++;
-                    console.log('[MenuV2 强制日志] → 向右', { 
-                        from: this.selectedIndex - 1, 
-                        to: this.selectedIndex,
-                        row: currentRow
-                    });
                 } else {
-                    console.log('[MenuV2 强制日志] → 向右失败：跨行了');
+                    // 跨行，忽略
                 }
             } else {
-                console.log('[MenuV2 强制日志] → 向右失败：到达行尾或边界');
+                // 行尾或边界，忽略
             }
             this.updateSelection();
             
@@ -535,12 +526,8 @@ export class CalloutMenuV2 {
             // 只有不在行首才移动
             if (currentCol > 0) {
                 this.selectedIndex--;
-                console.log('[MenuV2 强制日志] ← 向左', { 
-                    from: this.selectedIndex + 1, 
-                    to: this.selectedIndex 
-                });
             } else {
-                console.log('[MenuV2 强制日志] ← 向左失败：已在行首');
+                // 已在行首
             }
             this.updateSelection();
         }
@@ -593,16 +580,22 @@ export class CalloutMenuV2 {
         if (!selectedType) return;
 
         try {
+            const blockquote = this.currentBlockquote; // 先缓存，hide() 会清空
             if (this.isEdit) {
                 // 编辑模式：更新类型
-                await this.processor.updateCalloutType(this.currentBlockquote, selectedType.type);
+                await this.processor.updateCalloutType(blockquote, selectedType.type);
             } else {
                 // 创建模式：创建新 callout
-                await this.processor.createCallout(this.currentBlockquote, selectedType.type);
+                await this.processor.createCallout(blockquote, selectedType.type);
             }
 
             this.hide();
             logger.log('[MenuV2] 选择确认', { type: selectedType.type, isEdit: this.isEdit });
+
+            // 恢复编辑焦点：优先第二段落，其次标题行
+            setTimeout(() => {
+                this.focusAfterSelection(blockquote);
+            }, 30);
         } catch (error) {
             logger.error('[MenuV2] 确认选择失败:', error);
         }
@@ -618,10 +611,91 @@ export class CalloutMenuV2 {
             await this.processor.removeCallout(this.currentBlockquote);
             this.hide();
             logger.log('[MenuV2] 已取消 callout，恢复原生样式');
-            console.log('[MenuV2 强制日志] 已恢复为原生 blockquote');
         } catch (error) {
             logger.error('[MenuV2] 取消 callout 失败:', error);
         }
+    }
+
+    /**
+     * 选择完成后，将焦点放到内容编辑区
+     */
+    private focusAfterSelection(blockquote: HTMLElement | null) {
+        try {
+            if (!blockquote) return;
+            const paras = blockquote.querySelectorAll('div[data-type="NodeParagraph"]');
+            let target: HTMLElement | null = null;
+            if (paras.length >= 2) {
+                target = paras[1].querySelector('div[contenteditable]') as HTMLElement;
+                if (target) {
+                    target.focus();
+                    this.placeCaretAtEnd(target);
+                    return;
+                }
+            }
+            if (paras.length === 1) {
+                const first = paras[0].querySelector('div[contenteditable]') as HTMLElement;
+                if (first) {
+                    first.focus();
+                    this.placeCaretAtEnd(first);
+                    this.ensureSecondParagraph(blockquote, first);
+                    return;
+                }
+            }
+            if (paras.length >= 1) {
+                target = paras[0].querySelector('div[contenteditable]') as HTMLElement;
+                if (target) {
+                    target.focus();
+                    this.placeCaretAtEnd(target);
+                }
+            }
+        } catch {}
+    }
+
+    private placeCaretAtEnd(el: HTMLElement) {
+        try {
+            const range = document.createRange();
+            range.selectNodeContents(el);
+            range.collapse(false);
+            const sel = window.getSelection();
+            if (sel) {
+                sel.removeAllRanges();
+                sel.addRange(range);
+            }
+        } catch {}
+    }
+
+    private ensureSecondParagraph(blockquote: HTMLElement, firstEditable: HTMLElement) {
+        try {
+            firstEditable.focus();
+            this.placeCaretAtEnd(firstEditable);
+            try {
+                document.execCommand('insertParagraph', false);
+            } catch {}
+            this.triggerEnterOn(firstEditable);
+            setTimeout(async () => {
+                let paras = blockquote.querySelectorAll('div[data-type="NodeParagraph"]');
+                if (paras.length < 2 && (this.processor as any).ensureSecondParagraphWithAPI) {
+                    await (this.processor as any).ensureSecondParagraphWithAPI(blockquote);
+                }
+                setTimeout(() => {
+                    paras = blockquote.querySelectorAll('div[data-type="NodeParagraph"]');
+                    const second = paras.length >= 2 ? paras[1].querySelector('div[contenteditable]') as HTMLElement : null;
+                    if (second) {
+                        second.focus();
+                        this.placeCaretAtEnd(second);
+                    }
+                }, 80);
+            }, 60);
+        } catch {}
+    }
+
+    private triggerEnterOn(el: HTMLElement) {
+        try {
+            const options: any = { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true, cancelable: true, composed: true };
+            el.dispatchEvent(new KeyboardEvent('keydown', options));
+            el.dispatchEvent(new KeyboardEvent('keypress', options));
+            el.dispatchEvent(new KeyboardEvent('keyup', options));
+        } catch {}
     }
 
     /**
