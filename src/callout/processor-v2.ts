@@ -20,6 +20,7 @@ export class CalloutProcessorV2 {
     private observer: MutationObserver | null = null;
     private processedBlocks: Set<string> = new Set();
     private isInitialLoad: boolean = true;
+    private textChangeTimers: Map<string, number> = new Map();
     
     // 新建 blockquote 自动显示菜单的回调
     public onNewBlockquoteCreated: ((blockquote: HTMLElement) => void) | null = null;
@@ -40,6 +41,89 @@ export class CalloutProcessorV2 {
         DEFAULT_CALLOUT_TYPES.forEach(config => {
             this.calloutTypes.set(config.type, config);
         });
+    }
+
+    // 仅提取纯文本（忽略子元素）
+    private getPlainTextContent(element: HTMLElement): string {
+        let text = '';
+        element.childNodes.forEach(node => {
+            if (node.nodeType === Node.TEXT_NODE) {
+                text += node.textContent || '';
+            }
+        });
+        return text.trim();
+    }
+
+    // 根据 token 解析类型：支持 type、本地化命令和英文命令
+    private resolveTypeFromToken(token: string): CalloutTypeConfig | null {
+        const t = token.trim().toLowerCase();
+        for (const cfg of this.calloutTypes.values()) {
+            if (cfg.type?.toLowerCase() === t) return cfg;
+            if ((cfg.command && cfg.command.replace(/^\[!|\]$/g, '').toLowerCase() === t)) return cfg;
+            if ((cfg.zhCommand && cfg.zhCommand.replace(/^\[!|\]$/g, '').toLowerCase() === t)) return cfg;
+        }
+        return null;
+    }
+
+    // 解析形如 [!type|params]+/- 后可跟标题文本
+    private parseBracketCommand(text: string): { token: string; collapsed: boolean | null; title: string } | null {
+        const trimmed = text.trim();
+        const m = trimmed.match(/^\[!([^|\]]+)(\|[^\]]+)?\]([+-])?\s*(.*)$/);
+        if (!m) return null;
+        const token = m[1].trim();
+        const collapseMarker = m[3];
+        const title = (m[4] || '').trim();
+        const collapsed = collapseMarker === '-' ? true : (collapseMarker === '+' ? false : null);
+        return { token, collapsed, title };
+    }
+
+    // 检查并解析标题中的命令文本，设置块属性并清理命令
+    private async checkTextCommand(blockquote: HTMLElement): Promise<boolean> {
+        const nodeId = blockquote.getAttribute('data-node-id');
+        if (!nodeId) return false;
+
+        // 找到标题编辑区
+        const firstParagraph = blockquote.querySelector('div[data-type="NodeParagraph"]');
+        const titleDiv = firstParagraph?.querySelector('div[contenteditable]') as HTMLElement | null;
+        if (!titleDiv) return false;
+
+        const rawText = this.getPlainTextContent(titleDiv);
+        const parsed = this.parseBracketCommand(rawText);
+        if (!parsed) return false;
+
+        const cfg = this.resolveTypeFromToken(parsed.token);
+        if (!cfg) return false;
+
+        // 更新块属性
+        const attrsToSet: Record<string, string> = { 'custom-callout-type': cfg.type };
+        if (parsed.title) attrsToSet['custom-callout-title'] = parsed.title;
+        if (parsed.collapsed !== null) attrsToSet['custom-callout-collapsed'] = parsed.collapsed ? 'true' : 'false';
+
+        try {
+            await setBlockAttrs(nodeId, attrsToSet);
+        } catch {}
+
+        // 清理命令文本，仅保留标题
+        try {
+            // 移除所有纯文本节点
+            const texts: ChildNode[] = [];
+            titleDiv.childNodes.forEach(n => { if (n.nodeType === Node.TEXT_NODE) texts.push(n); });
+            texts.forEach(n => n.remove());
+            if (parsed.title) {
+                titleDiv.appendChild(document.createTextNode(parsed.title));
+            }
+        } catch {}
+
+        // 立即应用样式，避免等待属性变更回调
+        const mergedAttrs: Record<string, string> = { ...attrsToSet };
+        if (parsed.collapsed !== null) mergedAttrs['custom-callout-collapsed'] = parsed.collapsed ? 'true' : 'false';
+        this.applyCalloutStyle(blockquote, cfg.type, mergedAttrs);
+        return true;
+    }
+
+    // 暴露给菜单：当菜单插入命令文本后触发解析
+    public async parseTextCommandOn(blockquote: HTMLElement): Promise<boolean> {
+        return this.checkTextCommand(blockquote);
     }
 
     /**
@@ -114,6 +198,26 @@ export class CalloutProcessorV2 {
             const newBlockquotes: HTMLElement[] = [];
             
             for (const mutation of mutations) {
+                // 监听文字变化，尝试解析命令（轻量防抖）
+                if (mutation.type === 'characterData' && mutation.target) {
+                    const textNode = mutation.target as CharacterData;
+                    const parentEl = (textNode.parentElement || (textNode as any).parentNode) as HTMLElement;
+                    const bq = parentEl?.closest?.('.bq[data-node-id]') as HTMLElement | null;
+                    if (bq) {
+                        const nodeId = bq.getAttribute('data-node-id');
+                        if (nodeId) {
+                            const existing = this.textChangeTimers.get(nodeId);
+                            if (existing) {
+                                clearTimeout(existing);
+                            }
+                            const timer = window.setTimeout(() => {
+                                try { this.checkTextCommand(bq); } catch {}
+                                this.textChangeTimers.delete(nodeId);
+                            }, 150);
+                            this.textChangeTimers.set(nodeId, timer);
+                        }
+                    }
+                }
                 // 处理新增的节点
                 mutation.addedNodes.forEach(node => {
                     if (node.nodeType === Node.ELEMENT_NODE) {
@@ -174,7 +278,8 @@ export class CalloutProcessorV2 {
             childList: true,
             subtree: true,
             attributes: true,
-            attributeFilter: ['custom-callout-type', 'custom-callout-collapsed']
+            attributeFilter: ['custom-callout-type', 'custom-callout-collapsed'],
+            characterData: true
         });
     }
 

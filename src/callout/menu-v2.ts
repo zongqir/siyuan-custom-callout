@@ -580,19 +580,25 @@ export class CalloutMenuV2 {
         if (!selectedType) return;
 
         try {
-            const blockquote = this.currentBlockquote; // 先缓存，hide() 会清空
-            if (this.isEdit) {
-                // 编辑模式：更新类型
-                await this.processor.updateCalloutType(blockquote, selectedType.type);
-            } else {
-                // 创建模式：创建新 callout
-                await this.processor.createCallout(blockquote, selectedType.type);
+            const blockquote = this.currentBlockquote;
+            const firstPara = blockquote.querySelector('div[data-type="NodeParagraph"]') as HTMLElement | null;
+            const firstEditable = firstPara?.querySelector('div[contenteditable]') as HTMLElement | null;
+            if (firstEditable) {
+                let existingTitle = this.getTextOnly(firstEditable);
+                if (!existingTitle) existingTitle = selectedType.displayName;
+                const textToInsert = `[!${selectedType.type}] ${existingTitle}`;
+
+                const texts: ChildNode[] = [];
+                firstEditable.childNodes.forEach(n => { if (n.nodeType === Node.TEXT_NODE) texts.push(n); });
+                texts.forEach(n => n.remove());
+                firstEditable.appendChild(document.createTextNode(textToInsert));
+
+                await this.processor.parseTextCommandOn(blockquote);
             }
 
             this.hide();
             logger.log('[MenuV2] 选择确认', { type: selectedType.type, isEdit: this.isEdit });
 
-            // 恢复编辑焦点：优先第二段落，其次标题行
             setTimeout(() => {
                 this.focusAfterSelection(blockquote);
             }, 30);
@@ -662,6 +668,12 @@ export class CalloutMenuV2 {
                 sel.addRange(range);
             }
         } catch {}
+    }
+
+    private getTextOnly(el: HTMLElement): string {
+        let t = '';
+        el.childNodes.forEach(n => { if (n.nodeType === Node.TEXT_NODE) t += n.textContent || ''; });
+        return t.trim();
     }
 
     private ensureSecondParagraph(blockquote: HTMLElement, firstEditable: HTMLElement) {

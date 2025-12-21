@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from 'svelte';
-    import type { CalloutManager } from '../callout/manager';
+    import type { CalloutManagerV2 } from '../callout/manager-v2';
     import type CustomCalloutPlugin from '../index';
     import type { CalloutTypeConfig } from '../callout/types';
     import { DEFAULT_CALLOUT_TYPES } from '../callout/types';
@@ -11,7 +11,7 @@
     import { showMessage } from 'siyuan';
 
     export let plugin: CustomCalloutPlugin;
-    export let calloutManager: CalloutManager;
+    export let calloutManager: CalloutManagerV2;
 
     let config: CalloutConfig;
     let allTypes: CalloutTypeConfig[] = [];
