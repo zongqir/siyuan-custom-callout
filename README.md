@@ -8,6 +8,22 @@ A clean and elegant SiYuan plugin that renders ordinary blockquotes as beautiful
 
 ---
 
+## ✅ Requirements
+
+- SiYuan >= 3.5.0
+- Plugin >= 2.0.0 (this document)
+
+## 🚀 What's New in 2.0
+
+- Uses native `.callout[data-subtype]` for styling. Supports arbitrary custom subtypes.
+- Alias matching: `type` + `zhCommand` (without brackets) + `displayName` all map to the same style.
+- Per-type icons synced with `data-subtype` (with native fallbacks).
+- Higher CSS specificity and case-insensitive matching `[i]` to override themes safely.
+- Stability improvements: fixed potential freeze and caret-loss when creating/confirming callouts.
+- V2-only architecture; legacy V1 path fully removed.
+
+---
+
 ## 📖 Quick Start
 
 ### Installation
@@ -60,6 +76,8 @@ Search for "Custom Callout" in SiYuan marketplace and install.
 - 🎨 **11 Preset Types** - Info, tip, example, pitfall, etc.
 - ⌨️ **Full Keyboard Support** - Arrow navigation + letter filtering
 - 🛠️ **Fully Customizable** - Custom icons, colors, types
+- 🧩 **Native data-subtype** - Style any subtype value, including your custom ones
+- 🖼️ **Per-type Icons** - Icons auto-match the resolved `data-subtype`
 - 📐 **Drag to Resize** - Adjustable width and height
 - 🔒 **Non-Intrusive** - No content modification, only style rendering
 

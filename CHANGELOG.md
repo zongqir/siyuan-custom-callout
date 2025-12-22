@@ -1,5 +1,29 @@
 # Changelog
 
+## v2.0.0 2025-12-22
+
+### ✨ Major
+
+- Require SiYuan >= 3.5.0 (plugin.json `minAppVersion`)
+- Bump plugin version to 2.0.0 (plugin.json/package.json)
+- V2-only architecture, remove legacy V1 path
+
+### 🎨 Styling & Icons
+
+- Use native `.callout[data-subtype]` for all styles, supporting arbitrary custom subtypes
+- Alias matching: `type` + `zhCommand` (without brackets) + `displayName`
+- Per-type icons rendered based on `data-subtype`, native types have fallbacks
+- Increased selector specificity and case-insensitive matching `[i]`
+
+### 🧩 UX & Stability
+
+- Fix potential freeze when creating/confirming callouts
+- Restore caret focus when closing menu or selecting native style
+
+### 📝 Docs
+
+- Update README (EN/CN): requirements, 2.0 highlights, native subtype & icons
+
 ## v1.3.6 2025-10-12
 
 ### 📝 文档优化
