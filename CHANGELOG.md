@@ -1,5 +1,33 @@
 # Changelog
 
+## v3.0.0 2025-12-25
+
+### ✨ Major
+
+- Callout fold/unfold with native persistence
+  - Top-right transparent toggle button inside each callout
+  - Uses Siyuan native APIs `/api/block/foldBlock` and `/api/block/unfoldBlock`
+  - DOM `fold="1"` fully respected and observed
+- Callout Outline dock polish and theme compatibility fixes
+- Overall UI refinements
+
+### 🎨 Styling & UI
+
+- Chevron icon centering (24×24 stroke path + grid centering)
+- Semi-transparent rounded-square button, absolute to top-right
+- Better contrast with fallbacks (rgba + color-mix)
+- Folded state hides body, only shows title row + toggle
+
+### 🧩 UX & Stability
+
+- Robust owner resolution for `data-node-id`/`fold` on `.bq` or `.callout`
+- Avoid layout leaks in folded state (overflow/margins adjusted)
+
+### 📝 Docs
+
+- Simplify README/README_zh_CN, highlight: 侧边栏抓取关键信息 · 原生折叠 · 预设自定义 Callout
+- Bump versions in package.json / plugin.json to 3.0.0
+
 ## v2.0.0 2025-12-22
 
 ### ✨ Major

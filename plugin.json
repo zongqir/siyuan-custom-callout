@@ -2,14 +2,14 @@
   "name": "siyuan-custom-callout",
   "author": "zongqir",
   "url": "https://github.com/zongqir/siyuan-custom-callout",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "minAppVersion": "3.5.0",
   "disabledInPublish": false,
   "backends":  ["all"],
   "frontends":  ["all"],
   "displayName": {
     "en_US": "SiYuan Custom Callout",
-    "zh_CN": "思源自定义引述块"
+    "zh_CN": "思源自定义callout"
   },
   "description": {
     "en_US": "Transform blockquotes into beautiful, customizable callout blocks with rich features",
