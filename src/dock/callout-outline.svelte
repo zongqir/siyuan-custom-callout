@@ -458,13 +458,22 @@
             content = (bodyClone.textContent || '').trim();
         }
 
+        // 折叠状态：读取拥有该块 ID 的元素上的 fold 属性（优先 bq，其次 callout 本体）
+        let isFolded = false;
+        const ownerBq = calloutEl.closest('.bq[data-node-id]') as HTMLElement | null;
+        if (ownerBq && ownerBq.getAttribute('data-node-id') === blockId) {
+            isFolded = ownerBq.getAttribute('fold') === '1';
+        } else if (calloutEl.getAttribute('data-node-id') === blockId) {
+            isFolded = calloutEl.getAttribute('fold') === '1';
+        }
+
         return {
             id: blockId,
             type: cfg.type,
             title: title,
             content: content.substring(0, 600),
             config: cfg,
-            collapsed: false
+            collapsed: isFolded
         };
     }
 

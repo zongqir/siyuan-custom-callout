@@ -315,6 +315,27 @@ export function generateCalloutStylesV2(
     margin-bottom: 2px;
 }
 
+/* 标题区域内透明折叠按钮 */
+.protyle-wysiwyg .callout .callout-info .callout-fold-toggle {
+    all: unset;
+    cursor: pointer;
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    opacity: 0.55;
+    color: currentColor;
+}
+.protyle-wysiwyg .callout:hover .callout-info .callout-fold-toggle,
+.protyle-wysiwyg .callout .callout-info .callout-fold-toggle:hover {
+    opacity: 0.9;
+}
+.protyle-wysiwyg .callout .callout-info .callout-fold-toggle svg {
+    width: 16px; height: 16px;
+}
+
 /* 标题内部子元素遵循各自默认间距（不再强行清零），以获得更自然的视觉节奏 */
 
 /* === Note/Info —— 蓝色系 === */

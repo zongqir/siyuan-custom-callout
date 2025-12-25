@@ -1,5 +1,5 @@
 import { DEFAULT_CALLOUT_TYPES, CalloutTypeConfig, FIXED_CALLOUT_SVG } from './types';
-import { appendBlock } from '../api';
+import { appendBlock, foldBlock, unfoldBlock } from '../api';
 import { logger } from '../libs/logger';
 
 /**
@@ -76,6 +76,64 @@ export class CalloutProcessorV2 {
             const current = (icon.innerHTML || '').trim();
             if (current !== desiredIcon.trim()) {
                 icon.innerHTML = desiredIcon;
+            }
+        } catch {}
+    }
+
+    private ensureFoldToggleButton(blockquote: HTMLElement) {
+        try {
+            const callout = blockquote.classList.contains('callout')
+                ? blockquote
+                : (blockquote.querySelector('.callout') as HTMLElement | null);
+            if (!callout) return;
+
+            const info = callout.querySelector('.callout-info') as HTMLElement | null;
+            if (!info) return;
+
+            const bq = blockquote.classList.contains('bq')
+                ? blockquote
+                : (callout.closest('.bq[data-node-id]') as HTMLElement | null);
+            if (!bq) return;
+
+            const nodeId = bq.getAttribute('data-node-id');
+            if (!nodeId) return;
+
+            let btn = info.querySelector('.callout-fold-toggle') as HTMLButtonElement | null;
+            if (!btn) {
+                btn = document.createElement('button');
+                btn.className = 'callout-fold-toggle';
+                btn.type = 'button';
+                btn.setAttribute('aria-label', '折叠/展开');
+                btn.setAttribute('title', '折叠/展开');
+                info.appendChild(btn);
+            }
+
+            const isFolded = bq.getAttribute('fold') === '1';
+            const svgExpand = '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M8 11l-5-5h10z"/></svg>';
+            const svgCollapse = '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M8 5l-5 5h10z"/></svg>';
+            const desired = isFolded ? svgExpand : svgCollapse;
+            if ((btn.innerHTML || '').trim() !== desired) {
+                btn.innerHTML = desired;
+            }
+
+            const boundId = btn.getAttribute('data-node-id');
+            if (boundId !== nodeId) {
+                btn.setAttribute('data-node-id', nodeId);
+                btn.onclick = async (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (btn!.getAttribute('data-busy') === '1') return;
+                    btn!.setAttribute('data-busy', '1');
+                    try {
+                        const foldedNow = bq.getAttribute('fold') === '1';
+                        if (foldedNow) {
+                            await unfoldBlock(nodeId as any);
+                        } else {
+                            await foldBlock(nodeId as any);
+                        }
+                    } catch {}
+                    btn!.removeAttribute('data-busy');
+                };
             }
         } catch {}
     }
@@ -303,6 +361,7 @@ export class CalloutProcessorV2 {
         try {
             // 仅做图标兜底，不写入任何属性，完全交由原生 data-subtype
             this.ensureNativeIcon(blockquote);
+            this.ensureFoldToggleButton(blockquote);
         } catch {}
         this.processingNow.delete(blockquote);
     }
