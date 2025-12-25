@@ -413,6 +413,24 @@ export function generateCalloutStylesV2(
     background: transparent !important;
     width: 0 !important;
 }
+
+/* 折叠态：隐藏正文（保留标题与折叠按钮）*/
+.protyle-wysiwyg .bq[fold="1"] .callout > :not(.callout-info):not(.callout-fold-toggle) {
+    display: none !important;
+}
+.protyle-wysiwyg .callout[fold="1"] > :not(.callout-info):not(.callout-fold-toggle) {
+    display: none !important;
+}
+
+.protyle-wysiwyg .bq[fold="1"] .callout,
+.protyle-wysiwyg .callout[fold="1"] {
+    overflow: hidden !important;
+}
+
+.protyle-wysiwyg .bq[fold="1"] .callout .callout-info,
+.protyle-wysiwyg .callout[fold="1"] .callout-info {
+    margin-bottom: 0 !important;
+}
 `);
 
     // 动态类型样式（原生 data-subtype，后置覆盖基础 reset）
