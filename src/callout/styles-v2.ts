@@ -73,7 +73,8 @@ export function generateCalloutStylesV2(
 .protyle-wysiwyg .bq[custom-callout] [data-callout-title="true"] {
     position: relative;
     font-weight: 600 !important;
-    font-size: 15px !important;
+    font-size: inherit !important;
+    line-height: inherit !important;
     color: var(--callout-title-color) !important;
     margin-bottom: var(--callout-title-margin-bottom) !important;
     cursor: default !important;
@@ -87,8 +88,8 @@ export function generateCalloutStylesV2(
     left: 0;
     top: 50%;
     transform: translateY(-50%);
-    width: 20px;
-    height: 20px;
+    width: 1.25em;
+    height: 1.25em;
     display: ${hideIcon ? 'none' : 'flex'} !important;
     align-items: center;
     justify-content: center;
@@ -266,7 +267,7 @@ export function generateCalloutStylesV2(
 .callout {
     display: block;
     border-radius: 6px;
-    padding: 10px 16px;
+    padding: 12px 12px 12px !important;
     margin: 8px 0;
     position: relative;
     background-color: white !important;
@@ -280,19 +281,34 @@ export function generateCalloutStylesV2(
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 20px;
-    height: 20px;
-    margin-right: 6px;
+    width: 1.25em;
+    height: 1.25em;
+    margin-right: 0;
 }
 .protyle-wysiwyg .callout .callout-info .callout-icon svg {
-    width: 20px;
-    height: 20px;
+    width: 1.25em;
+    height: 1.25em;
 }
+
+/* 原生 callout 标题文本（缩小字号） */
+.protyle-wysiwyg .callout .callout-info {
+    font-size: inherit !important;
+    line-height: inherit;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding-top: 0;
+    margin-top: 2px !important;
+    margin-bottom: 2px;
+}
+
+/* 标题内部子元素遵循各自默认间距（不再强行清零），以获得更自然的视觉节奏 */
 
 /* === Note/Info —— 蓝色系 === */
 .protyle-wysiwyg .callout[data-subtype="note" i],
 .protyle-wysiwyg .callout[data-subtype="info" i] {
-    border-left: 0.25em solid #1f6feb !important;
+    border-left: 3px solid #1f6feb !important;
     background-color: rgba(247, 250, 255, 0.8) !important;
 }
 .protyle-wysiwyg .callout[data-subtype="note" i] .callout-info,
@@ -302,7 +318,7 @@ export function generateCalloutStylesV2(
 
 /* === Tip —— 绿色系 === */
 .protyle-wysiwyg .callout[data-subtype="tip" i] {
-    border-left: 0.25em solid #238636 !important;
+    border-left: 3px solid #238636 !important;
     background-color: rgba(238, 250, 240, 0.8) !important;
 }
 .protyle-wysiwyg .callout[data-subtype="tip" i] .callout-info {
@@ -311,7 +327,7 @@ export function generateCalloutStylesV2(
 
 /* === IMPORTANT —— 全新紫色系 (#9E75E7) === */
 .protyle-wysiwyg .callout[data-subtype="important" i] {
-    border-left: 0.25em solid #9E75E7 !important;
+    border-left: 3px solid #9E75E7 !important;
     background-color: rgba(158, 117, 231, 0.12) !important;
 }
 .protyle-wysiwyg .callout[data-subtype="important" i] .callout-info {
@@ -320,7 +336,7 @@ export function generateCalloutStylesV2(
 
 /* === Warning —— 橙色系 === */
 .protyle-wysiwyg .callout[data-subtype="warning" i] {
-    border-left: 0.25em solid #e3b341 !important;
+    border-left: 3px solid #e3b341 !important;
     background-color: rgba(255, 250, 235, 0.8) !important;
 }
 .protyle-wysiwyg .callout[data-subtype="warning" i] .callout-info {
@@ -329,7 +345,7 @@ export function generateCalloutStylesV2(
 
 /* === Caution —— 红色系 === */
 .protyle-wysiwyg .callout[data-subtype="caution" i] {
-    border-left: 0.25em solid #d1242f !important;
+    border-left: 3px solid #d1242f !important;
     background-color: rgba(255, 240, 240, 0.8) !important;
 }
 .protyle-wysiwyg .callout[data-subtype="caution" i] .callout-info {
@@ -353,7 +369,7 @@ export function generateCalloutStylesV2(
         const calloutInfoSel = aliases.map(a => `.protyle-wysiwyg .callout[data-subtype="${a}" i] .callout-info`).join(',\n');
         styles.push(`
 ${calloutSel} {
-    border-left: 0.25em solid ${config.borderColor} !important;
+    border-left: 3px solid ${config.borderColor} !important;
     background: ${config.bgGradient} !important;
 }
 ${calloutInfoSel} {
