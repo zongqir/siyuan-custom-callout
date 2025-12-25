@@ -262,18 +262,30 @@ export function generateCalloutStylesV2(
 `);
 
     // ==================== 原生 callout 样式（基于 data-subtype） ====================
+    // 背景色适配主题：Craft 时使用纯色半透明填充，非 Craft 维持渐变/预设
+    const infoBg = theme.backgroundStyle === 'solid' ? hexToRgba('#1f6feb', 0.08) : 'rgba(247, 250, 255, 0.8)';
+    const tipBg  = theme.backgroundStyle === 'solid' ? hexToRgba('#238636', 0.08) : 'rgba(238, 250, 240, 0.8)';
+    const impBg  = theme.backgroundStyle === 'solid' ? hexToRgba('#9E75E7', 0.12) : 'rgba(158, 117, 231, 0.12)';
+    const warnBg = theme.backgroundStyle === 'solid' ? hexToRgba('#e3b341', 0.12) : 'rgba(255, 250, 235, 0.8)';
+    const cautBg = theme.backgroundStyle === 'solid' ? hexToRgba('#d1242f', 0.12) : 'rgba(255, 240, 240, 0.8)';
+
     styles.push(`
 /* === 通用 callout 样式 === */
 .callout {
     display: block;
-    border-radius: 6px;
-    padding: 12px 12px 12px !important;
+    border-radius: var(--callout-border-radius, 6px) !important;
+    padding: var(--callout-padding, 12px 12px) !important;
     margin: 8px 0;
     position: relative;
     background-color: white !important;
     color: var(--b3-theme-on-background);
     border-left: none !important;
-    box-shadow: none !important;
+    box-shadow: var(--callout-box-shadow, none) !important;
+    transition: var(--callout-transition, none) !important;
+}
+
+.callout:hover {
+    transform: var(--callout-hover-transform, none);
 }
 
 /* 原生 callout 标题图标容器（与 .callout-info 文本并排） */
@@ -308,8 +320,8 @@ export function generateCalloutStylesV2(
 /* === Note/Info —— 蓝色系 === */
 .protyle-wysiwyg .callout[data-subtype="note" i],
 .protyle-wysiwyg .callout[data-subtype="info" i] {
-    border-left: 3px solid #1f6feb !important;
-    background-color: rgba(247, 250, 255, 0.8) !important;
+    border-left: var(--callout-left-border-width, 3px) solid #1f6feb !important;
+    background: ${infoBg} !important;
 }
 .protyle-wysiwyg .callout[data-subtype="note" i] .callout-info,
 .protyle-wysiwyg .callout[data-subtype="info" i] .callout-info {
@@ -318,8 +330,8 @@ export function generateCalloutStylesV2(
 
 /* === Tip —— 绿色系 === */
 .protyle-wysiwyg .callout[data-subtype="tip" i] {
-    border-left: 3px solid #238636 !important;
-    background-color: rgba(238, 250, 240, 0.8) !important;
+    border-left: var(--callout-left-border-width, 3px) solid #238636 !important;
+    background: ${tipBg} !important;
 }
 .protyle-wysiwyg .callout[data-subtype="tip" i] .callout-info {
     color: #238636;
@@ -327,8 +339,8 @@ export function generateCalloutStylesV2(
 
 /* === IMPORTANT —— 全新紫色系 (#9E75E7) === */
 .protyle-wysiwyg .callout[data-subtype="important" i] {
-    border-left: 3px solid #9E75E7 !important;
-    background-color: rgba(158, 117, 231, 0.12) !important;
+    border-left: var(--callout-left-border-width, 3px) solid #9E75E7 !important;
+    background: ${impBg} !important;
 }
 .protyle-wysiwyg .callout[data-subtype="important" i] .callout-info {
     color: #9E75E7;
@@ -336,8 +348,8 @@ export function generateCalloutStylesV2(
 
 /* === Warning —— 橙色系 === */
 .protyle-wysiwyg .callout[data-subtype="warning" i] {
-    border-left: 3px solid #e3b341 !important;
-    background-color: rgba(255, 250, 235, 0.8) !important;
+    border-left: var(--callout-left-border-width, 3px) solid #e3b341 !important;
+    background: ${warnBg} !important;
 }
 .protyle-wysiwyg .callout[data-subtype="warning" i] .callout-info {
     color: #e3b341;
@@ -345,8 +357,8 @@ export function generateCalloutStylesV2(
 
 /* === Caution —— 红色系 === */
 .protyle-wysiwyg .callout[data-subtype="caution" i] {
-    border-left: 3px solid #d1242f !important;
-    background-color: rgba(255, 240, 240, 0.8) !important;
+    border-left: var(--callout-left-border-width, 3px) solid #d1242f !important;
+    background: ${cautBg} !important;
 }
 .protyle-wysiwyg .callout[data-subtype="caution" i] .callout-info {
     color: #d1242f;
@@ -367,10 +379,11 @@ export function generateCalloutStylesV2(
         if (config.displayName) aliases.push(config.displayName);
         const calloutSel = aliases.map(a => `.protyle-wysiwyg .callout[data-subtype="${a}" i]`).join(',\n');
         const calloutInfoSel = aliases.map(a => `.protyle-wysiwyg .callout[data-subtype="${a}" i] .callout-info`).join(',\n');
+        const bgValue = theme.backgroundStyle === 'solid' ? hexToRgba(config.color, 0.08) : config.bgGradient;
         styles.push(`
 ${calloutSel} {
-    border-left: 3px solid ${config.borderColor} !important;
-    background: ${config.bgGradient} !important;
+    border-left: var(--callout-left-border-width, 3px) solid ${config.borderColor} !important;
+    background: ${bgValue} !important;
 }
 ${calloutInfoSel} {
     color: ${config.color};
@@ -403,6 +416,29 @@ function calculateTitleMargin(padding: string): string {
 function calculateListIndent(padding: string): string {
     const paddingValue = parseInt(padding);
     return `${paddingValue}px`;
+}
+
+/**
+ * 将 HEX 颜色转换为带透明度的 rgba()
+ */
+function hexToRgba(hex: string, alpha: number): string {
+    if (!hex) return `rgba(0,0,0,${alpha})`;
+    let h = hex.trim();
+    if (h.startsWith('#')) h = h.slice(1);
+    if (h.length === 3) {
+        const r = parseInt(h[0] + h[0], 16);
+        const g = parseInt(h[1] + h[1], 16);
+        const b = parseInt(h[2] + h[2], 16);
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+    if (h.length === 6) {
+        const r = parseInt(h.substring(0, 2), 16);
+        const g = parseInt(h.substring(2, 4), 16);
+        const b = parseInt(h.substring(4, 6), 16);
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+    // 非标准 HEX，回退
+    return `rgba(0,0,0,${alpha})`;
 }
 
 /**

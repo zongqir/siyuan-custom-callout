@@ -139,7 +139,7 @@ export class CalloutManagerV2 {
         }
 
         const types = this.currentConfig ? ConfigManager.getAllTypes(this.currentConfig) : undefined;
-        const themeId = this.currentConfig?.themeId || 'modern';
+        const themeId = this.currentConfig?.themeId || 'craft';
         const themeOverrides = this.currentConfig?.themeOverrides;
 
         this.styleElement = document.createElement('style');
@@ -157,7 +157,7 @@ export class CalloutManagerV2 {
         if (!this.currentConfig) return;
 
         const types = ConfigManager.getAllTypes(this.currentConfig);
-        const themeId = this.currentConfig.themeId || 'modern';
+        const themeId = this.currentConfig.themeId || 'craft';
         const themeOverrides = this.currentConfig.themeOverrides;
 
         updateCalloutStyles('custom-callout-styles-v2', types, themeId, themeOverrides);
