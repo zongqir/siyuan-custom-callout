@@ -316,24 +316,47 @@ export function generateCalloutStylesV2(
 }
 
 /* 标题区域内透明折叠按钮 */
-.protyle-wysiwyg .callout .callout-info .callout-fold-toggle {
+.protyle-wysiwyg .callout .callout-fold-toggle {
     all: unset;
+    position: absolute;
+    right: 8px;
+    top: 6px;
     cursor: pointer;
-    margin-left: auto;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 20px;
-    height: 20px;
-    opacity: 0.55;
-    color: currentColor;
+    margin: 0;
+    display: grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    color: var(--b3-theme-on-background);
+    border-radius: 6px;
+    z-index: 2;
+    pointer-events: auto;
+    line-height: 0;
+    box-sizing: border-box;
 }
-.protyle-wysiwyg .callout:hover .callout-info .callout-fold-toggle,
-.protyle-wysiwyg .callout .callout-info .callout-fold-toggle:hover {
-    opacity: 0.9;
+.protyle-wysiwyg .callout .callout-fold-toggle::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: rgba(0, 0, 0, 0.08);
+    background: color-mix(in srgb, currentColor 18%, transparent);
 }
-.protyle-wysiwyg .callout .callout-info .callout-fold-toggle svg {
-    width: 16px; height: 16px;
+.protyle-wysiwyg .callout:hover .callout-fold-toggle::before,
+.protyle-wysiwyg .callout .callout-fold-toggle:hover::before {
+    background: rgba(0, 0, 0, 0.12);
+    background: color-mix(in srgb, currentColor 28%, transparent);
+}
+.protyle-wysiwyg .callout .callout-fold-toggle svg {
+    width: 12px; height: 12px;
+    display: block;
+    position: relative;
+    z-index: 1;
+}
+
+/* 微调：折叠态下的箭头在部分缩放/DPI 下会出现 0.5px 视觉偏移，这里做轻微补偿 */
+.protyle-wysiwyg .callout .callout-fold-toggle[data-folded="1"] svg {
+    transform: translateY(0.5px);
 }
 
 /* 标题内部子元素遵循各自默认间距（不再强行清零），以获得更自然的视觉节奏 */

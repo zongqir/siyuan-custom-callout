@@ -54,7 +54,6 @@ export class CalloutProcessorV2 {
             if (!callout) return;
 
             const info = callout.querySelector('.callout-info') as HTMLElement | null;
-            if (!info) return;
 
             // 解析原生 data-subtype，并通过别名索引解析到配置
             let subtypeRaw = callout.getAttribute('data-subtype') || '';
@@ -90,31 +89,32 @@ export class CalloutProcessorV2 {
             const info = callout.querySelector('.callout-info') as HTMLElement | null;
             if (!info) return;
 
-            const bq = blockquote.classList.contains('bq')
-                ? blockquote
-                : (callout.closest('.bq[data-node-id]') as HTMLElement | null);
-            if (!bq) return;
+            const owner = (blockquote.getAttribute('data-node-id') ? blockquote
+                : (callout.getAttribute('data-node-id') ? callout
+                : (callout.closest('.bq[data-node-id]') as HTMLElement | null)));
+            if (!owner) return;
 
-            const nodeId = bq.getAttribute('data-node-id');
+            const nodeId = owner.getAttribute('data-node-id');
             if (!nodeId) return;
 
-            let btn = info.querySelector('.callout-fold-toggle') as HTMLButtonElement | null;
+            let btn = callout.querySelector('.callout-fold-toggle') as HTMLButtonElement | null;
             if (!btn) {
                 btn = document.createElement('button');
                 btn.className = 'callout-fold-toggle';
                 btn.type = 'button';
                 btn.setAttribute('aria-label', '折叠/展开');
                 btn.setAttribute('title', '折叠/展开');
-                info.appendChild(btn);
+                callout.appendChild(btn);
             }
 
-            const isFolded = bq.getAttribute('fold') === '1';
-            const svgExpand = '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M8 11l-5-5h10z"/></svg>';
-            const svgCollapse = '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M8 5l-5 5h10z"/></svg>';
+            const isFolded = owner.getAttribute('fold') === '1';
+            const svgExpand = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+            const svgCollapse = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 14l5-5 5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
             const desired = isFolded ? svgExpand : svgCollapse;
             if ((btn.innerHTML || '').trim() !== desired) {
                 btn.innerHTML = desired;
             }
+            btn.setAttribute('data-folded', isFolded ? '1' : '0');
 
             const boundId = btn.getAttribute('data-node-id');
             if (boundId !== nodeId) {
@@ -125,7 +125,7 @@ export class CalloutProcessorV2 {
                     if (btn!.getAttribute('data-busy') === '1') return;
                     btn!.setAttribute('data-busy', '1');
                     try {
-                        const foldedNow = bq.getAttribute('fold') === '1';
+                        const foldedNow = owner.getAttribute('fold') === '1';
                         if (foldedNow) {
                             await unfoldBlock(nodeId as any);
                         } else {
