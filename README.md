@@ -8,11 +8,6 @@ A clean and elegant SiYuan plugin that renders ordinary blockquotes as beautiful
 
 ---
 
-## ✅ Requirements
-
-- SiYuan >= 3.5.0
-- Plugin >= 3.0.0 (this document)
-
 ## 💡 Core Features
 
 - 🧭 **Sidebar Outline** - Quickly scan key callouts in the current document
@@ -23,6 +18,14 @@ A clean and elegant SiYuan plugin that renders ordinary blockquotes as beautiful
 
 - Type `>` + `space` to create a blockquote, then type to filter the callout menu
 - Or type `[!type] Title` then `Enter`; the plugin parses text and formats natively
+
+---
+
+## 💖 Sponsor
+
+<div align="center">
+<img src="https://i0.hdslb.com/bfs/openplatform/3b4d37a5285096d3493d09ca88280d9acf90129e.png@1e_1c.webp" width="200" alt="Support QR Code"/>
+</div>
 
 ---
 
