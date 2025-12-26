@@ -812,6 +812,11 @@
         overflow: hidden;
     }
 
+    /* 隐藏大纲卡片中的折叠指示小箭头 */
+    .callout-outline-dock .collapse-indicator {
+        display: none !important;
+    }
+
     .callout-outline-header {
         display: flex;
         align-items: center;
