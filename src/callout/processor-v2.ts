@@ -1,5 +1,5 @@
 import { DEFAULT_CALLOUT_TYPES, CalloutTypeConfig, FIXED_CALLOUT_SVG } from './types';
-import { appendBlock, foldBlock, unfoldBlock } from '../api';
+import { appendBlock, foldBlock, unfoldBlock, deleteBlock } from '../api';
 import { logger } from '../libs/logger';
 
 /**
@@ -22,6 +22,8 @@ export class CalloutProcessorV2 {
     private isInitialLoad: boolean = true;
     private processingNow: WeakSet<HTMLElement> = new WeakSet();
     private aliasIndex: Map<string, CalloutTypeConfig> = new Map();
+    private overlayButtons: Map<string, HTMLButtonElement> = new Map();
+    private overlayStates: Map<string, { overCallout: boolean; overBtn: boolean; hideTimer: number | null }> = new Map();
     
     // 新建 blockquote 自动显示菜单的回调
     public onNewBlockquoteCreated: ((blockquote: HTMLElement) => void) | null = null;
@@ -52,17 +54,15 @@ export class CalloutProcessorV2 {
                 ? blockquote
                 : (blockquote.querySelector('.callout') as HTMLElement | null);
             if (!callout) return;
-
             const info = callout.querySelector('.callout-info') as HTMLElement | null;
+            if (!info) return;
 
             // 解析原生 data-subtype，并通过别名索引解析到配置
             let subtypeRaw = callout.getAttribute('data-subtype') || '';
             const subtype = this.normalizeAlias(subtypeRaw);
             const mapped = subtype === 'note' ? 'info' : subtype; // 原生 note 归并为 info
             const cfg = this.getConfigBySubtype(mapped);
-
-            // 优先使用配置图标，否则按原生类型提供 fallback
-            const desiredIcon = (cfg && cfg.icon) ? cfg.icon : (this.getFallbackIconFor(mapped) || FIXED_CALLOUT_SVG);
+            const svg = (cfg && cfg.icon) ? cfg.icon : FIXED_CALLOUT_SVG;
 
             let icon = info.querySelector('.callout-icon') as HTMLElement | null;
             if (!icon) {
@@ -71,10 +71,22 @@ export class CalloutProcessorV2 {
                 info.insertBefore(icon, info.firstChild);
             }
 
-            // 仅当不同才更新，避免不必要的 DOM 变化
-            const current = (icon.innerHTML || '').trim();
-            if (current !== desiredIcon.trim()) {
-                icon.innerHTML = desiredIcon;
+            const current = (icon.textContent || '').trim();
+            if (!current && !icon.getAttribute('data-mask-icon')) {
+                icon.textContent = '';
+                const url = this.svgToDataUrl(svg);
+                if (url) {
+                    (icon.style as any).webkitMaskImage = url;
+                    (icon.style as any).maskImage = url;
+                    (icon.style as any).webkitMaskRepeat = 'no-repeat';
+                    (icon.style as any).maskRepeat = 'no-repeat';
+                    (icon.style as any).webkitMaskSize = 'contain';
+                    (icon.style as any).maskSize = 'contain';
+                    (icon.style as any).webkitMaskPosition = 'center';
+                    (icon.style as any).maskPosition = 'center';
+                    icon.style.backgroundColor = 'currentColor';
+                    icon.setAttribute('data-mask-icon', '1');
+                }
             }
         } catch {}
     }
@@ -97,33 +109,29 @@ export class CalloutProcessorV2 {
             const nodeId = owner.getAttribute('data-node-id');
             if (!nodeId) return;
 
-            let btn = callout.querySelector('.callout-fold-toggle') as HTMLButtonElement | null;
-            if (!btn) {
-                btn = document.createElement('button');
-                btn.className = 'callout-fold-toggle';
-                btn.type = 'button';
-                btn.setAttribute('aria-label', '折叠/展开');
-                btn.setAttribute('title', '折叠/展开');
-                callout.appendChild(btn);
-            }
-
+            const btn = this.getOrCreateOverlayButton(nodeId);
             const isFolded = owner.getAttribute('fold') === '1';
             const svgExpand = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
             const svgCollapse = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 14l5-5 5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
             const desired = isFolded ? svgExpand : svgCollapse;
             if ((btn.innerHTML || '').trim() !== desired) {
                 btn.innerHTML = desired;
+                const svgEl = btn.querySelector('svg') as SVGElement | null;
+                if (svgEl) {
+                    (svgEl.style as any).width = '12px';
+                    (svgEl.style as any).height = '12px';
+                    (svgEl.style as any).display = 'block';
+                }
             }
             btn.setAttribute('data-folded', isFolded ? '1' : '0');
-
-            const boundId = btn.getAttribute('data-node-id');
-            if (boundId !== nodeId) {
-                btn.setAttribute('data-node-id', nodeId);
+            btn.setAttribute('data-node-id', nodeId);
+            if (!btn.getAttribute('data-bound')) {
+                btn.setAttribute('data-bound', '1');
                 btn.onclick = async (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    if (btn!.getAttribute('data-busy') === '1') return;
-                    btn!.setAttribute('data-busy', '1');
+                    if (btn.getAttribute('data-busy') === '1') return;
+                    btn.setAttribute('data-busy', '1');
                     try {
                         const foldedNow = owner.getAttribute('fold') === '1';
                         if (foldedNow) {
@@ -132,9 +140,112 @@ export class CalloutProcessorV2 {
                             await foldBlock(nodeId as any);
                         }
                     } catch {}
-                    btn!.removeAttribute('data-busy');
+                    btn.removeAttribute('data-busy');
                 };
             }
+
+            // 以标题区域 .callout-info 为锚点，垂直居中对齐
+            const infoRect = info.getBoundingClientRect();
+            btn.style.position = 'fixed';
+            btn.style.left = `${Math.max(0, infoRect.right - 30)}px`;
+            btn.style.top = `${Math.max(0, Math.round(infoRect.top + Math.max(0, (infoRect.height - 22) / 2)))}px`;
+            btn.style.width = '22px';
+            btn.style.height = '22px';
+            btn.style.zIndex = '2147483647';
+            btn.style.display = 'grid';
+            btn.style.opacity = '0';
+            btn.style.pointerEvents = 'none';
+            btn.style.lineHeight = '0';
+            btn.style.borderRadius = '6px';
+            btn.style.alignItems = 'center';
+            (btn.style as any).justifyItems = 'center';
+            btn.style.justifyContent = 'center';
+            btn.style.color = getComputedStyle(callout).color || 'var(--b3-theme-on-background)';
+            btn.style.border = 'none';
+            btn.style.boxShadow = 'none';
+            // subtle transparent background; will increase on hover
+            ;(btn.style as any).background = 'color-mix(in srgb, currentColor 16%, transparent)';
+            btn.style.transition = 'background 120ms ease, opacity 120ms ease';
+
+            if (!callout.getAttribute('data-overlay-bound')) {
+                callout.setAttribute('data-overlay-bound', '1');
+                callout.addEventListener('pointerenter', (ev: PointerEvent) => {
+                    const state = this.ensureOverlayState(nodeId);
+                    state.overCallout = true;
+                    if (state.hideTimer) { clearTimeout(state.hideTimer); state.hideTimer = null; }
+                    const r = info.getBoundingClientRect();
+                    btn.style.left = `${Math.max(0, r.right - 30)}px`;
+                    btn.style.top = `${Math.max(0, Math.round(r.top + Math.max(0, (r.height - 22) / 2)))}px`;
+                    if (this.isInHotZone(callout, info, ev.clientX, ev.clientY)) {
+                        btn.style.opacity = '1';
+                        btn.style.pointerEvents = 'auto';
+                    } else {
+                        btn.style.opacity = '0';
+                        btn.style.pointerEvents = 'none';
+                    }
+                }, true);
+                // 根据指针位置动态判定“靠近右上角”
+                callout.addEventListener('pointermove', (ev: PointerEvent) => {
+                    const state = this.ensureOverlayState(nodeId);
+                    const ir = info.getBoundingClientRect();
+                    btn.style.left = `${Math.max(0, ir.right - 30)}px`;
+                    btn.style.top = `${Math.max(0, Math.round(ir.top + Math.max(0, (ir.height - 22) / 2)))}px`;
+                    if (this.isInHotZone(callout, info, ev.clientX, ev.clientY)) {
+                        if (state.hideTimer) { clearTimeout(state.hideTimer); state.hideTimer = null; }
+                        btn.style.opacity = '1';
+                        btn.style.pointerEvents = 'auto';
+                    } else if (!state.overBtn) {
+                        // 不在热区且不在按钮上，开始延时隐藏（3s）
+                        if (!state.hideTimer) {
+                            state.hideTimer = window.setTimeout(() => {
+                                btn.style.opacity = '0';
+                                btn.style.pointerEvents = 'none';
+                                state.hideTimer = null;
+                            }, 3000);
+                        }
+                    }
+                }, true);
+                callout.addEventListener('pointerleave', (ev: PointerEvent) => {
+                    const state = this.ensureOverlayState(nodeId);
+                    state.overCallout = false;
+                    // 若鼠标已处于按钮区域，不隐藏
+                    const bx = ev.clientX, by = ev.clientY;
+                    const br = btn.getBoundingClientRect();
+                    const inBtn = bx >= br.left && bx <= br.right && by >= br.top && by <= br.bottom;
+                    if (inBtn) {
+                        state.overBtn = true;
+                        btn.style.opacity = '1';
+                        btn.style.pointerEvents = 'auto';
+                        return;
+                    }
+                    if (!state.overBtn) {
+                        state.hideTimer = window.setTimeout(() => {
+                            btn.style.opacity = '0';
+                            btn.style.pointerEvents = 'none';
+                            state.hideTimer = null;
+                        }, 3000);
+                    }
+                }, true);
+            }
+
+            const inlineBtns = callout.querySelectorAll('.callout-fold-toggle:not([data-overlay="1"])');
+            inlineBtns.forEach(el => (el as HTMLElement).remove());
+
+            // 清理历史遗留：正文中被注入并持久化的 HTMLBlock（包含 callout-fold-toggle）
+            const htmlBlocks = callout.querySelectorAll('.render-node[data-type="NodeHTMLBlock"]') as NodeListOf<HTMLElement>;
+            htmlBlocks.forEach(async (blockEl) => {
+                try {
+                    const placeholder = blockEl.querySelector('protyle-html') as HTMLElement | null;
+                    const raw = placeholder?.getAttribute('data-content') || '';
+                    if (raw.includes('callout-fold-toggle')) {
+                        const badId = blockEl.getAttribute('data-node-id');
+                        blockEl.remove();
+                        if (badId) {
+                            await deleteBlock(badId as any);
+                        }
+                    }
+                } catch {}
+            });
         } catch {}
     }
 
@@ -187,6 +298,87 @@ export class CalloutProcessorV2 {
                 return FIXED_CALLOUT_SVG;
         }
     }
+
+    private svgToDataUrl(svg: string): string {
+        try {
+            const encoded = encodeURIComponent(svg).replace(/'/g, '%27').replace(/"/g, '%22');
+            return `url("data:image/svg+xml,${encoded}")`;
+        } catch {
+            return '';
+        }
+    }
+
+    private getOrCreateOverlayButton(nodeId: string): HTMLButtonElement {
+        let btn = this.overlayButtons.get(nodeId) as HTMLButtonElement | undefined;
+        if (!btn) {
+            btn = document.createElement('button');
+            btn.className = 'callout-fold-toggle';
+            btn.type = 'button';
+            btn.setAttribute('aria-label', '折叠/展开');
+            btn.setAttribute('title', '折叠/展开');
+            btn.setAttribute('data-overlay', '1');
+            document.body.appendChild(btn);
+            this.overlayButtons.set(nodeId, btn);
+        }
+        if (!btn.getAttribute('data-hover-bound')) {
+            btn.setAttribute('data-hover-bound', '1');
+            btn.addEventListener('pointerenter', () => {
+                const state = this.ensureOverlayState(nodeId);
+                state.overBtn = true;
+                if (state.hideTimer) { clearTimeout(state.hideTimer); state.hideTimer = null; }
+                // stronger background on hover
+                ;(btn!.style as any).background = 'color-mix(in srgb, currentColor 26%, transparent)';
+                // reposition in case of scroll while hidden
+                const owner = document.querySelector(`[data-node-id="${nodeId}"]`) as HTMLElement | null;
+                const callout = owner?.classList?.contains('callout') ? owner : owner?.querySelector?.('.callout');
+                if (callout) {
+                    const info = (callout as HTMLElement).querySelector('.callout-info') as HTMLElement | null;
+                    const r = (info || callout as HTMLElement).getBoundingClientRect();
+                    btn!.style.left = `${Math.max(0, r.right - 30)}px`;
+                    btn!.style.top = `${Math.max(0, Math.round(r.top + Math.max(0, (r.height - 22) / 2)))}px`;
+                }
+                btn!.style.opacity = '1';
+                btn!.style.pointerEvents = 'auto';
+            }, true);
+            btn.addEventListener('pointerleave', () => {
+                const state = this.ensureOverlayState(nodeId);
+                state.overBtn = false;
+                ;(btn!.style as any).background = 'color-mix(in srgb, currentColor 16%, transparent)';
+                if (!state.overCallout) {
+                    state.hideTimer = window.setTimeout(() => {
+                        btn!.style.opacity = '0';
+                        btn!.style.pointerEvents = 'none';
+                        state.hideTimer = null;
+                    }, 220);
+                }
+            }, true);
+        }
+        return btn;
+    }
+
+    // 判定指针是否在“靠近右上角”的较大热区内
+    private isInHotZone(callout: HTMLElement, info: HTMLElement, x: number, y: number): boolean {
+        try {
+            const cr = callout.getBoundingClientRect();
+            const ir = info.getBoundingClientRect();
+            const zoneRight = Math.max(ir.right, cr.right);
+            const zoneLeft = zoneRight - 80; // 横向 80px 范围
+            const zoneTop = Math.min(ir.top, cr.top) - 6; // 上方留 6px 缓冲
+            const zoneBottom = ir.top + Math.max(40, ir.height + 12); // 至少 40px 高度
+            return x >= zoneLeft && x <= zoneRight + 8 && y >= zoneTop && y <= zoneBottom;
+        } catch {
+            return false;
+        }
+    }
+    private ensureOverlayState(nodeId: string) {
+        let st = this.overlayStates.get(nodeId);
+        if (!st) {
+            st = { overCallout: false, overBtn: false, hideTimer: null };
+            this.overlayStates.set(nodeId, st);
+        }
+        return st;
+    }
+
 
     /**
      * 更新 Callout 类型配置
