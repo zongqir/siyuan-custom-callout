@@ -169,20 +169,17 @@ export class CalloutProcessorV2 {
 
             if (!callout.getAttribute('data-overlay-bound')) {
                 callout.setAttribute('data-overlay-bound', '1');
-                callout.addEventListener('pointerenter', (ev: PointerEvent) => {
+                callout.addEventListener('pointerenter', (_ev: PointerEvent) => {
                     const state = this.ensureOverlayState(nodeId);
                     state.overCallout = true;
                     if (state.hideTimer) { clearTimeout(state.hideTimer); state.hideTimer = null; }
                     const r = info.getBoundingClientRect();
                     btn.style.left = `${Math.max(0, r.right - 30)}px`;
                     btn.style.top = `${Math.max(0, Math.round(r.top + Math.max(0, (r.height - 22) / 2)))}px`;
-                    if (this.isInHotZone(callout, info, ev.clientX, ev.clientY)) {
-                        btn.style.opacity = '1';
-                        btn.style.pointerEvents = 'auto';
-                    } else {
-                        btn.style.opacity = '0';
-                        btn.style.pointerEvents = 'none';
-                    }
+                    // 只显示当前这一个覆盖按钮
+                    this.hideAllOverlaysExcept(nodeId);
+                    btn.style.opacity = '1';
+                    btn.style.pointerEvents = 'auto';
                 }, true);
                 // 根据指针位置动态判定“靠近右上角”
                 callout.addEventListener('pointermove', (ev: PointerEvent) => {
@@ -190,19 +187,17 @@ export class CalloutProcessorV2 {
                     const ir = info.getBoundingClientRect();
                     btn.style.left = `${Math.max(0, ir.right - 30)}px`;
                     btn.style.top = `${Math.max(0, Math.round(ir.top + Math.max(0, (ir.height - 22) / 2)))}px`;
+                    // 在 callout 内移动：始终保持可见，取消隐藏计时
+                    if (state.hideTimer) { clearTimeout(state.hideTimer); state.hideTimer = null; }
+                    btn.style.opacity = '1';
+                    btn.style.pointerEvents = 'auto';
+                    // 保证同一时间只显示一个
+                    this.hideAllOverlaysExcept(nodeId);
+                    // 仅用于视觉强调：热区内加深背景，非热区恢复
                     if (this.isInHotZone(callout, info, ev.clientX, ev.clientY)) {
-                        if (state.hideTimer) { clearTimeout(state.hideTimer); state.hideTimer = null; }
-                        btn.style.opacity = '1';
-                        btn.style.pointerEvents = 'auto';
-                    } else if (!state.overBtn) {
-                        // 不在热区且不在按钮上，开始延时隐藏（3s）
-                        if (!state.hideTimer) {
-                            state.hideTimer = window.setTimeout(() => {
-                                btn.style.opacity = '0';
-                                btn.style.pointerEvents = 'none';
-                                state.hideTimer = null;
-                            }, 3000);
-                        }
+                        (btn!.style as any).background = 'color-mix(in srgb, currentColor 26%, transparent)';
+                    } else {
+                        (btn!.style as any).background = 'color-mix(in srgb, currentColor 16%, transparent)';
                     }
                 }, true);
                 callout.addEventListener('pointerleave', (ev: PointerEvent) => {
@@ -211,7 +206,8 @@ export class CalloutProcessorV2 {
                     // 若鼠标已处于按钮区域，不隐藏
                     const bx = ev.clientX, by = ev.clientY;
                     const br = btn.getBoundingClientRect();
-                    const inBtn = bx >= br.left && bx <= br.right && by >= br.top && by <= br.bottom;
+                    const margin = 6;
+                    const inBtn = bx >= br.left - margin && bx <= br.right + margin && by >= br.top - margin && by <= br.bottom + margin;
                     if (inBtn) {
                         state.overBtn = true;
                         btn.style.opacity = '1';
@@ -219,11 +215,9 @@ export class CalloutProcessorV2 {
                         return;
                     }
                     if (!state.overBtn) {
-                        state.hideTimer = window.setTimeout(() => {
-                            btn.style.opacity = '0';
-                            btn.style.pointerEvents = 'none';
-                            state.hideTimer = null;
-                        }, 3000);
+                        btn.style.opacity = '0';
+                        btn.style.pointerEvents = 'none';
+                        state.hideTimer = null;
                     }
                 }, true);
             }
@@ -337,6 +331,8 @@ export class CalloutProcessorV2 {
                     btn!.style.left = `${Math.max(0, r.right - 30)}px`;
                     btn!.style.top = `${Math.max(0, Math.round(r.top + Math.max(0, (r.height - 22) / 2)))}px`;
                 }
+                // 只显示当前这一个覆盖按钮
+                this.hideAllOverlaysExcept(nodeId);
                 btn!.style.opacity = '1';
                 btn!.style.pointerEvents = 'auto';
             }, true);
@@ -345,11 +341,9 @@ export class CalloutProcessorV2 {
                 state.overBtn = false;
                 ;(btn!.style as any).background = 'color-mix(in srgb, currentColor 16%, transparent)';
                 if (!state.overCallout) {
-                    state.hideTimer = window.setTimeout(() => {
-                        btn!.style.opacity = '0';
-                        btn!.style.pointerEvents = 'none';
-                        state.hideTimer = null;
-                    }, 220);
+                    btn!.style.opacity = '0';
+                    btn!.style.pointerEvents = 'none';
+                    state.hideTimer = null;
                 }
             }, true);
         }
@@ -377,6 +371,24 @@ export class CalloutProcessorV2 {
             this.overlayStates.set(nodeId, st);
         }
         return st;
+    }
+
+    // 同时只显示一个覆盖按钮：隐藏其他所有 overlay 按钮
+    private hideAllOverlaysExcept(currentId: string) {
+        try {
+            this.overlayButtons.forEach((button, key) => {
+                if (key !== currentId) {
+                    button.style.opacity = '0';
+                    button.style.pointerEvents = 'none';
+                    const st = this.overlayStates.get(key);
+                    if (st) {
+                        st.overBtn = false;
+                        st.overCallout = false;
+                        if (st.hideTimer) { clearTimeout(st.hideTimer); st.hideTimer = null; }
+                    }
+                }
+            });
+        } catch {}
     }
 
 
