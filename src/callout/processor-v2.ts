@@ -26,6 +26,9 @@ export class CalloutProcessorV2 {
     private overlayStates: Map<string, { overCallout: boolean; overBtn: boolean; hideTimer: number | null }> = new Map();
     private overlayPositions: Map<string, { l: number; t: number; raf: number | null }> = new Map();
     private scrollResizeBound: boolean = false;
+    private overlayObservers: Map<string, IntersectionObserver> = new Map();
+    private processQueue: Set<HTMLElement> = new Set();
+    private processQueueRaf: number | null = null;
     private onScrollResize = () => {
         try {
             this.overlayButtons.forEach((btn, nodeId) => {
@@ -243,9 +246,15 @@ export class CalloutProcessorV2 {
             btn.style.color = getComputedStyle(callout).color || 'var(--b3-theme-on-background)';
             btn.style.border = 'none';
             btn.style.boxShadow = 'none';
-            // subtle transparent background; will increase on hover
-            ;(btn.style as any).background = 'color-mix(in srgb, currentColor 16%, transparent)';
-            btn.style.transition = 'background 120ms ease, opacity 120ms ease';
+            // subtle transparent background with fallback; will increase on hover
+            this.setBtnBackground(btn, false);
+            try {
+                const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                btn.style.transition = reduce ? 'none' : 'background 120ms ease, opacity 120ms ease';
+            } catch { btn.style.transition = 'background 120ms ease, opacity 120ms ease'; }
+
+            // 离屏可见性观察（不可见时自动隐藏）
+            this.ensureVisibilityObserver(nodeId, info, btn);
 
             if (!callout.getAttribute('data-overlay-bound')) {
                 callout.setAttribute('data-overlay-bound', '1');
@@ -256,8 +265,7 @@ export class CalloutProcessorV2 {
                     this.schedulePosition(nodeId, info, btn);
                     // 只显示当前这一个覆盖按钮
                     this.hideAllOverlaysExcept(nodeId);
-                    btn.style.opacity = '1';
-                    btn.style.pointerEvents = 'auto';
+                    this.setBtnVisible(btn, true);
                 }, true);
                 // 根据指针位置动态判定“靠近右上角”
                 callout.addEventListener('pointermove', (ev: PointerEvent) => {
@@ -265,16 +273,11 @@ export class CalloutProcessorV2 {
                     this.schedulePosition(nodeId, info, btn);
                     // 在 callout 内移动：始终保持可见，取消隐藏计时
                     if (state.hideTimer) { clearTimeout(state.hideTimer); state.hideTimer = null; }
-                    btn.style.opacity = '1';
-                    btn.style.pointerEvents = 'auto';
+                    this.setBtnVisible(btn, true);
                     // 保证同一时间只显示一个
                     this.hideAllOverlaysExcept(nodeId);
                     // 仅用于视觉强调：热区内加深背景，非热区恢复
-                    if (this.isInHotZone(callout, info, ev.clientX, ev.clientY)) {
-                        (btn!.style as any).background = 'color-mix(in srgb, currentColor 26%, transparent)';
-                    } else {
-                        (btn!.style as any).background = 'color-mix(in srgb, currentColor 16%, transparent)';
-                    }
+                    this.setBtnBackground(btn, this.isInHotZone(callout, info, ev.clientX, ev.clientY));
                 }, true);
                 callout.addEventListener('pointerleave', (ev: PointerEvent) => {
                     const state = this.ensureOverlayState(nodeId);
@@ -286,13 +289,11 @@ export class CalloutProcessorV2 {
                     const inBtn = bx >= br.left - margin && bx <= br.right + margin && by >= br.top - margin && by <= br.bottom + margin;
                     if (inBtn) {
                         state.overBtn = true;
-                        btn.style.opacity = '1';
-                        btn.style.pointerEvents = 'auto';
+                        this.setBtnVisible(btn, true);
                         return;
                     }
                     if (!state.overBtn) {
-                        btn.style.opacity = '0';
-                        btn.style.pointerEvents = 'none';
+                        this.setBtnVisible(btn, false);
                         state.hideTimer = null;
                     }
                 }, true);
@@ -379,7 +380,7 @@ export class CalloutProcessorV2 {
                 state.overBtn = true;
                 if (state.hideTimer) { clearTimeout(state.hideTimer); state.hideTimer = null; }
                 // stronger background on hover
-                ;(btn!.style as any).background = 'color-mix(in srgb, currentColor 26%, transparent)';
+                this.setBtnBackground(btn, true);
                 // reposition in case of scroll while hidden
                 const owner = document.querySelector(`[data-node-id="${nodeId}"]`) as HTMLElement | null;
                 const callout = owner?.classList?.contains('callout') ? owner : owner?.querySelector?.('.callout');
@@ -391,16 +392,14 @@ export class CalloutProcessorV2 {
                 }
                 // 只显示当前这一个覆盖按钮
                 this.hideAllOverlaysExcept(nodeId);
-                btn!.style.opacity = '1';
-                btn!.style.pointerEvents = 'auto';
+                this.setBtnVisible(btn, true);
             }, true);
             btn.addEventListener('pointerleave', () => {
                 const state = this.ensureOverlayState(nodeId);
                 state.overBtn = false;
-                ;(btn!.style as any).background = 'color-mix(in srgb, currentColor 16%, transparent)';
+                this.setBtnBackground(btn, false);
                 if (!state.overCallout) {
-                    btn!.style.opacity = '0';
-                    btn!.style.pointerEvents = 'none';
+                    this.setBtnVisible(btn, false);
                     state.hideTimer = null;
                 }
             }, true);
@@ -440,6 +439,8 @@ export class CalloutProcessorV2 {
                 this.overlayButtons.delete(nodeId);
             }
             this.overlayStates.delete(nodeId);
+            const obs = this.overlayObservers.get(nodeId);
+            if (obs) { try { obs.disconnect(); } catch {} this.overlayObservers.delete(nodeId); }
             const pos = this.overlayPositions.get(nodeId);
             if (pos && pos.raf != null) {
                 try { cancelAnimationFrame(pos.raf); } catch {}
@@ -476,14 +477,77 @@ export class CalloutProcessorV2 {
         try {
             this.overlayButtons.forEach((button, key) => {
                 if (key !== currentId) {
-                    button.style.opacity = '0';
-                    button.style.pointerEvents = 'none';
+                    this.setBtnVisible(button, false);
                     const st = this.overlayStates.get(key);
                     if (st) {
                         st.overBtn = false;
                         st.overCallout = false;
                         if (st.hideTimer) { clearTimeout(st.hideTimer); st.hideTimer = null; }
                     }
+                }
+            });
+        } catch {}
+    }
+
+    private setBtnVisible(btn: HTMLButtonElement, visible: boolean) {
+        try {
+            const cur = btn.getAttribute('data-visible') === '1';
+            if (cur === visible) return;
+            if (visible) {
+                btn.style.opacity = '1';
+                btn.style.pointerEvents = 'auto';
+                btn.setAttribute('data-visible', '1');
+            } else {
+                btn.style.opacity = '0';
+                btn.style.pointerEvents = 'none';
+                btn.setAttribute('data-visible', '0');
+            }
+        } catch {}
+    }
+
+    private setBtnBackground(btn: HTMLButtonElement, strong: boolean) {
+        try {
+            const target = strong ? '26' : '16';
+            if (btn.getAttribute('data-bg') === target) return;
+            // fallback first for browsers without color-mix
+            btn.style.background = strong ? 'rgba(0,0,0,0.14)' : 'rgba(0,0,0,0.10)';
+            (btn.style as any).background = `color-mix(in srgb, currentColor ${target}%, transparent)`;
+            btn.setAttribute('data-bg', target);
+        } catch {}
+    }
+
+    private ensureVisibilityObserver(nodeId: string, info: HTMLElement, btn: HTMLButtonElement) {
+        if (this.overlayObservers.has(nodeId)) return;
+        try {
+            const io = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.target !== info) return;
+                    if (!entry.isIntersecting) {
+                        const st = this.overlayStates.get(nodeId);
+                        if (!st || (!st.overBtn && !st.overCallout)) {
+                            this.setBtnVisible(btn, false);
+                        }
+                    }
+                });
+            }, { root: null, threshold: 0 });
+            io.observe(info);
+            this.overlayObservers.set(nodeId, io);
+        } catch {}
+    }
+
+    private enqueueProcess(el: HTMLElement) {
+        try {
+            this.processQueue.add(el);
+            if (this.processQueueRaf != null) return;
+            this.processQueueRaf = requestAnimationFrame(() => {
+                try {
+                    const list = Array.from(this.processQueue);
+                    this.processQueue.clear();
+                    list.forEach(node => {
+                        try { this.processBlockquote(node); } catch {}
+                    });
+                } finally {
+                    this.processQueueRaf = null;
                 }
             });
         } catch {}
@@ -608,7 +672,7 @@ export class CalloutProcessorV2 {
                         while (el && el !== document.body) {
                             if (el.classList?.contains('bq') || el.classList?.contains('callout')) {
                                 const bq = el.classList.contains('bq') ? el : (el.closest('.bq[data-node-id]') as HTMLElement | null);
-                                if (bq) this.processBlockquote(bq);
+                                if (bq) this.enqueueProcess(bq);
                                 break;
                             }
                             el = el.parentElement;
@@ -639,7 +703,7 @@ export class CalloutProcessorV2 {
                     const element = mutation.target as HTMLElement;
                     if (element.classList?.contains('bq') || element.classList?.contains('callout')) {
                         const target = element.classList.contains('bq') ? element : element;
-                        this.processBlockquote(target);
+                        this.enqueueProcess(target);
                     }
                 }
 
@@ -649,11 +713,11 @@ export class CalloutProcessorV2 {
                     let el: HTMLElement | null = (node as any).parentElement || null;
                     while (el && el !== document.body) {
                         if (el.classList?.contains('bq')) {
-                            this.processBlockquote(el);
+                            this.enqueueProcess(el);
                             break;
                         }
                         if (el.classList?.contains('callout')) {
-                            this.processBlockquote(el);
+                            this.enqueueProcess(el);
                             break;
                         }
                         el = el.parentElement;
