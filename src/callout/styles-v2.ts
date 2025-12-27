@@ -72,7 +72,7 @@ export function generateCalloutStylesV2(
 /* Callout 标题样式 */
 .protyle-wysiwyg .bq[custom-callout] [data-callout-title="true"] {
     position: relative;
-    font-weight: 600 !important;
+    font-weight: 1000 !important;
     font-size: inherit !important;
     line-height: inherit !important;
     color: var(--callout-title-color) !important;
@@ -88,12 +88,20 @@ export function generateCalloutStylesV2(
     left: 0;
     top: 50%;
     transform: translateY(-50%);
-    width: 1.25em;
-    height: 1.25em;
+    width: 1.05em;
+    height: 1.05em;
     display: ${hideIcon ? 'none' : 'flex'} !important;
     align-items: center;
     justify-content: center;
     pointer-events: none;
+    /* 当图标为 emoji/文本时，实际尺寸由 font-size 决定 */
+    font-size: 1.0em;
+    line-height: 1em;
+    padding: 0 !important; /* 覆盖系统编辑态对 .callout-icon 的 4px padding */
+    -webkit-mask-origin: content-box;
+    mask-origin: content-box;
+    -webkit-mask-clip: content-box;
+    mask-clip: content-box;
 }
 
 /* 不自定义折叠按钮与折叠状态，沿用思源原生能力 */
@@ -293,20 +301,28 @@ export function generateCalloutStylesV2(
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 1.25em;
-    height: 1.25em;
+    width: 1.05em;
+    height: 1.05em;
     margin-right: 0;
+    /* 当图标为 emoji/文本时，实际尺寸由 font-size 决定 */
+    font-size: 1.0em;
+    line-height: 1em;
+    padding: 0 !important; /* 覆盖系统编辑态对 .callout-icon 的 4px padding */
+    -webkit-mask-origin: content-box;
+    mask-origin: content-box;
+    -webkit-mask-clip: content-box;
+    mask-clip: content-box;
 }
 .protyle-wysiwyg .callout .callout-info .callout-icon svg {
-    width: 1.25em;
-    height: 1.25em;
+    width: 1.0em;
+    height: 1.0em;
 }
 
 /* 原生 callout 标题文本（缩小字号） */
 .protyle-wysiwyg .callout .callout-info {
     font-size: inherit !important;
     line-height: inherit;
-    font-weight: 600;
+   font-weight: 600;
     display: flex;
     align-items: center;
     gap: 6px;
