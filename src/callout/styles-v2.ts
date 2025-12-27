@@ -348,6 +348,11 @@ export function generateCalloutStylesV2(
     margin-bottom: 2px;
 }
 
+/* 让 callout 成为定位上下文，便于右上角按钮绝对定位 */
+.protyle-wysiwyg .callout {
+    position: relative;
+}
+
 /* 标题区域内透明折叠按钮 */
 .protyle-wysiwyg .callout .callout-fold-toggle {
     all: unset;
