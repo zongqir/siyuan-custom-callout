@@ -205,6 +205,27 @@
 
     // 创建类型映射（包括自定义类型）
     let typeMap = new Map<string, CalloutTypeConfig>();
+    // 别名索引（type/zhCommand/displayName → 配置）
+    let aliasIndex = new Map<string, CalloutTypeConfig>();
+    function normalizeAlias(s: string): string {
+        return (s || '')
+            .replace(/^\[!|\]$/g, '')
+            .replace(/\s+/g, '')
+            .trim()
+            .toLowerCase();
+    }
+    function rebuildAliasIndex() {
+        aliasIndex.clear();
+        typeMap.forEach(cfg => {
+            aliasIndex.set(normalizeAlias(cfg.type), cfg);
+            const zh = (cfg.zhCommand || '').replace(/^\[!|\]$/g, '');
+            if (zh) aliasIndex.set(normalizeAlias(zh), cfg);
+            if (cfg.displayName) aliasIndex.set(normalizeAlias(cfg.displayName), cfg);
+        });
+        // 原生 note 归并 info
+        const infoCfg = typeMap.get('info');
+        if (infoCfg && !aliasIndex.has('note')) aliasIndex.set('note', infoCfg);
+    }
     
     // 初始化类型映射
     async function initializeTypeMap() {
@@ -214,6 +235,7 @@
         allTypes.forEach(type => {
             typeMap.set(type.type, type);
         });
+        rebuildAliasIndex();
     }
 
     onMount(async () => {
@@ -377,25 +399,82 @@
         isLoading = true;
 
         try {
-            // 直接从 DOM 中查找所有带 custom-callout 属性的引述块
-            const calloutElements = docElement.querySelectorAll('.bq[custom-callout]');
-            
-            // 解析 callout
+            // 兼容原生结构：查找 .callout[data-subtype]
+            const calloutElements = docElement.querySelectorAll('.callout[data-subtype]');
+
             const newCallouts: CalloutItem[] = [];
-            
-            calloutElements.forEach((element) => {
-                const calloutInfo = parseCalloutFromDOM(element as HTMLElement);
-                if (calloutInfo) {
-                    newCallouts.push(calloutInfo);
-                }
+            calloutElements.forEach((el) => {
+                const item = parseNativeCalloutFromDOM(el as HTMLElement);
+                if (item) newCallouts.push(item);
             });
-            
+
             callouts = newCallouts;
         } catch (error) {
             console.error('Failed to load callouts:', error);
         } finally {
             isLoading = false;
         }
+    }
+
+    // 解析原生 .callout 结构
+    function parseNativeCalloutFromDOM(calloutEl: HTMLElement): CalloutItem | null {
+        // 优先使用 .callout 自身的 data-node-id，回退到最近的 .bq[data-node-id]
+        let blockId = calloutEl.getAttribute('data-node-id');
+        if (!blockId) {
+            const bq = calloutEl.closest('.bq[data-node-id]') as HTMLElement | null;
+            blockId = bq?.getAttribute('data-node-id') || '';
+        }
+        if (!blockId) return null;
+
+        // 解析 subtype 并映射到配置
+        let rawSubtype = calloutEl.getAttribute('data-subtype') || '';
+        let sub = normalizeAlias(rawSubtype);
+        if (sub === 'note') sub = 'info';
+        const cfg = aliasIndex.get(sub) || typeMap.get(sub);
+        if (!cfg) return null;
+
+        // 标题：从 .callout-info 文本提取（去除图标）
+        let title = cfg.displayName;
+        const infoDiv = calloutEl.querySelector('.callout-info') as HTMLElement | null;
+        if (infoDiv) {
+            const clone = infoDiv.cloneNode(true) as HTMLElement;
+            clone.querySelector('.callout-icon')?.remove();
+            const t = (clone.textContent || '').trim();
+            if (t) title = t;
+        }
+
+        // 内容预览：收集不在 .callout-info 内的段落文本
+        let content = '';
+        const paragraphs = calloutEl.querySelectorAll('div[data-type="NodeParagraph"]');
+        paragraphs.forEach(p => {
+            const el = p as HTMLElement;
+            if (el.closest('.callout-info')) return;
+            const text = (el.textContent || '').trim();
+            if (text) content += text + ' ';
+        });
+        if (!content) {
+            const bodyClone = calloutEl.cloneNode(true) as HTMLElement;
+            bodyClone.querySelector('.callout-info')?.remove();
+            content = (bodyClone.textContent || '').trim();
+        }
+
+        // 折叠状态：读取拥有该块 ID 的元素上的 fold 属性（优先 bq，其次 callout 本体）
+        let isFolded = false;
+        const ownerBq = calloutEl.closest('.bq[data-node-id]') as HTMLElement | null;
+        if (ownerBq && ownerBq.getAttribute('data-node-id') === blockId) {
+            isFolded = ownerBq.getAttribute('fold') === '1';
+        } else if (calloutEl.getAttribute('data-node-id') === blockId) {
+            isFolded = calloutEl.getAttribute('fold') === '1';
+        }
+
+        return {
+            id: blockId,
+            type: cfg.type,
+            title: title,
+            content: content.substring(0, 600),
+            config: cfg,
+            collapsed: isFolded
+        };
     }
 
     function parseCalloutFromDOM(element: HTMLElement): CalloutItem | null {
@@ -731,6 +810,11 @@
         backdrop-filter: var(--outline-container-backdrop, blur(20px));
         -webkit-backdrop-filter: var(--outline-container-backdrop, blur(20px));
         overflow: hidden;
+    }
+
+    /* 隐藏大纲卡片中的折叠指示小箭头 */
+    .callout-outline-dock .collapse-indicator {
+        display: none !important;
     }
 
     .callout-outline-header {

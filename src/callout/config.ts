@@ -86,6 +86,12 @@ export class ConfigManager {
                 return this.getDefaultConfig();
             }
 
+            // 兼容旧版本：将 legacy 的 'modern' 主题ID 归一为 'craft'
+            const loadedThemeId = data.themeId || 'craft';
+            const loadedOutlineThemeId = data.outlineThemeId || 'craft';
+            const normalizedThemeId = loadedThemeId === 'modern' ? 'craft' : loadedThemeId;
+            const normalizedOutlineThemeId = loadedOutlineThemeId === 'modern' ? 'craft' : loadedOutlineThemeId;
+
             return {
                 version: data.version || this.CONFIG_VERSION,
                 customTypes: data.customTypes || [],
@@ -93,8 +99,8 @@ export class ConfigManager {
                 hiddenDefaults: new Set(data.hiddenDefaults || []),
                 typeOrder: data.typeOrder || [],
                 gridColumns: data.gridColumns || 3,
-                themeId: data.themeId || 'modern',
-                outlineThemeId: data.outlineThemeId || 'modern',
+                themeId: normalizedThemeId,
+                outlineThemeId: normalizedOutlineThemeId,
                 themeOverrides: data.themeOverrides || {},
                 outlineOverrides: data.outlineOverrides || {}
             };
@@ -143,8 +149,8 @@ export class ConfigManager {
             hiddenDefaults: new Set(),
             typeOrder: [],
             gridColumns: 3,
-            themeId: 'modern',
-            outlineThemeId: 'modern',
+            themeId: 'craft',
+            outlineThemeId: 'craft',
             themeOverrides: {},
             outlineOverrides: {}
         };

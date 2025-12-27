@@ -1,5 +1,108 @@
 # Changelog
 
+## v3.0.0 2025-12-25
+
+### ✨ Major
+
+- Callout fold/unfold with native persistence
+  - Top-right transparent toggle button inside each callout
+  - Uses Siyuan native APIs `/api/block/foldBlock` and `/api/block/unfoldBlock`
+  - DOM `fold="1"` fully respected and observed
+- Callout Outline dock polish and theme compatibility fixes
+- Overall UI refinements
+
+### 🎨 Styling & UI
+
+- Chevron icon centering (24×24 stroke path + grid centering)
+- Semi-transparent rounded-square button, absolute to top-right
+- Better contrast with fallbacks (rgba + color-mix)
+- Folded state hides body, only shows title row + toggle
+
+### 🧩 UX & Stability
+
+- Robust owner resolution for `data-node-id`/`fold` on `.bq` or `.callout`
+- Avoid layout leaks in folded state (overflow/margins adjusted)
+
+### 📝 Docs
+
+- Simplify README/README_zh_CN, highlight: 侧边栏抓取关键信息 · 原生折叠 · 预设自定义 Callout
+- Bump versions in package.json / plugin.json to 3.0.0
+
+## v2.0.0 2025-12-22
+
+### ✨ Major
+
+- Require SiYuan >= 3.5.0 (plugin.json `minAppVersion`)
+- Bump plugin version to 2.0.0 (plugin.json/package.json)
+- V2-only architecture, remove legacy V1 path
+
+### 🎨 Styling & Icons
+
+- Use native `.callout[data-subtype]` for all styles, supporting arbitrary custom subtypes
+- Alias matching: `type` + `zhCommand` (without brackets) + `displayName`
+- Per-type icons rendered based on `data-subtype`, native types have fallbacks
+- Increased selector specificity and case-insensitive matching `[i]`
+
+### 🧩 UX & Stability
+
+- Fix potential freeze when creating/confirming callouts
+- Restore caret focus when closing menu or selecting native style
+
+### 📝 Docs
+
+- Update README (EN/CN): requirements, 2.0 highlights, native subtype & icons
+
+## v1.3.6 2025-10-12
+
+### 📝 文档优化
+
+* 文档优化 简化使用指南 
+
+## v1.3.5 2025-10-12
+
+### 📝 文档优化
+
+* **README 精简重构**: 大幅简化文档，聚焦核心功能
+  - 移除冗余的 FAQ 章节
+  - 移除过度详细的功能介绍
+  - 突出强调非侵入式设计理念
+  - 保留核心触发方式和键盘快捷键说明
+  - 文档从 350+ 行精简至 75 行
+
+### 🔧 修复
+
+* **Callout 触发优化**: 修复 Callout 触发相关 BUG
+  - 优化触发逻辑，提升稳定性
+  - 改善用户交互体验
+
+* **只读模式优化**: 禁止只读模式下显示拖拽滑轨
+  - 添加只读模式检测逻辑，支持多种检测方式
+  - 只读模式下不创建拖拽手柄元素
+  - CSS 层面强制隐藏只读模式下的拖拽手柄
+  - 双重保护机制，确保只读模式下无法拖拽调整
+
+* **拖拽手柄层级优化**: 降低 z-index 避免层级冲突
+  - 将拖拽手柄 z-index 从 10 降低到 2
+  - 减少与其他 UI 元素的层级冲突
+  - 保持更合理的层级结构
+
+## v1.3.3 2025-10-11
+
+### 🎯 少即是多
+
+* **删除冗余按钮**: 简化界面，提升用户体验
+  - 移除新增按钮：简化 Callout 交互，减少干扰
+  - 移除删除按钮：使用系统原生删除操作，保持一致性
+  - 移除折叠按钮：移除折叠功能及相关业务逻辑
+  - 删除 553 行冗余代码，提升性能和可维护性
+  - 界面更加简洁美观，专注内容本身
+
+### 🔧 修复
+
+* **列表排版优化**: 修复列表竖线错位问题
+  - 优化 CSS 样式，改善列表显示效果
+  - 移除冗余按钮相关样式，减少样式冲突
+
 ## v1.3.2 2025-10-09
 
 ### 🔧 修复
