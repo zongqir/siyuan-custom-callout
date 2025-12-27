@@ -292,11 +292,13 @@ export function generateCalloutStylesV2(
     padding: var(--callout-padding, 12px 12px) !important;
     margin: 8px 0;
     position: relative;
-    background-color: white !important;
+    background: var(--b3-theme-background) !important;
     color: var(--b3-theme-on-background);
     border-left: none !important;
     box-shadow: var(--callout-box-shadow, none) !important;
     transition: var(--callout-transition, none) !important;
+    will-change: background, background-color;
+    contain: paint;
 }
 
 .callout:hover {
@@ -563,7 +565,10 @@ export function updateCalloutStyles(
         styleElement.id = styleElementId;
         document.head.appendChild(styleElement);
     }
-    
-    styleElement.textContent = generateCalloutStylesV2(customTypes, themeId, themeOverrides);
+
+    const next = generateCalloutStylesV2(customTypes, themeId, themeOverrides);
+    if (styleElement.textContent !== next) {
+        styleElement.textContent = next;
+    }
 }
 
