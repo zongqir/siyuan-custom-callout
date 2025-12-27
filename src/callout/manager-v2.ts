@@ -28,7 +28,7 @@ export class CalloutManagerV2 {
     constructor(plugin?: any) {
         this.plugin = plugin;
         this.processor = new CalloutProcessorV2();
-        this.menu = new CalloutMenuV2(this.processor);
+        this.menu = new CalloutMenuV2(this.processor, this.plugin);
         
         // 暴露到全局（用于调试和其他模块访问）
         (window as any).siyuanCalloutProcessorV2 = this.processor;

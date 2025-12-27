@@ -13,12 +13,21 @@ import { logger } from '../libs/logger';
 export class CalloutMenuV2 {
     private menu: HTMLElement | null = null;
     private processor: CalloutProcessorV2;
+    private plugin: any;
     private calloutTypes: CalloutTypeConfig[] = [];
     private currentBlockquote: HTMLElement | null = null;
     private selectedIndex: number = 0;
     private menuItems: HTMLElement[] = [];  // 实际渲染的菜单项
     private isEdit: boolean = false;
     private listenersAttached: boolean = false;
+    // Type-ahead 键盘缓冲
+    private typeAheadBuffer: string = '';
+    private typeAheadTimer: any = null;
+    // 过滤与渲染
+    private menuGrid: HTMLElement | null = null;
+    private filterInput: HTMLInputElement | null = null;
+    private currentList: CalloutTypeConfig[] = [];
+    private filterQuery: string = '';
     
     // 网格布局配置
     private gridColumns: number = 3;
@@ -27,11 +36,21 @@ export class CalloutMenuV2 {
     private keydownHandler: ((e: KeyboardEvent) => void) | null = null;
     private clickHandler: ((e: MouseEvent) => void) | null = null;
 
-    constructor(processor: CalloutProcessorV2) {
+    constructor(processor: CalloutProcessorV2, plugin?: any) {
         this.processor = processor;
+        this.plugin = plugin;
         this.calloutTypes = [...DEFAULT_CALLOUT_TYPES];
+        this.currentList = [...this.calloutTypes];
         
         logger.log('[MenuV2] ✅ 菜单系统已初始化');
+    }
+
+    private t(key: string, fallback: string): string {
+        try {
+            const txt = this.plugin?.i18n?.[key];
+            if (typeof txt === 'string' && txt.trim()) return txt;
+        } catch {}
+        return fallback;
     }
 
     /**
@@ -39,6 +58,10 @@ export class CalloutMenuV2 {
      */
     updateTypes(types: CalloutTypeConfig[]) {
         this.calloutTypes = types;
+        this.currentList = [...types];
+        if (this.menuGrid) {
+            this.renderMenuGrid(this.currentList);
+        }
     }
 
     /**
@@ -56,6 +79,8 @@ export class CalloutMenuV2 {
         // 键盘事件监听
         this.keydownHandler = (e: KeyboardEvent) => {
             if (!this.menu) return;
+            const target = e.target as HTMLElement | null;
+            const isOnFilter = this.filterInput ? (target === this.filterInput) : false;
             
             logger.log('[MenuV2] 键盘事件', { 
                 key: e.key, 
@@ -94,6 +119,43 @@ export class CalloutMenuV2 {
                     e.preventDefault();
                     this.confirmSelection();
                     break;
+            }
+
+            // 优先使用筛选输入框（与中文行为一致：键入即出现筛选）
+            if (this.filterInput) {
+                if (this.isPrintableKey(e)) {
+                    if (!isOnFilter) {
+                        e.preventDefault();
+                        const v = this.filterInput.value || '';
+                        this.filterInput.value = v + e.key;
+                        this.applyFilter(this.filterInput.value);
+                        this.filterInput.focus();
+                        return;
+                    } else {
+                        // 让输入框接收字符，过滤由 oninput 触发
+                        return;
+                    }
+                }
+                if (e.key === 'Backspace' && !isOnFilter) {
+                    e.preventDefault();
+                    const v = this.filterInput.value || '';
+                    this.filterInput.value = v.slice(0, -1);
+                    this.applyFilter(this.filterInput.value);
+                    this.filterInput.focus();
+                    return;
+                }
+            } else {
+                // 无输入框时，回退到无 UI 的 type-ahead
+                if (this.isPrintableKey(e)) {
+                    e.preventDefault();
+                    this.handleTypeAheadCharacter(e.key);
+                    return;
+                }
+                if (e.key === 'Backspace') {
+                    e.preventDefault();
+                    this.handleTypeAheadBackspace();
+                    return;
+                }
             }
         };
 
@@ -134,6 +196,11 @@ export class CalloutMenuV2 {
         this.currentBlockquote = blockquote;
         this.isEdit = isEdit;
         this.selectedIndex = 0;
+        try { if (this.typeAheadTimer) { clearTimeout(this.typeAheadTimer); } } catch {}
+        this.typeAheadTimer = null;
+        this.typeAheadBuffer = '';
+        this.currentList = [...this.calloutTypes];
+        this.filterQuery = '';
 
         // 创建菜单
         this.menu = this.createMenu();
@@ -172,6 +239,9 @@ export class CalloutMenuV2 {
         }
         // 菜单隐藏时移除监听器，避免无关按键触发
         this.teardownGlobalListeners();
+        try { if (this.typeAheadTimer) { clearTimeout(this.typeAheadTimer); } } catch {}
+        this.typeAheadTimer = null;
+        this.typeAheadBuffer = '';
 
         // 若存在当前编辑块，优先恢复到首段编辑区，避免光标丢失
         try {
@@ -214,7 +284,9 @@ export class CalloutMenuV2 {
         // 标题
         const title = document.createElement('div');
         title.className = 'callout-menu-title';
-        title.textContent = this.isEdit ? '修改 Callout 类型' : '选择 Callout 类型';
+        title.textContent = this.isEdit
+            ? this.t('menuEditTitle', 'Edit Callout Type')
+            : this.t('menuCreateTitle', 'Select Callout Type');
         title.style.cssText = `
             font-size: 14px;
             font-weight: 600;
@@ -254,6 +326,27 @@ export class CalloutMenuV2 {
         closeBtn.onclick = () => this.hide();
         menu.appendChild(closeBtn);
 
+        // 筛选输入框
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.placeholder = this.t('filterPlaceholder', 'Type to filter (fuzzy) · Use arrow keys · Enter to confirm');
+        input.style.cssText = `
+            width: 100%;
+            box-sizing: border-box;
+            margin: 8px 0 10px 0;
+            padding: 6px 8px;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            font-size: 12px;
+            outline: none;
+        `;
+        input.oninput = () => {
+            this.filterQuery = input.value || '';
+            this.applyFilter(this.filterQuery);
+        };
+        menu.appendChild(input);
+        this.filterInput = input as HTMLInputElement;
+
         // 网格容器
         const grid = document.createElement('div');
         grid.className = 'callout-menu-grid';
@@ -262,30 +355,18 @@ export class CalloutMenuV2 {
             grid-template-columns: repeat(${this.gridColumns}, 1fr);
             gap: 8px;
         `;
-
-        // 创建类型项并保存引用
-        this.menuItems = [];
-        
-        // 第一项：原生样式（取消 callout）
-        const noneItem = this.createNoneItem();
-        grid.appendChild(noneItem);
-        this.menuItems.push(noneItem);
-        
-        // 其他类型
-        this.calloutTypes.forEach((config, index) => {
-            const item = this.createMenuItem(config, index + 1);  // 索引从1开始
-            grid.appendChild(item);
-            this.menuItems.push(item);  // 保存菜单项引用
-        });
-
+        this.menuGrid = grid;
         menu.appendChild(grid);
+
+        // 初始渲染
+        this.renderMenuGrid(this.currentList);
         
         // 菜单创建完成
 
         // 如果是编辑模式，添加删除按钮
         if (this.isEdit) {
             const deleteBtn = document.createElement('button');
-            deleteBtn.textContent = '删除 Callout';
+            deleteBtn.textContent = this.t('deleteCallout', 'Delete Callout');
             deleteBtn.className = 'callout-menu-delete';
             deleteBtn.style.cssText = `
                 width: 100%;
@@ -311,6 +392,51 @@ export class CalloutMenuV2 {
         }
 
         return menu;
+    }
+
+    private applyFilter(query: string) {
+        const q = this.normalizeForMatch(query);
+        if (!q) {
+            this.currentList = [...this.calloutTypes];
+            this.renderMenuGrid(this.currentList);
+            return;
+        }
+        const scored: Array<{cfg: CalloutTypeConfig; score: number}> = [];
+        for (const c of this.calloutTypes) {
+            let score = -1;
+            const fields = [c.command, (c as any).zhCommand, c.type, c.displayName];
+            for (const f of fields) {
+                const s = this.normalizeForMatch(f as any);
+                if (!s) continue;
+                if (s.startsWith(q)) score = Math.max(score, 2);
+                else if (s.includes(q)) score = Math.max(score, 1);
+            }
+            if (score >= 0) scored.push({ cfg: c, score });
+        }
+        // 前缀优先，其次包含；再按 displayName 稳定排序
+        scored.sort((a, b) => (b.score - a.score) || a.cfg.displayName.localeCompare(b.cfg.displayName));
+        this.currentList = scored.map(s => s.cfg);
+        this.renderMenuGrid(this.currentList);
+    }
+
+    private renderMenuGrid(list: CalloutTypeConfig[]) {
+        if (!this.menuGrid) return;
+        // 清空
+        while (this.menuGrid.firstChild) this.menuGrid.removeChild(this.menuGrid.firstChild);
+        this.menuItems = [];
+        // 原生样式
+        const noneItem = this.createNoneItem();
+        this.menuGrid.appendChild(noneItem);
+        this.menuItems.push(noneItem);
+        // 列表
+        list.forEach((cfg, i) => {
+            const item = this.createMenuItem(cfg, i + 1);
+            this.menuGrid!.appendChild(item);
+            this.menuItems.push(item);
+        });
+        // 选中第一项（存在时偏向列表首项，否则原生样式）
+        this.selectedIndex = list.length > 0 ? 1 : 0;
+        this.updateSelection();
     }
 
     /**
@@ -346,7 +472,7 @@ export class CalloutMenuV2 {
 
         // 显示名称
         const name = document.createElement('div');
-        name.textContent = '原生样式';
+        name.textContent = this.t('nativeStyle', 'Native style');
         name.style.cssText = `
             font-size: 12px;
             color: #374151;
@@ -400,16 +526,31 @@ export class CalloutMenuV2 {
         `;
         item.appendChild(icon);
 
-        // 显示名称
+        // 显示名称（中文）+ 英文副标题
+        const wrap = document.createElement('div');
+        wrap.style.cssText = `
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+        `;
         const name = document.createElement('div');
         name.textContent = config.displayName;
         name.style.cssText = `
             font-size: 12px;
             color: #374151;
-            text-align: center;
             font-weight: 500;
         `;
-        item.appendChild(name);
+        const sub = document.createElement('div');
+        sub.textContent = config.type;
+        sub.style.cssText = `
+            font-size: 11px;
+            color: #6b7280;
+        `;
+        wrap.appendChild(name);
+        wrap.appendChild(sub);
+        item.appendChild(wrap);
 
         // 鼠标事件
         item.onmouseover = () => {
@@ -565,7 +706,7 @@ export class CalloutMenuV2 {
                 element.style.background = isSelected ? '#f3f4f6' : 'white';
             } else {
                 // callout 类型
-                const config = this.calloutTypes[index - 1];
+                const config = this.currentList[index - 1];
                 element.style.border = `2px solid ${isSelected ? config.borderColor : '#e5e7eb'}`;
                 element.style.background = isSelected ? config.bgGradient : 'white';
             }
@@ -576,6 +717,72 @@ export class CalloutMenuV2 {
         if (selectedItem) {
             selectedItem.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
         }
+    }
+
+    private isPrintableKey(e: KeyboardEvent): boolean {
+        if (e.ctrlKey || e.metaKey || e.altKey) return false;
+        if (!e.key || e.key.length !== 1) return false;
+        const c = e.key.charCodeAt(0);
+        return c >= 32 && c !== 127;
+    }
+
+    private handleTypeAheadCharacter(ch: string) {
+        this.typeAheadBuffer += ch;
+        if (this.typeAheadBuffer.length > 32) {
+            this.typeAheadBuffer = this.typeAheadBuffer.slice(-32);
+        }
+        const idx = this.findBestMatchIndex(this.typeAheadBuffer);
+        if (idx >= 0) {
+            this.selectedIndex = idx + 1;
+            this.updateSelection();
+        }
+        try { if (this.typeAheadTimer) { clearTimeout(this.typeAheadTimer); } } catch {}
+        this.typeAheadTimer = setTimeout(() => { this.typeAheadBuffer = ''; }, 700);
+    }
+
+    private handleTypeAheadBackspace() {
+        if (!this.typeAheadBuffer) return;
+        this.typeAheadBuffer = this.typeAheadBuffer.slice(0, -1);
+        const idx = this.findBestMatchIndex(this.typeAheadBuffer);
+        if (idx >= 0) {
+            this.selectedIndex = idx + 1;
+            this.updateSelection();
+        }
+        try { if (this.typeAheadTimer) { clearTimeout(this.typeAheadTimer); } } catch {}
+        this.typeAheadTimer = this.typeAheadBuffer
+            ? setTimeout(() => { this.typeAheadBuffer = ''; }, 700)
+            : null;
+    }
+
+    private findBestMatchIndex(q: string): number {
+        const query = this.normalizeForMatch(q);
+        if (!query) return -1;
+        let best = -1;
+        let bestScore = -1;
+        for (let i = 0; i < this.calloutTypes.length; i++) {
+            const c = this.calloutTypes[i];
+            const fields = [
+                c.command,
+                (c as any).zhCommand,
+                c.type,
+                c.displayName,
+            ];
+            let score = -1;
+            for (const f of fields) {
+                const s = this.normalizeForMatch(f as any);
+                if (!s) continue;
+                if (s.startsWith(query)) { score = Math.max(score, 2); }
+                else if (s.includes(query)) { score = Math.max(score, 1); }
+            }
+            if (score > bestScore) { bestScore = score; best = i; }
+        }
+        return bestScore >= 0 ? best : -1;
+    }
+
+    private normalizeForMatch(s?: string): string {
+        if (!s) return '';
+        const low = s.toLowerCase();
+        return low.replace(/\[|\]|!|\s+/g, '');
     }
 
     /**
@@ -590,7 +797,7 @@ export class CalloutMenuV2 {
             return;
         }
 
-        const selectedType = this.calloutTypes[this.selectedIndex - 1];  // 减1因为索引0是原生样式
+        const selectedType = this.currentList[this.selectedIndex - 1];  // 减1因为索引0是原生样式
         if (!selectedType) return;
 
         try {

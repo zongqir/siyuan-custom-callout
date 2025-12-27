@@ -15,5 +15,10 @@
     "hintTitle": "关于",
     "hintDesc": "<a href='https://github.com/siyuan-note/siyuan-custom-callout'>🔗 思源自定义引述块</a><br>💻 @frostime",
     "calloutOutline": "Callout 大纲",
-    "noCallouts": "当前文档没有 Callout"
+    "noCallouts": "当前文档没有 Callout",
+    "menuCreateTitle": "选择 Callout 类型",
+    "menuEditTitle": "修改 Callout 类型",
+    "filterPlaceholder": "输入筛选（支持模糊匹配）· 方向键移动 · Enter 确认",
+    "deleteCallout": "删除 Callout",
+    "nativeStyle": "原生样式"
 }

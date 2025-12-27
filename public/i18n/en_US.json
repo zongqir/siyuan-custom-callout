@@ -15,5 +15,10 @@
     "hintTitle": "About",
     "hintDesc": "<a href='https://github.com/siyuan-note/siyuan-custom-callout'>🔗 SiYuan Custom Callout</a><br>💻 @frostime",
     "calloutOutline": "Callout Outline",
-    "noCallouts": "No callouts in current document"
+    "noCallouts": "No callouts in current document",
+    "menuCreateTitle": "Select Callout Type",
+"menuEditTitle": "Edit Callout Type",
+"filterPlaceholder": "Type to filter (fuzzy) · Use arrow keys · Enter to confirm",
+"deleteCallout": "Delete Callout",
+"nativeStyle": "Native style"
 }
