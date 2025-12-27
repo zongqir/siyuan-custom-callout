@@ -71,7 +71,38 @@ export class CalloutProcessorV2 {
                 info.insertBefore(icon, info.firstChild);
             }
 
+            // 去重：如果 .callout-info 下出现多个 .callout-icon，优先保留原生（非 data-mask-icon）
+            try {
+                const icons = Array.from(info.querySelectorAll('.callout-icon')) as HTMLElement[];
+                if (icons.length > 1) {
+                    const others = icons.filter(i => !i.hasAttribute('data-mask-icon'));
+                    const plugins = icons.filter(i => i.hasAttribute('data-mask-icon'));
+                    if (others.length > 0) {
+                        plugins.forEach(i => i.remove());
+                        icon = others[0];
+                    } else {
+                        // 只有插件图标时，保留一个，移除其余
+                        icon = icons[0];
+                        icons.slice(1).forEach(i => i.remove());
+                    }
+                }
+            } catch {}
+
             const current = (icon.textContent || '').trim();
+            if (current && icon.getAttribute('data-mask-icon')) {
+                (icon.style as any).webkitMaskImage = '';
+                (icon.style as any).maskImage = '';
+                (icon.style as any).webkitMaskRepeat = '';
+                (icon.style as any).maskRepeat = '';
+                (icon.style as any).webkitMaskSize = '';
+                (icon.style as any).maskSize = '';
+                (icon.style as any).webkitMaskPosition = '';
+                (icon.style as any).maskPosition = '';
+                icon.style.backgroundColor = '';
+                icon.removeAttribute('data-mask-icon');
+                const svgs = icon.querySelectorAll('svg') as NodeListOf<SVGElement>;
+                svgs.forEach(el => el.remove());
+            }
             if (!current && !icon.getAttribute('data-mask-icon')) {
                 icon.textContent = '';
                 const url = this.svgToDataUrl(svg);
@@ -86,6 +117,28 @@ export class CalloutProcessorV2 {
                     (icon.style as any).maskPosition = 'center';
                     icon.style.backgroundColor = 'currentColor';
                     icon.setAttribute('data-mask-icon', '1');
+                    // 二次校验：若之后原生写入了文本图标，立即清理我们设置的 mask，避免混合显示
+                    const tryClearMask = () => {
+                        try {
+                            const t = (icon!.textContent || '').trim();
+                            if (t && icon!.getAttribute('data-mask-icon')) {
+                                (icon!.style as any).webkitMaskImage = '';
+                                (icon!.style as any).maskImage = '';
+                                (icon!.style as any).webkitMaskRepeat = '';
+                                (icon!.style as any).maskRepeat = '';
+                                (icon!.style as any).webkitMaskSize = '';
+                                (icon!.style as any).maskSize = '';
+                                (icon!.style as any).webkitMaskPosition = '';
+                                (icon!.style as any).maskPosition = '';
+                                icon!.style.backgroundColor = '';
+                                icon!.removeAttribute('data-mask-icon');
+                                const svgs2 = icon!.querySelectorAll('svg') as NodeListOf<SVGElement>;
+                                svgs2.forEach(el => el.remove());
+                            }
+                        } catch {}
+                    };
+                    try { requestAnimationFrame(tryClearMask); } catch { tryClearMask(); }
+                    setTimeout(tryClearMask, 120);
                 }
             }
         } catch {}
@@ -273,25 +326,7 @@ export class CalloutProcessorV2 {
         return this.aliasIndex.get(key) || null;
     }
 
-    // 原生 fallback 图标（使用 currentColor 以匹配 CSS 配色）
-    private getFallbackIconFor(sub: string): string {
-        const key = this.normalizeAlias(sub);
-        switch (key) {
-            case 'info':
-            case 'note':
-                return FIXED_CALLOUT_SVG; // 信息图标
-            case 'tip':
-                return '<svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M9 18h6m-5 2h4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M8 10a4 4 0 018 0c0 1.657-.895 2.5-1.6 3.2-.42.414-.8.79-.953 1.3H10.55c-.154-.51-.534-.886-.954-1.3C8.895 12.5 8 11.657 8 10z" fill="currentColor"/></svg>';
-            case 'important':
-                return '<svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 7v7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="12" cy="17" r="1.2" fill="currentColor"/></svg>';
-            case 'warning':
-                return '<svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 4l9 16H3l9-16z" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 10v4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="12" cy="17" r="1.2" fill="currentColor"/></svg>';
-            case 'caution':
-                return '<svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M7 4h10l3 7-3 9H7L4 11l3-7z" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 9v5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="12" cy="17" r="1.2" fill="currentColor"/></svg>';
-            default:
-                return FIXED_CALLOUT_SVG;
-        }
-    }
+    
 
     private svgToDataUrl(svg: string): string {
         try {
@@ -499,8 +534,8 @@ export class CalloutProcessorV2 {
                 if (mutation.type === 'attributes' && mutation.target) {
                     const element = mutation.target as HTMLElement;
                     if (element.classList?.contains('bq') || element.classList?.contains('callout')) {
-                        const bq = element.classList.contains('bq') ? element : (element.closest('.bq[data-node-id]') as HTMLElement | null);
-                        if (bq) this.processBlockquote(bq);
+                        const target = element.classList.contains('bq') ? element : element;
+                        this.processBlockquote(target);
                     }
                 }
 
@@ -509,9 +544,12 @@ export class CalloutProcessorV2 {
                     const node = mutation.target as Node;
                     let el: HTMLElement | null = (node as any).parentElement || null;
                     while (el && el !== document.body) {
-                        if (el.classList?.contains('bq') || el.classList?.contains('callout')) {
-                            const bq = el.classList.contains('bq') ? el : (el.closest('.bq[data-node-id]') as HTMLElement | null);
-                            if (bq) this.processBlockquote(bq);
+                        if (el.classList?.contains('bq')) {
+                            this.processBlockquote(el);
+                            break;
+                        }
+                        if (el.classList?.contains('callout')) {
+                            this.processBlockquote(el);
                             break;
                         }
                         el = el.parentElement;

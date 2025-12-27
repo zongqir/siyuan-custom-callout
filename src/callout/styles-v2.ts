@@ -79,7 +79,7 @@ export function generateCalloutStylesV2(
     margin-bottom: var(--callout-title-margin-bottom) !important;
     cursor: default !important;
     user-select: none !important;
-    padding-left: 28px !important;
+    padding-left: 24px !important;
 }
 
 /* 图标容器 */
@@ -102,6 +102,13 @@ export function generateCalloutStylesV2(
     mask-origin: content-box;
     -webkit-mask-clip: content-box;
     mask-clip: content-box;
+}
+/* 若图标容器出现文本（emoji/字符），禁用任何 mask/background，避免与原生混合 */
+.protyle-wysiwyg .bq[custom-callout] .callout-icon:not(:empty) {
+    -webkit-mask-image: none !important;
+    mask-image: none !important;
+    background: none !important;
+    background-color: transparent !important;
 }
 
 /* 不自定义折叠按钮与折叠状态，沿用思源原生能力 */
@@ -318,6 +325,14 @@ export function generateCalloutStylesV2(
     height: 1.0em;
 }
 
+/* 若原生图标容器出现文本（emoji/字符），禁用任何 mask/background，避免与原生混合 */
+.protyle-wysiwyg .callout .callout-info .callout-icon:not(:empty) {
+    -webkit-mask-image: none !important;
+    mask-image: none !important;
+    background: none !important;
+    background-color: transparent !important;
+}
+
 /* 原生 callout 标题文本（缩小字号） */
 .protyle-wysiwyg .callout .callout-info {
     font-size: inherit !important;
@@ -325,7 +340,7 @@ export function generateCalloutStylesV2(
    font-weight: 600;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
     padding-top: 0;
     margin-top: 2px !important;
     margin-bottom: 2px;
