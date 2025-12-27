@@ -6,6 +6,7 @@
     import { getAllEditor } from 'siyuan';
     import { getDefaultOutlineTheme, generateOutlineThemeCSS, type OutlineThemeStyle } from './themes';
     import { ConfigManager } from '../callout/config';
+    import PopCards from '../libs/components/pop-cards.svelte';
 
     export let plugin: Plugin;
     export let themeId: string = 'modern'; // 外部传入的主题ID
@@ -28,6 +29,7 @@
     let isLoading = false;
     let lastUpdateTime = 0;
     const UPDATE_DEBOUNCE = 1000; // 防抖间隔
+    let popCardsVisible: boolean = false;
     
     // 主题相关
     let currentTheme: OutlineThemeStyle = getDefaultOutlineTheme();
@@ -600,6 +602,15 @@
         currentDocId = ''; // 重置文档ID，强制刷新
         loadCallouts();
     }
+    async function openPopCards() {
+        try {
+            lastUpdateTime = 0;
+            currentDocId = '';
+            await loadCallouts();
+        } finally {
+            popCardsVisible = true;
+        }
+    }
     
     /**
      * 切换显示密度：自动 → 极简 → 紧凑 → 全部 → 极简...
@@ -687,7 +698,17 @@
                     </svg>
                 {/if}
             </button>
-            
+            <button 
+                class="cards-btn" 
+                on:click={openPopCards}
+                title={plugin.i18n.popCardsTooltip || 'Pop out all callouts'}
+                disabled={isLoading}
+            >
+                <svg viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M3 3h8v8H3V3zm10 0h8v8h-8V3zM3 13h8v8H3v-8zm10 8v-8h8v8h-8z"/>
+                </svg>
+            </button>
+
             <!-- 刷新按钮 -->
             <button 
                 class="refresh-btn" 
@@ -801,6 +822,15 @@
     {/if}
 </div>
 
+<PopCards
+    visible={popCardsVisible}
+    plugin={plugin}
+    cards={callouts}
+    on:close={() => { popCardsVisible = false; }}
+    on:jump={(e) => { popCardsVisible = false; jumpToCallout(e.detail); }}
+    on:refresh={async () => { lastUpdateTime = 0; currentDocId = ''; await loadCallouts(); }}
+/>
+
 <style lang="scss">
     .callout-outline-dock {
         height: 100%;
@@ -849,7 +879,8 @@
         }
 
         .density-btn,
-        .refresh-btn {
+        .refresh-btn,
+        .cards-btn {
             display: flex;
             align-items: center;
             justify-content: center;

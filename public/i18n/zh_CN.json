@@ -20,5 +20,8 @@
     "menuEditTitle": "修改 Callout 类型",
     "filterPlaceholder": "输入筛选（支持模糊匹配）· 方向键移动 · Enter 确认",
     "deleteCallout": "删除 Callout",
-    "nativeStyle": "原生样式"
+    "nativeStyle": "原生样式",
+    "popCards": "卡片",
+    "popCardsTooltip": "弹出所有 Callout",
+    "close": "关闭"
 }

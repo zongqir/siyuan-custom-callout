@@ -17,8 +17,11 @@
     "calloutOutline": "Callout Outline",
     "noCallouts": "No callouts in current document",
     "menuCreateTitle": "Select Callout Type",
-"menuEditTitle": "Edit Callout Type",
-"filterPlaceholder": "Type to filter (fuzzy) · Use arrow keys · Enter to confirm",
-"deleteCallout": "Delete Callout",
-"nativeStyle": "Native style"
+    "menuEditTitle": "Edit Callout Type",
+    "filterPlaceholder": "Type to filter (fuzzy) · Use arrow keys · Enter to confirm",
+    "deleteCallout": "Delete Callout",
+    "nativeStyle": "Native style",
+    "popCards": "Cards",
+    "popCardsTooltip": "Pop out all callouts",
+    "close": "Close"
 }
