@@ -125,7 +125,6 @@
   <div class="scc-pop-cards-mask" on:click={close} />
   <div class="scc-pop-cards" role="dialog" aria-modal="true">
     <div class="scc-pop-cards__header">
-      <div class="title">{plugin?.i18n?.popCards || 'Cards'}</div>
       <div class="actions">
         <input
           class="filter"
@@ -210,7 +209,7 @@
   .scc-pop-cards-mask{position:fixed;inset:0;background:rgba(0,0,0,.35);backdrop-filter:saturate(120%) blur(2px);z-index:2147483646}
   .scc-pop-cards{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(1200px,86vw);height:min(860px,86vh);background:var(--b3-theme-background,#fff);color:var(--b3-theme-on-background,#222);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.25);display:flex;flex-direction:column;z-index:2147483647;min-width:640px;min-height:400px}
   .scc-pop-cards__header{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid var(--b3-theme-surface-lighter,#e5e5e5)}
-  .scc-pop-cards__header .title{font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px}
+  .scc-pop-cards__header .title{font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px;white-space:nowrap;flex-shrink:0}
   .scc-pop-cards__header .actions{display:flex;align-items:center;gap:8px}
   .scc-pop-cards__header .filter{height:28px;line-height:28px;padding:0 10px;border:1px solid var(--b3-theme-surface-lighter,#e5e5e5);border-radius:6px;background:var(--b3-theme-surface,#fafafa);color:inherit;min-width:220px}
   .scc-pop-cards__header .mode{display:inline-grid;place-items:center;width:28px;height:28px;border:none;border-radius:6px;background:transparent;color:inherit;cursor:pointer}
@@ -226,7 +225,7 @@
   .card__head{display:flex;align-items:center;gap:8px}
   .card__type{color:#fff;font-size:11px;font-weight:600;line-height:1;padding:5px 8px;border-radius:6px;max-width:75%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .card__title{margin:8px 0 4px;font-weight:600;line-height:1.3}
-  .card__content{font-size:12px;line-height:1.45;color:var(--b3-theme-on-surface,#666);display:-webkit-box;-webkit-line-clamp:6;line-clamp:6;-webkit-box-orient:vertical;overflow:hidden}
+  .card__content{font-size:12px;line-height:1.45;color:var(--b3-theme-on-surface,#666);display:-webkit-box;-webkit-line-clamp:3;line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
   .collapsed{opacity:.7}
   @media (max-width: 860px){.scc-pop-cards{inset:4% 3%}}
 
@@ -238,6 +237,15 @@
   .detail__bar button:hover{background:color-mix(in srgb, var(--color) 14%, var(--b3-theme-surface,#fafafa))}
   .detail__body{margin-top:8px;padding:8px 4px}
   .detail__type{display:inline-block;font-size:12px;font-weight:700;color:#fff;background:var(--color);padding:4px 8px;border-radius:6px}
-  .detail__title{margin:8px 0 6px;font-weight:700;font-size:16px}
-  .detail__content{font-size:13px;line-height:1.6;color:var(--b3-theme-on-surface,#555)}
+  .detail__title{margin:8px 0 6px;font-weight:700;font-size:1.125rem}
+  .detail__content{font-size:1rem;line-height:1.75;color:var(--b3-theme-on-surface,#555)}
+  @media (max-width: 640px){
+    .scc-pop-cards{left:auto;top:auto;transform:none;inset:0;width:100vw;height:100vh;min-width:0;min-height:0;border-radius:0}
+    .scc-pop-cards__header{padding:calc(10px + env(safe-area-inset-top)) 12px 10px 12px}
+    .scc-pop-cards__body{padding:10px 8px calc(12px + env(safe-area-inset-bottom)) 8px}
+    .scc-pop-cards__header .filter{min-width:140px;max-width:240px;flex:0 0 50vw}
+    .scc-pop-cards__header .mode,.scc-pop-cards__header .refresh,.scc-pop-cards__header .close{width:36px;height:36px}
+    .grid{grid-template-columns:1fr}
+    .detail__bar button{width:36px;height:36px}
+  }
 </style>
