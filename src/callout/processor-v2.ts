@@ -24,6 +24,33 @@ export class CalloutProcessorV2 {
     private aliasIndex: Map<string, CalloutTypeConfig> = new Map();
     private overlayButtons: Map<string, HTMLButtonElement> = new Map();
     private overlayStates: Map<string, { overCallout: boolean; overBtn: boolean; hideTimer: number | null }> = new Map();
+    private overlayPositions: Map<string, { l: number; t: number; raf: number | null }> = new Map();
+    private scrollResizeBound: boolean = false;
+    private onScrollResize = () => {
+        try {
+            this.overlayButtons.forEach((btn, nodeId) => {
+                const owner = document.querySelector(`[data-node-id="${nodeId}"]`) as HTMLElement | null;
+                if (!owner) {
+                    this.removeOverlayForNode(nodeId);
+                    return;
+                }
+                const callout = owner.classList.contains('callout') ? owner : (owner.querySelector('.callout') as HTMLElement | null);
+                const info = callout?.querySelector('.callout-info') as HTMLElement | null;
+                if (!callout || !info) return;
+                const r = info.getBoundingClientRect();
+                const offscreen = (r.width === 0 && r.height === 0) || r.bottom < 0 || r.top > (window.innerHeight || 0);
+                if (offscreen) {
+                    const st = this.overlayStates.get(nodeId);
+                    if (st && !st.overBtn && !st.overCallout) {
+                        btn.style.opacity = '0';
+                        btn.style.pointerEvents = 'none';
+                    }
+                    return;
+                }
+                this.schedulePosition(nodeId, info, btn);
+            });
+        } catch {}
+    };
     
     // 新建 blockquote 自动显示菜单的回调
     public onNewBlockquoteCreated: ((blockquote: HTMLElement) => void) | null = null;
@@ -226,9 +253,7 @@ export class CalloutProcessorV2 {
                     const state = this.ensureOverlayState(nodeId);
                     state.overCallout = true;
                     if (state.hideTimer) { clearTimeout(state.hideTimer); state.hideTimer = null; }
-                    const r = info.getBoundingClientRect();
-                    btn.style.left = `${Math.max(0, r.right - 30)}px`;
-                    btn.style.top = `${Math.max(0, Math.round(r.top + Math.max(0, (r.height - 22) / 2)))}px`;
+                    this.schedulePosition(nodeId, info, btn);
                     // 只显示当前这一个覆盖按钮
                     this.hideAllOverlaysExcept(nodeId);
                     btn.style.opacity = '1';
@@ -237,9 +262,7 @@ export class CalloutProcessorV2 {
                 // 根据指针位置动态判定“靠近右上角”
                 callout.addEventListener('pointermove', (ev: PointerEvent) => {
                     const state = this.ensureOverlayState(nodeId);
-                    const ir = info.getBoundingClientRect();
-                    btn.style.left = `${Math.max(0, ir.right - 30)}px`;
-                    btn.style.top = `${Math.max(0, Math.round(ir.top + Math.max(0, (ir.height - 22) / 2)))}px`;
+                    this.schedulePosition(nodeId, info, btn);
                     // 在 callout 内移动：始终保持可见，取消隐藏计时
                     if (state.hideTimer) { clearTimeout(state.hideTimer); state.hideTimer = null; }
                     btn.style.opacity = '1';
@@ -385,6 +408,46 @@ export class CalloutProcessorV2 {
         return btn;
     }
 
+    // rAF 节流定位：同帧只写一次 left/top
+    private schedulePosition(nodeId: string, info: HTMLElement, btn: HTMLButtonElement) {
+        try {
+            const r = info.getBoundingClientRect();
+            const l = Math.max(0, r.right - 30);
+            const t = Math.max(0, Math.round(r.top + Math.max(0, (r.height - 22) / 2)));
+            let st = this.overlayPositions.get(nodeId);
+            if (!st) {
+                st = { l, t, raf: null };
+                this.overlayPositions.set(nodeId, st);
+            } else {
+                st.l = l; st.t = t;
+            }
+            if (st.raf != null) return;
+            st.raf = requestAnimationFrame(() => {
+                try {
+                    btn.style.left = `${st!.l}px`;
+                    btn.style.top = `${st!.t}px`;
+                } catch {}
+                st!.raf = null;
+            });
+        } catch {}
+    }
+
+    private removeOverlayForNode(nodeId: string) {
+        try {
+            const btn = this.overlayButtons.get(nodeId);
+            if (btn) {
+                btn.remove();
+                this.overlayButtons.delete(nodeId);
+            }
+            this.overlayStates.delete(nodeId);
+            const pos = this.overlayPositions.get(nodeId);
+            if (pos && pos.raf != null) {
+                try { cancelAnimationFrame(pos.raf); } catch {}
+            }
+            this.overlayPositions.delete(nodeId);
+        } catch {}
+    }
+
     // 判定指针是否在“靠近右上角”的较大热区内
     private isInHotZone(callout: HTMLElement, info: HTMLElement, x: number, y: number): boolean {
         try {
@@ -458,6 +521,14 @@ export class CalloutProcessorV2 {
     initialize() {
         logger.log('[ProcessorV2] 初始化处理器');
         
+        if (!this.scrollResizeBound) {
+            try {
+                window.addEventListener('scroll', this.onScrollResize, true);
+                window.addEventListener('resize', this.onScrollResize, true);
+                this.scrollResizeBound = true;
+            } catch {}
+        }
+
         // 处理现有的所有 blockquote
         this.processAllBlockquotes();
         
@@ -475,7 +546,22 @@ export class CalloutProcessorV2 {
             this.observer.disconnect();
             this.observer = null;
         }
-        
+        try {
+            if (this.scrollResizeBound) {
+                window.removeEventListener('scroll', this.onScrollResize, true);
+                window.removeEventListener('resize', this.onScrollResize, true);
+                this.scrollResizeBound = false;
+            }
+        } catch {}
+
+        // 清理所有 overlay 按钮与状态
+        try {
+            this.overlayButtons.forEach((btn) => btn.remove());
+            this.overlayButtons.clear();
+            this.overlayStates.clear();
+            this.overlayPositions.clear();
+        } catch {}
+
         this.processedBlocks.clear();
     }
 
@@ -529,6 +615,24 @@ export class CalloutProcessorV2 {
                         }
                     }
                 });
+
+                // 处理被移除的节点：清理对应 overlay
+                if (mutation.type === 'childList' && (mutation as any).removedNodes) {
+                    (mutation as any).removedNodes.forEach((node: Node) => {
+                        if (node.nodeType === Node.ELEMENT_NODE) {
+                            const element = node as HTMLElement;
+                            const candidates: HTMLElement[] = [];
+                            if (element.matches?.('.bq[data-node-id], .callout[data-node-id]')) {
+                                candidates.push(element);
+                            }
+                            element.querySelectorAll?.('.bq[data-node-id], .callout[data-node-id]')?.forEach(el => candidates.push(el as HTMLElement));
+                            candidates.forEach(el => {
+                                const nid = el.getAttribute('data-node-id');
+                                if (nid) this.removeOverlayForNode(nid);
+                            });
+                        }
+                    });
+                }
 
                 // 处理属性变化（用于当原生完成解析并设置结构时我们兜底图标）
                 if (mutation.type === 'attributes' && mutation.target) {
@@ -590,7 +694,8 @@ export class CalloutProcessorV2 {
             childList: true,
             subtree: true,
             attributes: true,
-            characterData: true
+            characterData: true,
+            attributeFilter: ['fold', 'data-subtype', 'class', 'data-node-id']
         });
     }
 
