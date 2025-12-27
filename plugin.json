@@ -12,8 +12,8 @@
     "zh_CN": "思源自定义callout"
   },
   "description": {
-    "en_US": "Transform blockquotes into beautiful, customizable callout blocks with rich features",
-    "zh_CN": "将引述块转换为美观、可自定义的 Callout 提示块，功能丰富"
+    "en_US": "Native-extensible Callout enhancer for SiYuan — focused on beautification and efficient operations, with zero data modification",
+    "zh_CN": "基于原生、可扩展的 Callout 增强插件，专注美化与高效操作，零数据改写"
   },
   "readme": {
     "en_US": "README.md",

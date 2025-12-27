@@ -2,7 +2,7 @@
 
 [中文版](./README_zh_CN.md)
 
-A clean and elegant SiYuan plugin that renders ordinary blockquotes as beautiful Callout blocks.
+An enhancer for SiYuan's native-extensible callouts—focused on beautiful styles and efficient operations, with zero data modification.
 
 <!-- Support moved to bottom -->
 
