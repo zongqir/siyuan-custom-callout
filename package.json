@@ -1,6 +1,6 @@
 {
   "name": "siyuan-custom-callout",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "type": "module",
   "description": "Transform SiYuan blockquotes into beautiful, customizable callout blocks with rich features",
   "repository": "https://github.com/zongqir/siyuan-custom-callout",
