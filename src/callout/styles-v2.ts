@@ -357,7 +357,7 @@ export function generateCalloutStylesV2(
 .protyle-wysiwyg .callout .callout-fold-toggle {
     all: unset;
     position: absolute;
-    right: 8px;
+    right: 34px;
     top: 6px;
     cursor: pointer;
     margin: 0;
@@ -395,6 +395,44 @@ export function generateCalloutStylesV2(
 /* 微调：折叠态下的箭头在部分缩放/DPI 下会出现 0.5px 视觉偏移，这里做轻微补偿 */
 .protyle-wysiwyg .callout .callout-fold-toggle[data-folded="1"] svg {
     transform: translateY(0.5px);
+}
+
+.protyle-wysiwyg .callout .callout-quickcard-toggle {
+    all: unset;
+    position: absolute;
+    right: 8px;
+    top: 6px;
+    cursor: pointer;
+    margin: 0;
+    display: grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    color: var(--b3-theme-on-background);
+    border-radius: 6px;
+    z-index: 2;
+    pointer-events: auto;
+    line-height: 0;
+    box-sizing: border-box;
+}
+.protyle-wysiwyg .callout .callout-quickcard-toggle::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: rgba(0, 0, 0, 0.08);
+    background: color-mix(in srgb, currentColor 18%, transparent);
+}
+.protyle-wysiwyg .callout:hover .callout-quickcard-toggle::before,
+.protyle-wysiwyg .callout .callout-quickcard-toggle:hover::before {
+    background: rgba(0, 0, 0, 0.12);
+    background: color-mix(in srgb, currentColor 28%, transparent);
+}
+.protyle-wysiwyg .callout .callout-quickcard-toggle svg {
+    width: 12px; height: 12px;
+    display: block;
+    position: relative;
+    z-index: 1;
 }
 
 /* 标题内部子元素遵循各自默认间距（不再强行清零），以获得更自然的视觉节奏 */
@@ -453,10 +491,10 @@ export function generateCalloutStylesV2(
 }
 
 /* 折叠态：隐藏正文（保留标题与折叠按钮）*/
-.protyle-wysiwyg .bq[fold="1"] .callout > :not(.callout-info):not(.callout-fold-toggle) {
+.protyle-wysiwyg .bq[fold="1"] .callout > :not(.callout-info):not(.callout-fold-toggle):not(.callout-quickcard-toggle) {
     display: none !important;
 }
-.protyle-wysiwyg .callout[fold="1"] > :not(.callout-info):not(.callout-fold-toggle) {
+.protyle-wysiwyg .callout[fold="1"] > :not(.callout-info):not(.callout-fold-toggle):not(.callout-quickcard-toggle) {
     display: none !important;
 }
 
