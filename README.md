@@ -17,6 +17,7 @@ An enhancer for SiYuan's native-extensible callouts—focused on beautiful style
 - 🎨 **Custom Types & Themes** - More subtypes/colors on top of native presets, styled to match your theme
 
 - 🧰 **Customizable Quick Menu Panel** - Build your own quick menu of common callout types for one-tap insertion
+- 🎴 **Quick Flashcard Creation** - Instantly turn any callout into a flashcard with a single click, perfect for spaced repetition learning
 
 ## 🧩 Tips
 
