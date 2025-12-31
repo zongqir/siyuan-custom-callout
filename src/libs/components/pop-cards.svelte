@@ -108,8 +108,19 @@
   }
 
   function handleKeydown(e: KeyboardEvent) {
+    if (!visible) return;
+    const ae = document.activeElement as HTMLElement | null;
+    if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable || ae.tagName === 'SELECT')) {
+      return;
+    }
     if (e.key === 'Escape') {
+      e.preventDefault();
       close();
+      return;
+    }
+    if (e.code === 'Space' || e.key === ' ' || (e as any).key === 'Spacebar') {
+      e.preventDefault();
+      random();
     }
   }
 
