@@ -780,7 +780,7 @@
                         </div>
                         <div class="callout-title-section">
                             <div class="callout-type-label" style="background: {callout.config.color}">
-                                {callout.config.displayName}
+                                {callout.title || callout.config.displayName}
                             </div>
                             {#if callout.collapsed}
                                 <svg class="collapse-indicator" viewBox="0 0 16 16" width="12" height="12">
@@ -789,10 +789,6 @@
                             {/if}
                         </div>
                     </div>
-                    
-                    {#if callout.title && callout.title !== callout.config.displayName}
-                        <div class="callout-title">{callout.title}</div>
-                    {/if}
                     
                     <!-- 🎯 内容显示逻辑（优先级：卡片展开状态 > 全局密度模式） -->
                     {#if callout.content}

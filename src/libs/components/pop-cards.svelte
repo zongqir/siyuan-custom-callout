@@ -170,10 +170,7 @@
             </button>
           </div>
           <div class="detail__body">
-            <div class="detail__type">{current.config?.displayName}</div>
-            {#if current.title && current.title !== current.config?.displayName}
-              <div class="detail__title">{current.title}</div>
-            {/if}
+            <div class="detail__type">{current.title || current.config?.displayName}</div>
             {#if current.content}
               <div class="detail__content">{current.content}</div>
             {/if}
@@ -186,14 +183,11 @@
           {#each filtered as c, i (c.id)}
             <div class="card" style="--color:{c.config?.color || '#888'};" on:click={() => handleCardAction(i, c.id)} tabindex="0" title={c.title || c.config?.displayName}>
               <div class="card__head">
-                <div class="card__type" style="background: var(--color)">{c.config?.displayName}</div>
+                <div class="card__type" style="background: var(--color)">{c.title || c.config?.displayName}</div>
                 {#if c.collapsed}
                   <svg class="collapsed" viewBox="0 0 16 16" width="12" height="12"><path fill="currentColor" d="M8 4l-6 6h12z"/></svg>
                 {/if}
               </div>
-              {#if c.title && c.title !== c.config?.displayName}
-                <div class="card__title">{c.title}</div>
-              {/if}
               {#if c.content}
                 <div class="card__content">{c.content}</div>
               {/if}
