@@ -178,13 +178,8 @@ export class CalloutManagerV2 {
     private setupEventListeners() {
         // 键盘快捷键
         this.keydownHandler = (e: KeyboardEvent) => {
-            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'C') {
-                e.preventDefault();
-                this.handleQuickCreate();
-                return;
-            }
 
-            if (e.key === '>') {
+            if (e.key === '>' || e.key === '>' || e.key === '》') { // Support both English and Chinese '>'
                 const ctx = this.getGTContext();
                 if (ctx) {
                     // 已在空的 blockquote 首行：直接拦截并弹出
