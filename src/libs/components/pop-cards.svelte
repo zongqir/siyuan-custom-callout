@@ -156,6 +156,15 @@
               <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M14 7l-5 5 5 5V7z"/></svg>
             </button>
             <div class="spacer"></div>
+          </div>
+          <div class="detail__body">
+            <div class="detail__type">{current.title || current.config?.displayName}</div>
+            {#if current.content}
+              <div class="detail__content">{current.content}</div>
+            {/if}
+          </div>
+          <div class="detail__footer">
+            <div class="spacer"></div>
             <button class="nav" on:click={prev} title={plugin?.i18n?.prev || 'Prev'}>
               <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M15 6l-6 6 6 6"/></svg>
             </button>
@@ -168,12 +177,6 @@
             <button class="open" on:click={openCurrent} title={plugin?.i18n?.open || 'Open'}>
               <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M10 9V5l7 7-7 7v-4H4V9h6z"/></svg>
             </button>
-          </div>
-          <div class="detail__body">
-            <div class="detail__type">{current.title || current.config?.displayName}</div>
-            {#if current.content}
-              <div class="detail__content">{current.content}</div>
-            {/if}
           </div>
         </div>
       {:else if filtered.length === 0}
@@ -233,6 +236,10 @@
   .detail__type{display:inline-block;font-size:12px;font-weight:700;color:#fff;background:var(--color);padding:4px 8px;border-radius:6px}
   .detail__title{margin:8px 0 6px;font-weight:700;font-size:1.125rem}
   .detail__content{font-size:1rem;line-height:1.75;color:var(--b3-theme-on-surface,#555)}
+  .detail__footer{display:flex;align-items:center;gap:8px;margin-top:10px;padding:8px 4px 0 4px;border-top:1px solid var(--b3-theme-surface-lighter,#e5e5e5)}
+  .detail__footer .spacer{flex:1}
+  .detail__footer button{display:inline-grid;place-items:center;width:32px;height:32px;border:none;border-radius:8px;background:var(--b3-theme-surface,#fafafa);color:inherit;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+  .detail__footer button:hover{background:color-mix(in srgb, var(--color) 14%, var(--b3-theme-surface,#fafafa))}
   @media (max-width: 640px){
     .scc-pop-cards{left:auto;top:auto;transform:none;inset:0;width:100vw;height:100vh;min-width:0;min-height:0;border-radius:0}
     .scc-pop-cards__header{padding:calc(10px + env(safe-area-inset-top)) 12px 10px 12px}
@@ -241,5 +248,7 @@
     .scc-pop-cards__header .mode,.scc-pop-cards__header .refresh,.scc-pop-cards__header .close{width:36px;height:36px}
     .grid{grid-template-columns:1fr}
     .detail__bar button{width:36px;height:36px}
+    .detail__footer{position:sticky;bottom:0;background:var(--b3-theme-background,#fff);padding:8px 4px calc(8px + env(safe-area-inset-bottom)) 4px;margin-top:12px;border-top:1px solid var(--b3-theme-surface-lighter,#e5e5e5)}
+    .detail__footer button{width:36px;height:36px}
   }
 </style>
