@@ -274,9 +274,9 @@ export class CalloutMenuV2 {
             border: 1px solid #e5e7eb;
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            padding: 12px;
+            padding: 10px;
             z-index: 9999;
-            min-width: 400px;
+            min-width: 360px;
             max-height: 500px;
             overflow-y: auto;
         `;
@@ -291,8 +291,8 @@ export class CalloutMenuV2 {
             font-size: 14px;
             font-weight: 600;
             color: #374151;
-            margin-bottom: 12px;
-            padding-bottom: 8px;
+            margin-bottom: 8px;
+            padding-bottom: 6px;
             border-bottom: 1px solid #e5e7eb;
         `;
         menu.appendChild(title);
@@ -333,11 +333,11 @@ export class CalloutMenuV2 {
         input.style.cssText = `
             width: 100%;
             box-sizing: border-box;
-            margin: 8px 0 10px 0;
-            padding: 6px 8px;
+            margin: 6px 0 8px 0;
+            padding: 5px 8px;
             border: 1px solid #e5e7eb;
             border-radius: 6px;
-            font-size: 12px;
+            font-size: 11px;
             outline: none;
         `;
         input.oninput = () => {
@@ -353,7 +353,7 @@ export class CalloutMenuV2 {
         grid.style.cssText = `
             display: grid;
             grid-template-columns: repeat(${this.gridColumns}, 1fr);
-            gap: 8px;
+            gap: 6px;
         `;
         this.menuGrid = grid;
         menu.appendChild(grid);
@@ -449,8 +449,8 @@ export class CalloutMenuV2 {
         item.dataset.isNone = 'true';
         
         item.style.cssText = `
-            padding: 12px;
-            border: 2px solid #e5e7eb;
+            padding: 8px;
+            border: 1px solid #e5e7eb;
             border-radius: 6px;
             cursor: pointer;
             transition: all 0.2s;
@@ -458,15 +458,15 @@ export class CalloutMenuV2 {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 6px;
+            gap: 4px;
         `;
 
         // X 图标
         const icon = document.createElement('div');
         icon.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24"><path d="M18.364 5.636L5.636 18.364M5.636 5.636l12.728 12.728" stroke="#9ca3af" stroke-width="2" stroke-linecap="round"/></svg>`;
         icon.style.cssText = `
-            width: 24px;
-            height: 24px;
+            width: 20px;
+            height: 20px;
         `;
         item.appendChild(icon);
 
@@ -474,7 +474,7 @@ export class CalloutMenuV2 {
         const name = document.createElement('div');
         name.textContent = this.t('nativeStyle', 'Native style');
         name.style.cssText = `
-            font-size: 12px;
+            font-size: 11px;
             color: #374151;
             text-align: center;
             font-weight: 500;
@@ -505,8 +505,8 @@ export class CalloutMenuV2 {
         
         // 先不设置选中状态，等待 updateSelection 统一处理
         item.style.cssText = `
-            padding: 12px;
-            border: 2px solid #e5e7eb;
+            padding: 8px;
+            border: 1px solid #e5e7eb;
             border-radius: 6px;
             cursor: pointer;
             transition: all 0.2s;
@@ -514,15 +514,15 @@ export class CalloutMenuV2 {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 6px;
+            gap: 4px;
         `;
 
         // 图标
         const icon = document.createElement('div');
         icon.innerHTML = config.icon || FIXED_CALLOUT_SVG;
         icon.style.cssText = `
-            width: 24px;
-            height: 24px;
+            width: 20px;
+            height: 20px;
         `;
         item.appendChild(icon);
 
@@ -533,19 +533,19 @@ export class CalloutMenuV2 {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 2px;
+            gap: 1px;
         `;
         const name = document.createElement('div');
         name.textContent = config.displayName;
         name.style.cssText = `
-            font-size: 12px;
+            font-size: 11px;
             color: #374151;
             font-weight: 500;
         `;
         const sub = document.createElement('div');
         sub.textContent = config.type;
         sub.style.cssText = `
-            font-size: 11px;
+            font-size: 10px;
             color: #6b7280;
         `;
         wrap.appendChild(name);
@@ -702,12 +702,12 @@ export class CalloutMenuV2 {
             // 索引0是"原生样式"，其他是 callout 类型
             if (index === 0) {
                 // 原生样式
-                element.style.border = `2px solid ${isSelected ? '#9ca3af' : '#e5e7eb'}`;
+                element.style.border = `1px solid ${isSelected ? '#9ca3af' : '#e5e7eb'}`;
                 element.style.background = isSelected ? '#f3f4f6' : 'white';
             } else {
                 // callout 类型
                 const config = this.currentList[index - 1];
-                element.style.border = `2px solid ${isSelected ? config.borderColor : '#e5e7eb'}`;
+                element.style.border = `1px solid ${isSelected ? config.borderColor : '#e5e7eb'}`;
                 element.style.background = isSelected ? config.bgGradient : 'white';
             }
         });
