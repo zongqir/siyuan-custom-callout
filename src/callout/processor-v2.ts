@@ -28,6 +28,7 @@ export class CalloutProcessorV2 {
     private overlayCardButtons: Map<string, HTMLButtonElement> = new Map();
     private overlayCardPositions: Map<string, { l: number; t: number; raf: number | null }> = new Map();
     private scrollResizeBound: boolean = false;
+    private selectionChangeBound: boolean = false;
     private overlayObservers: Map<string, IntersectionObserver> = new Map();
     private processQueue: Set<HTMLElement> = new Set();
     private processQueueRaf: number | null = null;
@@ -104,6 +105,36 @@ export class CalloutProcessorV2 {
                 } catch {}
                 this.scheduleCardPosition(nodeId, anchor, qbtn);
             });
+        } catch {}
+    };
+    
+    private onSelectionChange = () => {
+        try {
+            const sel = window.getSelection();
+            if (!sel || sel.rangeCount === 0) return;
+            let el: HTMLElement | null = sel.anchorNode as any;
+            if (el && el.nodeType !== Node.ELEMENT_NODE) el = el.parentElement;
+            while (el && el !== document.body) {
+                if (el.classList?.contains('bq') || el.classList?.contains('callout')) break;
+                el = el.parentElement;
+            }
+            if (!el) return;
+            const owner = el;
+            const nid = owner.getAttribute('data-node-id');
+            if (!nid) return;
+            const base = owner.classList.contains('callout') ? owner : ((owner.querySelector('.callout') as HTMLElement) || owner);
+            const info = base.querySelector('.callout-info') as HTMLElement | null;
+            const anchor = (info || base) as HTMLElement;
+            const btn = this.getOrCreateOverlayButton(nid);
+            const qbtn = this.getOrCreateQuickButton(nid);
+            const st = this.ensureOverlayState(nid);
+            st.graceUntil = Date.now() + 900;
+            this.schedulePosition(nid, anchor, btn);
+            this.scheduleCardPosition(nid, anchor, qbtn);
+            this.ensureVisibilityObserver(nid, anchor, btn);
+            this.hideAllOverlaysExcept(nid);
+            this.setBtnVisible(btn, true);
+            this.setBtnVisible(qbtn, true);
         } catch {}
     };
     
@@ -333,7 +364,7 @@ export class CalloutProcessorV2 {
             btn.style.width = '22px';
             btn.style.height = '22px';
             btn.style.zIndex = '2147483647';
-            btn.style.display = 'none';
+            btn.style.display = 'grid';
             btn.style.opacity = '0';
             btn.style.pointerEvents = 'none';
             btn.style.lineHeight = '0';
@@ -357,7 +388,7 @@ export class CalloutProcessorV2 {
             qbtn.style.width = '22px';
             qbtn.style.height = '22px';
             qbtn.style.zIndex = '2147483647';
-            qbtn.style.display = 'none';
+            qbtn.style.display = 'grid';
             qbtn.style.opacity = '0';
             qbtn.style.pointerEvents = 'none';
             qbtn.style.lineHeight = '0';
@@ -391,9 +422,36 @@ export class CalloutProcessorV2 {
                     this.ensureVisibilityObserver(nodeId, anchor, btn);
                     // 只显示当前这一个覆盖按钮
                     this.hideAllOverlaysExcept(nodeId);
-                    const foldedNowX = owner.getAttribute('fold') === '1';
-                    this.setBtnVisible(btn, !foldedNowX);
-                    this.setBtnVisible(qbtn, !foldedNowX);
+                    this.setBtnVisible(btn, true);
+                    this.setBtnVisible(qbtn, true);
+                }, true);
+                owner.addEventListener('mouseenter', () => {
+                    const state = this.ensureOverlayState(nodeId);
+                    state.overCallout = true;
+                    if (state.hideTimer) { clearTimeout(state.hideTimer); state.hideTimer = null; }
+                    const calloutNow = (owner.classList.contains('callout') ? owner : (owner.querySelector('.callout') as HTMLElement | null)) as HTMLElement | null;
+                    const infoNow = calloutNow?.querySelector('.callout-info') as HTMLElement | null;
+                    const anchor = (infoNow || calloutNow || owner) as HTMLElement;
+                    this.schedulePosition(nodeId, anchor, btn);
+                    this.scheduleCardPosition(nodeId, anchor, qbtn);
+                    this.ensureVisibilityObserver(nodeId, anchor, btn);
+                    this.hideAllOverlaysExcept(nodeId);
+                    this.setBtnVisible(btn, true);
+                    this.setBtnVisible(qbtn, true);
+                }, true);
+                owner.addEventListener('focusin', () => {
+                    const state = this.ensureOverlayState(nodeId);
+                    state.overCallout = true;
+                    if (state.hideTimer) { clearTimeout(state.hideTimer); state.hideTimer = null; }
+                    const calloutNow = (owner.classList.contains('callout') ? owner : (owner.querySelector('.callout') as HTMLElement | null)) as HTMLElement | null;
+                    const infoNow = calloutNow?.querySelector('.callout-info') as HTMLElement | null;
+                    const anchor = (infoNow || calloutNow || owner) as HTMLElement;
+                    this.schedulePosition(nodeId, anchor, btn);
+                    this.scheduleCardPosition(nodeId, anchor, qbtn);
+                    this.ensureVisibilityObserver(nodeId, anchor, btn);
+                    this.hideAllOverlaysExcept(nodeId);
+                    this.setBtnVisible(btn, true);
+                    this.setBtnVisible(qbtn, true);
                 }, true);
                 // 根据指针位置动态判定“靠近右上角”
                 owner.addEventListener('pointermove', (ev: PointerEvent) => {
@@ -406,9 +464,8 @@ export class CalloutProcessorV2 {
                     this.ensureVisibilityObserver(nodeId, anchor, btn);
                     // 在 callout 内移动：始终保持可见，取消隐藏计时
                     if (state.hideTimer) { clearTimeout(state.hideTimer); state.hideTimer = null; }
-                    const foldedNowY = owner.getAttribute('fold') === '1';
-                    this.setBtnVisible(btn, !foldedNowY);
-                    this.setBtnVisible(qbtn, !foldedNowY);
+                    this.setBtnVisible(btn, true);
+                    this.setBtnVisible(qbtn, true);
                     // 保证同一时间只显示一个
                     this.hideAllOverlaysExcept(nodeId);
                     // 仅用于视觉强调：热区内加深背景，非热区恢复
@@ -443,96 +500,29 @@ export class CalloutProcessorV2 {
                         state.hideTimer = null;
                     }
                 }, true);
+                owner.addEventListener('focusout', () => {
+                    const state = this.ensureOverlayState(nodeId);
+                    state.overCallout = false;
+                    const inGrace = !!(state.graceUntil && Date.now() < state.graceUntil);
+                    let foldedNow = false;
+                    try {
+                        const ownerNow = document.querySelector(`[data-node-id="${nodeId}"]`) as HTMLElement | null;
+                        foldedNow = !!(ownerNow && ownerNow.getAttribute('fold') === '1');
+                    } catch {}
+                    if (!state.overBtn && !inGrace && !foldedNow) {
+                        this.setBtnVisible(btn, false);
+                        this.setBtnVisible(qbtn, false);
+                        state.hideTimer = null;
+                    }
+                }, true);
             }
 
-            // 确保折叠态下始终有内嵌按钮贴合右上角
-            let inlineBtn = callout.querySelector('.callout-fold-toggle:not([data-overlay="1"])') as HTMLButtonElement | null;
-            if (!inlineBtn) {
-                inlineBtn = document.createElement('button');
-                inlineBtn.className = 'callout-fold-toggle';
-                inlineBtn.type = 'button';
-                inlineBtn.setAttribute('aria-label', '折叠/展开');
-                inlineBtn.setAttribute('title', '折叠/展开');
-                inlineBtn.setAttribute('contenteditable', 'false');
-                inlineBtn.setAttribute('draggable', 'false');
-                inlineBtn.setAttribute('spellcheck', 'false');
-                try { (inlineBtn as any).tabIndex = -1; } catch {}
-                callout.appendChild(inlineBtn);
-                inlineBtn.onclick = async (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (inlineBtn!.getAttribute('data-busy') === '1') return;
-                    inlineBtn!.setAttribute('data-busy', '1');
-                    try {
-                        const root = (callout.closest('.protyle-wysiwyg') as HTMLElement | null) || document;
-                        const ownerNow = root.querySelector(`[data-node-id="${nodeId}"]`) as HTMLElement | null;
-                        const foldedNow3 = !!(ownerNow && ownerNow.getAttribute('fold') === '1');
-                        if (foldedNow3) {
-                            await unfoldBlock(nodeId as any);
-                        } else {
-                            await foldBlock(nodeId as any);
-                        }
-                    } catch {}
-                    inlineBtn!.removeAttribute('data-busy');
-                };
-            }
-            inlineBtn.setAttribute('data-folded', isFolded ? '1' : '0');
-            if ((inlineBtn.innerHTML || '').trim() !== desired) {
-                inlineBtn.innerHTML = desired;
-                const svgEl2 = inlineBtn.querySelector('svg') as SVGElement | null;
-                if (svgEl2) {
-                    (svgEl2.style as any).width = '12px';
-                    (svgEl2.style as any).height = '12px';
-                    (svgEl2.style as any).display = 'block';
-                }
-            }
-            inlineBtn.style.display = 'grid';
+            const toRemove = callout.querySelectorAll('.callout-fold-toggle:not([data-overlay="1"]), .callout-quickcard-toggle:not([data-overlay="1"])') as NodeListOf<HTMLElement>;
+            toRemove.forEach(el => { try { el.remove(); } catch {} });
             if (isFolded) {
-                this.setBtnVisible(btn, false);
-                this.setBtnVisible(qbtn, false);
+                this.setBtnVisible(btn, true);
+                this.setBtnVisible(qbtn, true);
             }
-
-            let inlineQuick = callout.querySelector('.callout-quickcard-toggle:not([data-overlay="1"])') as HTMLButtonElement | null;
-            if (!inlineQuick) {
-                inlineQuick = document.createElement('button');
-                inlineQuick.className = 'callout-quickcard-toggle';
-                inlineQuick.type = 'button';
-                inlineQuick.setAttribute('aria-label', '快速制卡');
-                inlineQuick.setAttribute('title', '快速制卡');
-                inlineQuick.setAttribute('contenteditable', 'false');
-                inlineQuick.setAttribute('draggable', 'false');
-                inlineQuick.setAttribute('spellcheck', 'false');
-                try { (inlineQuick as any).tabIndex = -1; } catch {}
-                callout.appendChild(inlineQuick);
-                inlineQuick.onclick = async (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (inlineQuick!.getAttribute('data-busy') === '1') return;
-                    inlineQuick!.setAttribute('data-busy', '1');
-                    try {
-                        const on = await this.toggleQuickCard(nodeId);
-                        const starOn = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" fill="currentColor"/></svg>';
-                        const starOff = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l2.834 6.631 7.166.593-5.44 4.707 1.64 7.069L12 17.27 5.8 21 7.44 13.93 2 9.224l7.166-.593L12 2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-                        inlineQuick!.innerHTML = on ? starOn : starOff;
-                        inlineQuick!.setAttribute('data-on', on ? '1' : '0');
-                    } catch {}
-                    inlineQuick!.removeAttribute('data-busy');
-                };
-            }
-            const quickOn2 = this.getQuickCardState(nodeId);
-            const starOn2 = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" fill="currentColor"/></svg>';
-            const starOff2 = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l2.834 6.631 7.166.593-5.44 4.707 1.64 7.069L12 17.27 5.8 21 7.44 13.93 2 9.224l7.166-.593L12 2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-            const desiredQ2 = quickOn2 ? starOn2 : starOff2;
-            if ((inlineQuick.innerHTML || '').trim() !== desiredQ2) {
-                inlineQuick.innerHTML = desiredQ2;
-                const svgElQ2 = inlineQuick.querySelector('svg') as SVGElement | null;
-                if (svgElQ2) {
-                    (svgElQ2.style as any).width = '12px';
-                    (svgElQ2.style as any).height = '12px';
-                    (svgElQ2.style as any).display = 'block';
-                }
-            }
-            inlineQuick.style.display = 'grid';
 
             // 清理历史遗留：正文中被注入并持久化的 HTMLBlock（包含 callout-fold-toggle）
             const htmlBlocks = callout.querySelectorAll('.render-node[data-type="NodeHTMLBlock"]') as NodeListOf<HTMLElement>;
@@ -891,6 +881,23 @@ export class CalloutProcessorV2 {
                             const qbtn = this.overlayCardButtons.get(nodeId);
                             if (qbtn) this.setBtnVisible(qbtn, false);
                         }
+                    } else {
+                        try {
+                            const st = this.overlayStates.get(nodeId);
+                            const inGrace = !!(st && st.graceUntil && Date.now() < st.graceUntil);
+                            const ownerNow = document.querySelector(`[data-node-id="${nodeId}"]`) as HTMLElement | null;
+                            const foldedNow = !!(ownerNow && ownerNow.getAttribute('fold') === '1');
+                            if (foldedNow || inGrace || (st && (st.overBtn || st.overCallout))) {
+                                const calloutNow = ownerNow?.classList?.contains('callout') ? ownerNow : ownerNow?.querySelector?.('.callout');
+                                const infoNow = (calloutNow as HTMLElement | null)?.querySelector?.('.callout-info') as HTMLElement | null;
+                                const anchorNow = (infoNow || (calloutNow as HTMLElement) || ownerNow || info) as HTMLElement;
+                                this.schedulePosition(nodeId, anchorNow, btn);
+                                const qbtn = this.overlayCardButtons.get(nodeId);
+                                if (qbtn) this.scheduleCardPosition(nodeId, anchorNow, qbtn);
+                                this.setBtnVisible(btn, true);
+                                if (qbtn) this.setBtnVisible(qbtn, true);
+                            }
+                        } catch {}
                     }
                 });
             }, { root: null, threshold: 0 });
@@ -957,6 +964,13 @@ export class CalloutProcessorV2 {
             } catch {}
         }
 
+        if (!this.selectionChangeBound) {
+            try {
+                document.addEventListener('selectionchange', this.onSelectionChange, true);
+                this.selectionChangeBound = true;
+            } catch {}
+        }
+
         // 处理现有的所有 blockquote
         this.processAllBlockquotes();
         
@@ -979,6 +993,13 @@ export class CalloutProcessorV2 {
                 window.removeEventListener('scroll', this.onScrollResize, true);
                 window.removeEventListener('resize', this.onScrollResize, true);
                 this.scrollResizeBound = false;
+            }
+        } catch {}
+
+        try {
+            if (this.selectionChangeBound) {
+                document.removeEventListener('selectionchange', this.onSelectionChange, true);
+                this.selectionChangeBound = false;
             }
         } catch {}
 
@@ -1062,7 +1083,12 @@ export class CalloutProcessorV2 {
                                 if (nid) {
                                     // 仅当文档中确实不存在该 nodeId 时才移除 overlay，避免折叠/缩进替换过程中的短暂移除导致按钮丢失
                                     const stillExists = document.querySelector(`[data-node-id="${nid}"]`);
-                                    if (!stillExists) this.removeOverlayForNode(nid);
+                                    if (!stillExists) {
+                                        setTimeout(() => {
+                                            const existsLater = document.querySelector(`[data-node-id="${nid}"]`);
+                                            if (!existsLater) this.removeOverlayForNode(nid);
+                                        }, 50);
+                                    }
                                 }
                             });
                         }

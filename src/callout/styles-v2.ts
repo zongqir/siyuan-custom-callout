@@ -371,6 +371,10 @@ export function generateCalloutStylesV2(
     pointer-events: auto;
     line-height: 0;
     box-sizing: border-box;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 }
 .protyle-wysiwyg .callout .callout-fold-toggle::before {
     content: "";
@@ -414,6 +418,10 @@ export function generateCalloutStylesV2(
     pointer-events: auto;
     line-height: 0;
     box-sizing: border-box;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 }
 .protyle-wysiwyg .callout .callout-quickcard-toggle::before {
     content: "";
