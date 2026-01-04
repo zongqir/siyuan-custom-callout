@@ -35,6 +35,8 @@ export class CalloutProcessorV2 {
     private overlayBoundCallouts: WeakSet<HTMLElement> = new WeakSet();
     private readonly QUICK_DECK_ID = '20230218211946-2kw8jgx';
     private readonly CUSTOM_RIFF_DECKS = 'custom-riff-decks';
+    private showFoldButton: boolean = true;
+    private showQuickTagButton: boolean = true;
     private onScrollResize = () => {
         try {
             this.overlayButtons.forEach((btn, nodeId) => {
@@ -831,6 +833,15 @@ export class CalloutProcessorV2 {
 
     private setBtnVisible(btn: HTMLButtonElement, visible: boolean) {
         try {
+            const isFoldBtn = !!(btn && btn.classList && btn.classList.contains('callout-fold-toggle'));
+            const isQuickBtn = !!(btn && btn.classList && btn.classList.contains('callout-quickcard-toggle'));
+            const disabledByFlag = (isFoldBtn && !this.showFoldButton) || (isQuickBtn && !this.showQuickTagButton);
+            if (disabledByFlag) {
+                visible = false;
+                try { btn.style.display = 'none'; } catch {}
+            } else {
+                try { btn.style.display = 'grid'; } catch {}
+            }
             const cur = btn.getAttribute('data-visible') === '1';
             if (cur === visible) return;
             if (visible) {
@@ -842,6 +853,33 @@ export class CalloutProcessorV2 {
                 btn.style.pointerEvents = 'none';
                 btn.setAttribute('data-visible', '0');
             }
+        } catch {}
+    }
+
+    public setOverlayOptions(opts: { showFoldButton?: boolean; showQuickTagButton?: boolean }) {
+        try {
+            if (opts.showFoldButton !== undefined) this.showFoldButton = !!opts.showFoldButton;
+            if (opts.showQuickTagButton !== undefined) this.showQuickTagButton = !!opts.showQuickTagButton;
+        } catch {}
+        try {
+            this.overlayButtons.forEach((btn) => {
+                if (!this.showFoldButton) {
+                    this.setBtnVisible(btn, false);
+                    try { btn.style.display = 'none'; } catch {}
+                } else {
+                    try { btn.style.display = 'grid'; } catch {}
+                }
+            });
+        } catch {}
+        try {
+            this.overlayCardButtons.forEach((btn) => {
+                if (!this.showQuickTagButton) {
+                    this.setBtnVisible(btn, false);
+                    try { btn.style.display = 'none'; } catch {}
+                } else {
+                    try { btn.style.display = 'grid'; } catch {}
+                }
+            });
         } catch {}
     }
 

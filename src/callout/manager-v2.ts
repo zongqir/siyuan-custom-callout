@@ -83,6 +83,11 @@ export class CalloutManagerV2 {
         this.processor.updateTypes(availableTypes);
         this.menu.updateTypes(availableTypes);
         this.menu.updateGridColumns(config.gridColumns || 3);
+        // Apply overlay visibility options
+        this.processor.setOverlayOptions({
+            showFoldButton: config.showFoldButton,
+            showQuickTagButton: config.showQuickTagButton,
+        });
         
         // 更新样式
         this.updateStyles();
@@ -104,6 +109,11 @@ export class CalloutManagerV2 {
             this.processor.updateTypes(availableTypes);
             this.menu.updateTypes(availableTypes);
             this.menu.updateGridColumns(this.currentConfig.gridColumns || 3);
+            // Apply overlay visibility options at startup
+            this.processor.setOverlayOptions({
+                showFoldButton: this.currentConfig.showFoldButton,
+                showQuickTagButton: this.currentConfig.showQuickTagButton,
+            });
         }
 
         // 注入样式
