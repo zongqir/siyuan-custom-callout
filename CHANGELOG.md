@@ -1,5 +1,16 @@
 # Changelog
 
+## v3.1.0 2026-01-04
+
+### ✨ 新增
+
+- 设置面板：新增“显示折叠/展开按钮”“显示快速加标签（制卡）按钮”两个开关；关闭时相关浮动按钮与覆盖层被移除
+- Callout Dock/Pop Cards：支持原生类型映射 Note→info、Tip→tip、Important→highlight、Warning→tradeoff、Caution→pitfall
+
+### 🧰 杂项
+
+- 同步版本号（package.json / plugin.json）
+
 ## v3.0.0 2025-12-25
 
 ### ✨ Major
