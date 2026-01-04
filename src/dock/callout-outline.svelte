@@ -207,7 +207,7 @@
 
     // 创建类型映射（包括自定义类型）
     let typeMap = new Map<string, CalloutTypeConfig>();
-    // 别名索引（type/zhCommand/displayName → 配置）
+    // 别名索引（type/displayName → 配置）
     let aliasIndex = new Map<string, CalloutTypeConfig>();
     function normalizeAlias(s: string): string {
         return (s || '')
@@ -220,8 +220,6 @@
         aliasIndex.clear();
         typeMap.forEach(cfg => {
             aliasIndex.set(normalizeAlias(cfg.type), cfg);
-            const zh = (cfg.zhCommand || '').replace(/^\[!|\]$/g, '');
-            if (zh) aliasIndex.set(normalizeAlias(zh), cfg);
             if (cfg.displayName) aliasIndex.set(normalizeAlias(cfg.displayName), cfg);
         });
         // 原生 note 归并 info

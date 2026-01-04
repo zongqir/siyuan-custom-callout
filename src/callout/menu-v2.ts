@@ -404,7 +404,7 @@ export class CalloutMenuV2 {
         const scored: Array<{cfg: CalloutTypeConfig; score: number}> = [];
         for (const c of this.calloutTypes) {
             let score = -1;
-            const fields = [c.command, (c as any).zhCommand, c.type, c.displayName];
+            const fields = [c.command, c.type, c.displayName];
             for (const f of fields) {
                 const s = this.normalizeForMatch(f as any);
                 if (!s) continue;
@@ -763,7 +763,6 @@ export class CalloutMenuV2 {
             const c = this.calloutTypes[i];
             const fields = [
                 c.command,
-                (c as any).zhCommand,
                 c.type,
                 c.displayName,
             ];

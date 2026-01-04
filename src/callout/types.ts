@@ -8,8 +8,6 @@ export interface CalloutTypeConfig {
     displayName: string;
     /** 触发命令 */
     command: string;
-    /** 中文触发命令（可选） */
-    zhCommand?: string;
     /** 主题色 */
     color: string;
     /** SVG图标 */
@@ -50,7 +48,6 @@ export const DEFAULT_CALLOUT_TYPES: CalloutTypeConfig[] = [
         type: 'info',
         displayName: '信息说明',
         command: '[!info]',
-        zhCommand: '[!信息]',
         color: '#4493f8',
         bgGradient: 'linear-gradient(to bottom, #eff6ff, #ffffff)',
         borderColor: '#4493f8',
@@ -60,7 +57,6 @@ export const DEFAULT_CALLOUT_TYPES: CalloutTypeConfig[] = [
         type: 'concept',
         displayName: '概念解释',
         command: '[!concept]',
-        zhCommand: '[!概念]',
         color: '#9333ea',
         bgGradient: 'linear-gradient(to bottom, #faf5ff, #ffffff)',
         borderColor: '#9333ea',
@@ -70,7 +66,6 @@ export const DEFAULT_CALLOUT_TYPES: CalloutTypeConfig[] = [
         type: 'example',
         displayName: '示例演示',
         command: '[!example]',
-        zhCommand: '[!示例]',
         color: '#10b981',
         bgGradient: 'linear-gradient(to bottom, #f0fdf4, #ffffff)',
         borderColor: '#10b981',
@@ -80,7 +75,6 @@ export const DEFAULT_CALLOUT_TYPES: CalloutTypeConfig[] = [
         type: 'tip',
         displayName: '使用技巧',
         command: '[!tip]',
-        zhCommand: '[!技巧]',
         color: '#84cc16',
         bgGradient: 'linear-gradient(to bottom, #f7fee7, #ffffff)',
         borderColor: '#84cc16',
@@ -90,7 +84,6 @@ export const DEFAULT_CALLOUT_TYPES: CalloutTypeConfig[] = [
         type: 'best-practice',
         displayName: '最佳实践',
         command: '[!best-practice]',
-        zhCommand: '[!最佳实践]',
         color: '#059669',
         bgGradient: 'linear-gradient(to bottom, #ecfdf5, #ffffff)',
         borderColor: '#059669',
@@ -100,7 +93,6 @@ export const DEFAULT_CALLOUT_TYPES: CalloutTypeConfig[] = [
         type: 'tradeoff',
         displayName: '权衡取舍',
         command: '[!tradeoff]',
-        zhCommand: '[!权衡取舍]',
         color: '#ea580c',
         bgGradient: 'linear-gradient(to bottom, #fff7ed, #ffffff)',
         borderColor: '#ea580c',
@@ -110,7 +102,6 @@ export const DEFAULT_CALLOUT_TYPES: CalloutTypeConfig[] = [
         type: 'deep-dive',
         displayName: '深水区',
         command: '[!deep-dive]',
-        zhCommand: '[!深水区]',
         color: '#1e40af',
         bgGradient: 'linear-gradient(to bottom, #eff6ff, #ffffff)',
         borderColor: '#1e40af',
@@ -120,7 +111,6 @@ export const DEFAULT_CALLOUT_TYPES: CalloutTypeConfig[] = [
         type: 'comparison',
         displayName: '对比分析',
         command: '[!comparison]',
-        zhCommand: '[!对比]',
         color: '#6366f1',
         bgGradient: 'linear-gradient(to bottom, #eef2ff, #ffffff)',
         borderColor: '#6366f1',
@@ -130,7 +120,6 @@ export const DEFAULT_CALLOUT_TYPES: CalloutTypeConfig[] = [
         type: 'summary',
         displayName: '章节总结',
         command: '[!summary]',
-        zhCommand: '[!总结]',
         color: '#06b6d4',
         bgGradient: 'linear-gradient(to bottom, #ecfeff, #ffffff)',
         borderColor: '#06b6d4',
@@ -140,7 +129,6 @@ export const DEFAULT_CALLOUT_TYPES: CalloutTypeConfig[] = [
         type: 'pitfall',
         displayName: '常见陷阱',
         command: '[!pitfall]',
-        zhCommand: '[!陷阱]',
         color: '#dc2626',
         bgGradient: 'linear-gradient(to bottom, #fef2f2, #ffffff)',
         borderColor: '#dc2626',
@@ -150,7 +138,6 @@ export const DEFAULT_CALLOUT_TYPES: CalloutTypeConfig[] = [
         type: 'highlight',
         displayName: '重要亮点',
         command: '[!highlight]',
-        zhCommand: '[!亮点]',
         color: '#f59e0b',
         bgGradient: 'linear-gradient(to bottom, #fffbeb, #ffffff)',
         borderColor: '#f59e0b',

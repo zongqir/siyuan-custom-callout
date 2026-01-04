@@ -434,7 +434,7 @@
     function getExistingCommands(): string[] {
         return allTypes
             .filter(t => !editingType || t.type !== editingType.type)
-            .flatMap(t => [t.command, t.zhCommand].filter(Boolean) as string[]);
+            .map(t => t.command);
     }
 </script>
 

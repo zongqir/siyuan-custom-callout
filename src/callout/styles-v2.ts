@@ -519,9 +519,7 @@ export function generateCalloutStylesV2(
 
     // 动态类型样式（原生 data-subtype，后置覆盖基础 reset）
     types.forEach(config => {
-        const zh = (config.zhCommand || '').replace(/^\[!|\]$/g, '');
         const aliases: string[] = [config.type];
-        if (zh) aliases.push(zh);
         if (config.displayName) aliases.push(config.displayName);
         const calloutSel = aliases.map(a => `.protyle-wysiwyg .callout[data-subtype="${a}" i]`).join(',\n');
         const calloutInfoSel = aliases.map(a => `.protyle-wysiwyg .callout[data-subtype="${a}" i] .callout-info`).join(',\n');

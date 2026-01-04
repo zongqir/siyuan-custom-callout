@@ -12,7 +12,6 @@
     let type = config?.type || '';
     let displayName = config?.displayName || '';
     let command = config?.command || '';
-    let zhCommand = config?.zhCommand || '';
     let selectedIconId = config ? ICON_LIBRARY.find(i => i.svg.includes(config!.icon.split('currentColor')[0]))?.id || 'info-circle' : 'info-circle';
     let selectedColorId = config ? COLOR_SCHEMES.find(c => c.color === config!.color)?.id || 'blue' : 'blue';
     let customColor = config?.color || '#4493f8';
@@ -51,11 +50,7 @@
             errors.command = '该命令已被使用';
         }
 
-        if (zhCommand && (!zhCommand.startsWith('[!') || !zhCommand.endsWith(']'))) {
-            errors.zhCommand = '中文命令格式必须是 [!命令名]，例如 [!信息]';
-        } else if (zhCommand && existingCommands.includes(zhCommand)) {
-            errors.zhCommand = '该中文命令已被使用';
-        }
+        // 移除中文命令校验
 
         if (useCustomColor && !/^#[0-9A-Fa-f]{6}$/.test(customColor)) {
             errors.customColor = '请输入有效的十六进制颜色代码';
@@ -75,7 +70,7 @@
             type,
             displayName,
             command,
-            zhCommand: zhCommand || undefined,
+            // 不再保存中文命令
             color: colorScheme.color,
             bgGradient: colorScheme.bgGradient,
             borderColor: colorScheme.borderColor,
@@ -160,20 +155,7 @@
                     {#if errors.command}<span class="error-msg">{errors.command}</span>{/if}
                 </div>
 
-                <div class="form-group">
-                    <label>
-                        中文命令
-                        <span class="label-hint">（选填，用中文也能触发）</span>
-                    </label>
-                    <input
-                        type="text"
-                        bind:value={zhCommand}
-                        placeholder="[!我的笔记]"
-                        class:error={errors.zhCommand}
-                    />
-                    {#if errors.zhCommand}<span class="error-msg">{errors.zhCommand}</span>{/if}
-                    <div class="field-hint">💡 填了之后，输入 [!my-note] 或 [!我的笔记] 都能创建引述块</div>
-                </div>
+                
             </div>
 
             <!-- 图标选择 -->
@@ -534,15 +516,17 @@
     }
 
     .color-options {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(28px, 1fr));
+        gap: 6px;
         margin-bottom: 12px;
+        max-height: 200px;
+        overflow-y: auto;
     }
 
     .color-option {
-        width: 40px;
-        height: 40px;
+        width: 28px;
+        height: 28px;
         border: 2px solid transparent;
         border-radius: 50%;
         cursor: pointer;

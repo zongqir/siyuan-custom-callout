@@ -283,7 +283,7 @@ export class ConfigManager {
         const allTypes = this.getAllTypes(config);
         return allTypes.some(t => 
             t.type !== excludeTypeId && 
-            (t.command === command || t.zhCommand === command)
+            t.command === command
         );
     }
 

@@ -551,13 +551,11 @@ export class CalloutProcessorV2 {
             .toLowerCase();
     }
 
-    // 重建别名索引（type、zhCommand 去括号、displayName）
+    // 重建别名索引（type、displayName）
     private rebuildAliasIndex() {
         const idx = new Map<string, CalloutTypeConfig>();
         this.calloutTypes.forEach(cfg => {
             idx.set(this.normalizeAlias(cfg.type), cfg);
-            const zh = (cfg.zhCommand || '').replace(/^\[!|\]$/g, '');
-            if (zh) idx.set(this.normalizeAlias(zh), cfg);
             if (cfg.displayName) idx.set(this.normalizeAlias(cfg.displayName), cfg);
         });
         // 原生 note 归并 info

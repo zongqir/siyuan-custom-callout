@@ -5,7 +5,6 @@
     type: string;
     displayName: string;
     command: string;
-    zhCommand?: string;
     color: string;
     icon: string;
     bgGradient: string;
@@ -39,7 +38,7 @@
   function scoreCard(c: CalloutItem, q: string): number {
     if (!q) return 0;
     const cfg: any = c.config || {};
-    const fields = [cfg.command, cfg.zhCommand, cfg.type, cfg.displayName];
+    const fields = [cfg.command, cfg.type, cfg.displayName];
     let score = -1;
     for (const f of fields) {
       const s = normalizeForMatch(f as any);
