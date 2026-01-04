@@ -225,6 +225,14 @@
         // 原生 note 归并 info
         const infoCfg = typeMap.get('info');
         if (infoCfg && !aliasIndex.has('note')) aliasIndex.set('note', infoCfg);
+        const tipCfg = typeMap.get('tip');
+        if (tipCfg && !aliasIndex.has('tip')) aliasIndex.set('tip', tipCfg);
+        const highlightCfg = typeMap.get('highlight');
+        if (highlightCfg && !aliasIndex.has('important')) aliasIndex.set('important', highlightCfg);
+        const tradeoffCfg = typeMap.get('tradeoff');
+        if (tradeoffCfg && !aliasIndex.has('warning')) aliasIndex.set('warning', tradeoffCfg);
+        const pitfallCfg = typeMap.get('pitfall');
+        if (pitfallCfg && !aliasIndex.has('caution')) aliasIndex.set('caution', pitfallCfg);
     }
     
     // 初始化类型映射
