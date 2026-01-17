@@ -58,8 +58,8 @@
     let outlineContentMaxLines: number = 2;       // 内容最多显示行数
     let outlineHideContent: boolean = false;      // 是否隐藏内容只显示标题
     // Overlay buttons visibility
-    let showFoldButton: boolean = true;
-    let showQuickTagButton: boolean = true;
+    let showFoldButton: boolean = false;
+    let showQuickTagButton: boolean = false;
     
     // 监听列数变化并保存
     $: if (config && gridColumns !== config.gridColumns) {
@@ -158,8 +158,8 @@
         outlineHideContent = outlineOverrides.hideContent || false;
 
         // Overlay button flags
-        showFoldButton = config.showFoldButton !== false;
-        showQuickTagButton = config.showQuickTagButton !== false;
+        showFoldButton = config.showFoldButton === true;
+        showQuickTagButton = config.showQuickTagButton === true;
     }
     
     async function handleGridColumnsChange(newColumns: number) {

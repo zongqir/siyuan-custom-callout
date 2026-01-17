@@ -105,8 +105,8 @@ export class ConfigManager {
                 outlineThemeId: normalizedOutlineThemeId,
                 themeOverrides: data.themeOverrides || {},
                 outlineOverrides: data.outlineOverrides || {},
-                showFoldButton: data.showFoldButton !== false,
-                showQuickTagButton: data.showQuickTagButton !== false
+                showFoldButton: data.showFoldButton === true,
+                showQuickTagButton: data.showQuickTagButton === true
             };
         } catch (error) {
             logger.error('[Callout Config] Error loading config:', error);
@@ -159,8 +159,8 @@ export class ConfigManager {
             outlineThemeId: 'craft',
             themeOverrides: {},
             outlineOverrides: {},
-            showFoldButton: true,
-            showQuickTagButton: true
+            showFoldButton: false,
+            showQuickTagButton: false
         };
     }
 

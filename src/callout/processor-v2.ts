@@ -35,8 +35,8 @@ export class CalloutProcessorV2 {
     private overlayBoundCallouts: WeakSet<HTMLElement> = new WeakSet();
     private readonly QUICK_DECK_ID = '20230218211946-2kw8jgx';
     private readonly CUSTOM_RIFF_DECKS = 'custom-riff-decks';
-    private showFoldButton: boolean = true;
-    private showQuickTagButton: boolean = true;
+    private showFoldButton: boolean = false;
+    private showQuickTagButton: boolean = false;
     private onScrollResize = () => {
         try {
             this.overlayButtons.forEach((btn, nodeId) => {
