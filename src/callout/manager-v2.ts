@@ -83,9 +83,6 @@ export class CalloutManagerV2 {
         this.processor.updateTypes(availableTypes);
         this.menu.updateTypes(availableTypes);
         this.menu.updateGridColumns(config.gridColumns || 3);
-        this.processor.setOverlayOptions({
-            showQuickTagButton: config.showQuickTagButton,
-        });
         
         // 更新样式
         this.updateStyles();
@@ -107,9 +104,6 @@ export class CalloutManagerV2 {
             this.processor.updateTypes(availableTypes);
             this.menu.updateTypes(availableTypes);
             this.menu.updateGridColumns(this.currentConfig.gridColumns || 3);
-            this.processor.setOverlayOptions({
-                showQuickTagButton: this.currentConfig.showQuickTagButton,
-            });
         }
 
         // 注入样式

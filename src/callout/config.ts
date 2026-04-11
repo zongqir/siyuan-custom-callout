@@ -67,7 +67,6 @@ export interface CalloutConfig {
     outlineThemeId?: string; // 大纲主题ID
     themeOverrides?: ThemeOverrides; // 主题样式覆盖
     outlineOverrides?: OutlineOverrides; // 大纲样式覆盖
-    showQuickTagButton: boolean;
 }
 
 /**
@@ -103,8 +102,7 @@ export class ConfigManager {
                 themeId: normalizedThemeId,
                 outlineThemeId: normalizedOutlineThemeId,
                 themeOverrides: data.themeOverrides || {},
-                outlineOverrides: data.outlineOverrides || {},
-                showQuickTagButton: data.showQuickTagButton === true
+                outlineOverrides: data.outlineOverrides || {}
             };
         } catch (error) {
             logger.error('[Callout Config] Error loading config:', error);
@@ -128,7 +126,6 @@ export class ConfigManager {
                 outlineThemeId: config.outlineThemeId || 'modern',
                 themeOverrides: config.themeOverrides || {},
                 outlineOverrides: config.outlineOverrides || {},  // 添加这个字段！
-                showQuickTagButton: config.showQuickTagButton
             };
             
             console.log('Saving config data:', data);
@@ -155,8 +152,7 @@ export class ConfigManager {
             themeId: 'craft',
             outlineThemeId: 'craft',
             themeOverrides: {},
-            outlineOverrides: {},
-            showQuickTagButton: false
+            outlineOverrides: {}
         };
     }
 

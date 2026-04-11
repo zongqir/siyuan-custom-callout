@@ -1,5 +1,5 @@
 import { DEFAULT_CALLOUT_TYPES, CalloutTypeConfig, FIXED_CALLOUT_SVG } from './types';
-import { appendBlock, deleteBlock, request } from '../api';
+import { appendBlock, deleteBlock } from '../api';
 import { logger } from '../libs/logger';
 
 /**
@@ -22,77 +22,8 @@ export class CalloutProcessorV2 {
     private isInitialLoad: boolean = true;
     private processingNow: WeakSet<HTMLElement> = new WeakSet();
     private aliasIndex: Map<string, CalloutTypeConfig> = new Map();
-    private overlayStates: Map<string, { overCallout: boolean; overBtn: boolean; hideTimer: number | null; graceUntil: number | null }> = new Map();
-    private overlayCardButtons: Map<string, HTMLButtonElement> = new Map();
-    private overlayCardPositions: Map<string, { l: number; t: number; raf: number | null }> = new Map();
-    private scrollResizeBound: boolean = false;
-    private selectionChangeBound: boolean = false;
-    private overlayObservers: Map<string, IntersectionObserver> = new Map();
     private processQueue: Set<HTMLElement> = new Set();
     private processQueueRaf: number | null = null;
-    private overlayBoundCallouts: WeakSet<HTMLElement> = new WeakSet();
-    private readonly QUICK_DECK_ID = '20230218211946-2kw8jgx';
-    private readonly CUSTOM_RIFF_DECKS = 'custom-riff-decks';
-    private showQuickTagButton: boolean = false;
-    private onScrollResize = () => {
-        try {
-            this.overlayCardButtons.forEach((qbtn, nodeId) => {
-                const owner = document.querySelector(`.protyle-wysiwyg [data-node-id="${nodeId}"]`) as HTMLElement | null;
-                if (!owner) {
-                    this.removeOverlayForNode(nodeId);
-                    return;
-                }
-                const callout = owner.classList.contains('callout') ? owner : (owner.querySelector('.callout') as HTMLElement | null);
-                const info = callout?.querySelector('.callout-info') as HTMLElement | null;
-                if (!callout) return;
-                const anchor = (info || callout) as HTMLElement;
-                const r = anchor.getBoundingClientRect();
-                const offscreen = (r.width === 0 && r.height === 0) || r.bottom < 0 || r.top > (window.innerHeight || 0);
-                if (offscreen) {
-                    const st = this.overlayStates.get(nodeId);
-                    const inGrace = !!(st && st.graceUntil && Date.now() < st.graceUntil);
-                    const foldedNow = owner.getAttribute('fold') === '1';
-                    if (st && !st.overBtn && !st.overCallout && !inGrace && !foldedNow) {
-                        qbtn.style.opacity = '0';
-                        qbtn.style.pointerEvents = 'none';
-                    }
-                    return;
-                }
-                try {
-                    const foldedNow = owner.getAttribute('fold') === '1';
-                    if (foldedNow) this.setBtnVisible(qbtn, true);
-                } catch {}
-                this.scheduleCardPosition(nodeId, anchor, qbtn);
-            });
-        } catch {}
-    };
-    
-    private onSelectionChange = () => {
-        try {
-            const sel = window.getSelection();
-            if (!sel || sel.rangeCount === 0) return;
-            let el: HTMLElement | null = sel.anchorNode as any;
-            if (el && el.nodeType !== Node.ELEMENT_NODE) el = el.parentElement;
-            while (el && el !== document.body) {
-                if (el.classList?.contains('bq') || el.classList?.contains('callout')) break;
-                el = el.parentElement;
-            }
-            if (!el) return;
-            const owner = el;
-            const nid = owner.getAttribute('data-node-id');
-            if (!nid) return;
-            const base = owner.classList.contains('callout') ? owner : ((owner.querySelector('.callout') as HTMLElement) || owner);
-            const info = base.querySelector('.callout-info') as HTMLElement | null;
-            const anchor = (info || base) as HTMLElement;
-            const qbtn = this.getOrCreateQuickButton(nid);
-            const st = this.ensureOverlayState(nid);
-            st.graceUntil = Date.now() + 900;
-            this.scheduleCardPosition(nid, anchor, qbtn);
-            this.ensureVisibilityObserver(nid, anchor, qbtn);
-            this.hideAllOverlaysExcept(nid);
-            this.setBtnVisible(qbtn, true);
-        } catch {}
-    };
     
     // 新建 blockquote 自动显示菜单的回调
     public onNewBlockquoteCreated: ((blockquote: HTMLElement) => void) | null = null;
@@ -213,163 +144,13 @@ export class CalloutProcessorV2 {
         } catch {}
     }
 
-    private ensureQuickCardButton(blockquote: HTMLElement) {
+    private cleanupLegacyButtons(blockquote: HTMLElement) {
         try {
-            const callout = blockquote.classList.contains('callout')
-                ? blockquote
-                : (blockquote.querySelector('.callout') as HTMLElement | null);
-            if (!callout) return;
+            blockquote.querySelectorAll('.callout-fold-toggle, .callout-quickcard-toggle').forEach((el) => {
+                try { (el as HTMLElement).remove(); } catch {}
+            });
 
-            const info = callout.querySelector('.callout-info') as HTMLElement | null;
-            const anchorInit = (info || callout) as HTMLElement;
-
-            const owner = (blockquote.getAttribute('data-node-id') ? blockquote
-                : (callout.getAttribute('data-node-id') ? callout
-                : (callout.closest('.bq[data-node-id]') as HTMLElement | null)));
-            if (!owner) { this.enqueueProcess(blockquote); return; }
-
-            const nodeId = owner.getAttribute('data-node-id');
-            if (!nodeId) { this.enqueueProcess(blockquote); return; }
-
-            const qbtn = this.getOrCreateQuickButton(nodeId);
-            qbtn.setAttribute('data-node-id', nodeId);
-            const starOn = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" fill="currentColor"/></svg>';
-            const starOff = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l2.834 6.631 7.166.593-5.44 4.707 1.64 7.069L12 17.27 5.8 21 7.44 13.93 2 9.224l7.166-.593L12 2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-            const quickOn = this.getQuickCardState(nodeId);
-            const desiredQ = quickOn ? starOn : starOff;
-            if ((qbtn.innerHTML || '').trim() !== desiredQ) {
-                qbtn.innerHTML = desiredQ;
-                const svgElQ = qbtn.querySelector('svg') as SVGElement | null;
-                if (svgElQ) {
-                    (svgElQ.style as any).width = '12px';
-                    (svgElQ.style as any).height = '12px';
-                    (svgElQ.style as any).display = 'block';
-                }
-            }
-            qbtn.setAttribute('data-on', quickOn ? '1' : '0');
-
-            const infoRect = anchorInit.getBoundingClientRect();
-            qbtn.style.position = 'fixed';
-            qbtn.style.left = `${Math.max(0, infoRect.right - 30 - 26)}px`;
-            qbtn.style.top = `${Math.max(0, Math.round(infoRect.top + Math.max(0, (infoRect.height - 22) / 2)))}px`;
-            qbtn.style.width = '22px';
-            qbtn.style.height = '22px';
-            qbtn.style.zIndex = '2147483647';
-            qbtn.style.display = 'grid';
-            qbtn.style.opacity = '0';
-            qbtn.style.pointerEvents = 'none';
-            qbtn.style.lineHeight = '0';
-            qbtn.style.borderRadius = '6px';
-            qbtn.style.alignItems = 'center';
-            (qbtn.style as any).justifyItems = 'center';
-            qbtn.style.justifyContent = 'center';
-            qbtn.style.color = getComputedStyle(callout).color || 'var(--b3-theme-on-background)';
-            qbtn.style.border = 'none';
-            qbtn.style.boxShadow = 'none';
-            this.setBtnBackground(qbtn, false);
-            try {
-                const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-                qbtn.style.transition = reduce ? 'none' : 'background 120ms ease, opacity 120ms ease';
-            } catch { qbtn.style.transition = 'background 120ms ease, opacity 120ms ease'; }
-
-            this.ensureVisibilityObserver(nodeId, anchorInit, qbtn);
-
-            if (!this.overlayBoundCallouts.has(owner)) {
-                this.overlayBoundCallouts.add(owner);
-                owner.addEventListener('pointerenter', () => {
-                    const state = this.ensureOverlayState(nodeId);
-                    state.overCallout = true;
-                    if (state.hideTimer) { clearTimeout(state.hideTimer); state.hideTimer = null; }
-                    const calloutNow = (owner.classList.contains('callout') ? owner : (owner.querySelector('.callout') as HTMLElement | null)) as HTMLElement | null;
-                    const infoNow = calloutNow?.querySelector('.callout-info') as HTMLElement | null;
-                    const anchor = (infoNow || calloutNow || owner) as HTMLElement;
-                    this.scheduleCardPosition(nodeId, anchor, qbtn);
-                    this.ensureVisibilityObserver(nodeId, anchor, qbtn);
-                    this.hideAllOverlaysExcept(nodeId);
-                    this.setBtnVisible(qbtn, true);
-                }, true);
-                owner.addEventListener('mouseenter', () => {
-                    const state = this.ensureOverlayState(nodeId);
-                    state.overCallout = true;
-                    if (state.hideTimer) { clearTimeout(state.hideTimer); state.hideTimer = null; }
-                    const calloutNow = (owner.classList.contains('callout') ? owner : (owner.querySelector('.callout') as HTMLElement | null)) as HTMLElement | null;
-                    const infoNow = calloutNow?.querySelector('.callout-info') as HTMLElement | null;
-                    const anchor = (infoNow || calloutNow || owner) as HTMLElement;
-                    this.scheduleCardPosition(nodeId, anchor, qbtn);
-                    this.ensureVisibilityObserver(nodeId, anchor, qbtn);
-                    this.hideAllOverlaysExcept(nodeId);
-                    this.setBtnVisible(qbtn, true);
-                }, true);
-                owner.addEventListener('focusin', () => {
-                    const state = this.ensureOverlayState(nodeId);
-                    state.overCallout = true;
-                    if (state.hideTimer) { clearTimeout(state.hideTimer); state.hideTimer = null; }
-                    const calloutNow = (owner.classList.contains('callout') ? owner : (owner.querySelector('.callout') as HTMLElement | null)) as HTMLElement | null;
-                    const infoNow = calloutNow?.querySelector('.callout-info') as HTMLElement | null;
-                    const anchor = (infoNow || calloutNow || owner) as HTMLElement;
-                    this.scheduleCardPosition(nodeId, anchor, qbtn);
-                    this.ensureVisibilityObserver(nodeId, anchor, qbtn);
-                    this.hideAllOverlaysExcept(nodeId);
-                    this.setBtnVisible(qbtn, true);
-                }, true);
-                owner.addEventListener('pointermove', (ev: PointerEvent) => {
-                    const state = this.ensureOverlayState(nodeId);
-                    const calloutNow = (owner.classList.contains('callout') ? owner : (owner.querySelector('.callout') as HTMLElement | null)) as HTMLElement | null;
-                    const infoNow = calloutNow?.querySelector('.callout-info') as HTMLElement | null;
-                    const anchor = (infoNow || calloutNow || owner) as HTMLElement;
-                    this.scheduleCardPosition(nodeId, anchor, qbtn);
-                    this.ensureVisibilityObserver(nodeId, anchor, qbtn);
-                    if (state.hideTimer) { clearTimeout(state.hideTimer); state.hideTimer = null; }
-                    this.setBtnVisible(qbtn, true);
-                    this.hideAllOverlaysExcept(nodeId);
-                    this.setBtnBackground(qbtn, this.isInHotZone((calloutNow || owner) as HTMLElement, anchor, ev.clientX, ev.clientY));
-                }, true);
-                owner.addEventListener('pointerleave', (ev: PointerEvent) => {
-                    const state = this.ensureOverlayState(nodeId);
-                    state.overCallout = false;
-                    const bx = ev.clientX, by = ev.clientY;
-                    const qr = qbtn.getBoundingClientRect();
-                    const margin = 6;
-                    const inQ = bx >= qr.left - margin && bx <= qr.right + margin && by >= qr.top - margin && by <= qr.bottom + margin;
-                    if (inQ) {
-                        state.overBtn = true;
-                        this.setBtnVisible(qbtn, true);
-                        return;
-                    }
-                    const inGrace = !!(state.graceUntil && Date.now() < state.graceUntil);
-                    let foldedNow = false;
-                    try {
-                        const ownerNow = document.querySelector(`[data-node-id="${nodeId}"]`) as HTMLElement | null;
-                        foldedNow = !!(ownerNow && ownerNow.getAttribute('fold') === '1');
-                    } catch {}
-                    if (!state.overBtn && !inGrace && !foldedNow) {
-                        this.setBtnVisible(qbtn, false);
-                        state.hideTimer = null;
-                    }
-                }, true);
-                owner.addEventListener('focusout', () => {
-                    const state = this.ensureOverlayState(nodeId);
-                    state.overCallout = false;
-                    const inGrace = !!(state.graceUntil && Date.now() < state.graceUntil);
-                    let foldedNow = false;
-                    try {
-                        const ownerNow = document.querySelector(`[data-node-id="${nodeId}"]`) as HTMLElement | null;
-                        foldedNow = !!(ownerNow && ownerNow.getAttribute('fold') === '1');
-                    } catch {}
-                    if (!state.overBtn && !inGrace && !foldedNow) {
-                        this.setBtnVisible(qbtn, false);
-                        state.hideTimer = null;
-                    }
-                }, true);
-            }
-
-            const toRemove = callout.querySelectorAll('.callout-fold-toggle, .callout-quickcard-toggle:not([data-overlay="1"])') as NodeListOf<HTMLElement>;
-            toRemove.forEach(el => { try { el.remove(); } catch {} });
-            if (owner.getAttribute('fold') === '1') {
-                this.setBtnVisible(qbtn, true);
-            }
-
-            const htmlBlocks = callout.querySelectorAll('.render-node[data-type="NodeHTMLBlock"]') as NodeListOf<HTMLElement>;
+            const htmlBlocks = blockquote.querySelectorAll('.render-node[data-type="NodeHTMLBlock"]') as NodeListOf<HTMLElement>;
             htmlBlocks.forEach(async (blockEl) => {
                 try {
                     const placeholder = blockEl.querySelector('protyle-html') as HTMLElement | null;
@@ -377,9 +158,7 @@ export class CalloutProcessorV2 {
                     if (raw.includes('callout-fold-toggle') || raw.includes('callout-quickcard-toggle')) {
                         const badId = blockEl.getAttribute('data-node-id');
                         blockEl.remove();
-                        if (badId) {
-                            await deleteBlock(badId as any);
-                        }
+                        if (badId) await deleteBlock(badId as any);
                     }
                 } catch {}
             });
@@ -423,287 +202,6 @@ export class CalloutProcessorV2 {
         } catch {
             return '';
         }
-    }
-
-    private initializeOverlayButtonBase(btn: HTMLButtonElement) {
-        btn.style.all = 'unset';
-        btn.style.position = 'fixed';
-        btn.style.left = '0px';
-        btn.style.top = '0px';
-        btn.style.width = '22px';
-        btn.style.height = '22px';
-        btn.style.zIndex = '2147483647';
-        btn.style.display = 'grid';
-        btn.style.opacity = '0';
-        btn.style.pointerEvents = 'none';
-        btn.style.lineHeight = '0';
-        btn.style.margin = '0';
-        btn.style.padding = '0';
-        btn.style.borderRadius = '6px';
-        btn.style.alignItems = 'center';
-        (btn.style as any).justifyItems = 'center';
-        btn.style.justifyContent = 'center';
-        btn.style.boxSizing = 'border-box';
-        btn.style.cursor = 'pointer';
-        btn.style.color = 'var(--b3-theme-on-background)';
-        btn.style.border = 'none';
-        btn.style.boxShadow = 'none';
-        btn.style.userSelect = 'none';
-        this.setBtnBackground(btn, false);
-        try {
-            const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-            btn.style.transition = reduce ? 'none' : 'background 120ms ease, opacity 120ms ease';
-        } catch {
-            btn.style.transition = 'background 120ms ease, opacity 120ms ease';
-        }
-    }
-
-    private getOrCreateQuickButton(nodeId: string): HTMLButtonElement {
-        let btn = this.overlayCardButtons.get(nodeId) as HTMLButtonElement | undefined;
-        if (!btn) {
-            btn = document.createElement('button');
-            btn.className = 'callout-quickcard-toggle';
-            btn.type = 'button';
-            btn.setAttribute('aria-label', '快速制卡');
-            btn.setAttribute('title', '快速制卡');
-            btn.setAttribute('data-overlay', '1');
-            this.initializeOverlayButtonBase(btn);
-            document.body.appendChild(btn);
-            this.overlayCardButtons.set(nodeId, btn);
-        }
-        if (!btn.getAttribute('data-hover-bound')) {
-            btn.setAttribute('data-hover-bound', '1');
-            btn.addEventListener('pointerenter', () => {
-                const state = this.ensureOverlayState(nodeId);
-                state.overBtn = true;
-                if (state.hideTimer) { clearTimeout(state.hideTimer); state.hideTimer = null; }
-                this.setBtnBackground(btn!, true);
-                const owner = document.querySelector(`[data-node-id="${nodeId}"]`) as HTMLElement | null;
-                const callout = owner?.classList?.contains('callout') ? owner : owner?.querySelector?.('.callout');
-                if (callout) {
-                    const info = (callout as HTMLElement).querySelector('.callout-info') as HTMLElement | null;
-                    const r = (info || callout as HTMLElement).getBoundingClientRect();
-                    btn!.style.left = `${Math.max(0, r.right - 30 - 26)}px`;
-                    btn!.style.top = `${Math.max(0, Math.round(r.top + Math.max(0, (r.height - 22) / 2)))}px`;
-                }
-                this.hideAllOverlaysExcept(nodeId);
-                this.setBtnVisible(btn!, true);
-            }, true);
-            btn.addEventListener('pointerleave', () => {
-                const state = this.ensureOverlayState(nodeId);
-                state.overBtn = false;
-                this.setBtnBackground(btn!, false);
-                const inGrace = !!(state.graceUntil && Date.now() < state.graceUntil);
-                const owner = document.querySelector(`[data-node-id="${nodeId}"]`) as HTMLElement | null;
-                let foldedNow = false;
-                try { foldedNow = !!(owner && owner.getAttribute('fold') === '1'); } catch {}
-                if (!state.overCallout && !inGrace && !foldedNow) {
-                    this.setBtnVisible(btn!, false);
-                    state.hideTimer = null;
-                }
-            }, true);
-            btn.addEventListener('click', async (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                if (btn!.getAttribute('data-busy') === '1') return;
-                btn!.setAttribute('data-busy', '1');
-                try {
-                    const st = this.ensureOverlayState(nodeId);
-                    st.graceUntil = Date.now() + 900;
-                    const on = await this.toggleQuickCard(nodeId);
-                    const starOn = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" fill="currentColor"/></svg>';
-                    const starOff = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l2.834 6.631 7.166.593-5.44 4.707 1.64 7.069L12 17.27 5.8 21 7.44 13.93 2 9.224l7.166-.593L12 2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-                    btn!.innerHTML = on ? starOn : starOff;
-                    btn!.setAttribute('data-on', on ? '1' : '0');
-                    const owner = document.querySelector(`[data-node-id="${nodeId}"]`) as HTMLElement | null;
-                    const base = owner?.classList?.contains('callout') ? owner : owner?.querySelector?.('.callout');
-                    const anchor = (base as HTMLElement) || document.body;
-                    if (anchor) {
-                        this.scheduleCardPosition(nodeId, anchor as HTMLElement, btn!);
-                        this.ensureVisibilityObserver(nodeId, anchor as HTMLElement, btn!);
-                    }
-                    this.hideAllOverlaysExcept(nodeId);
-                    this.setBtnVisible(btn!, true);
-                } catch {}
-                btn!.removeAttribute('data-busy');
-            }, true);
-        }
-        return btn;
-    }
-
-    private scheduleCardPosition(nodeId: string, info: HTMLElement, btn: HTMLButtonElement) {
-        try {
-            const r = info.getBoundingClientRect();
-            const l = Math.max(0, r.right - 30 - 26);
-            const t = Math.max(0, Math.round(r.top + Math.max(0, (r.height - 22) / 2)));
-            let st = this.overlayCardPositions.get(nodeId);
-            if (!st) {
-                st = { l, t, raf: null };
-                this.overlayCardPositions.set(nodeId, st);
-            } else {
-                st.l = l; st.t = t;
-            }
-            if (st.raf != null) return;
-            st.raf = requestAnimationFrame(() => {
-                try {
-                    btn.style.left = `${st!.l}px`;
-                    btn.style.top = `${st!.t}px`;
-                } catch {}
-                st!.raf = null;
-            });
-        } catch {}
-    }
-
-    private removeOverlayForNode(nodeId: string) {
-        try {
-            const qbtn = this.overlayCardButtons.get(nodeId);
-            if (qbtn) {
-                qbtn.remove();
-                this.overlayCardButtons.delete(nodeId);
-            }
-            this.overlayStates.delete(nodeId);
-            const obs = this.overlayObservers.get(nodeId);
-            if (obs) { try { obs.disconnect(); } catch {} this.overlayObservers.delete(nodeId); }
-            const pos2 = this.overlayCardPositions.get(nodeId);
-            if (pos2 && pos2.raf != null) {
-                try { cancelAnimationFrame(pos2.raf); } catch {}
-            }
-            this.overlayCardPositions.delete(nodeId);
-        } catch {}
-    }
-
-    // 判定指针是否在“靠近右上角”的较大热区内
-    private isInHotZone(callout: HTMLElement, info: HTMLElement, x: number, y: number): boolean {
-        try {
-            const cr = callout.getBoundingClientRect();
-            const ir = info.getBoundingClientRect();
-            const zoneRight = Math.max(ir.right, cr.right);
-            const zoneLeft = zoneRight - 80; // 横向 80px 范围
-            const zoneTop = Math.min(ir.top, cr.top) - 6; // 上方留 6px 缓冲
-            const zoneBottom = ir.top + Math.max(40, ir.height + 12); // 至少 40px 高度
-            return x >= zoneLeft && x <= zoneRight + 8 && y >= zoneTop && y <= zoneBottom;
-        } catch {
-            return false;
-        }
-    }
-    private ensureOverlayState(nodeId: string) {
-        let st = this.overlayStates.get(nodeId);
-        if (!st) {
-            st = { overCallout: false, overBtn: false, hideTimer: null, graceUntil: null };
-            this.overlayStates.set(nodeId, st);
-        }
-        return st;
-    }
-
-    // 同时只显示一个覆盖按钮：隐藏其他所有 overlay 按钮
-    private hideAllOverlaysExcept(currentId: string) {
-        try {
-            this.overlayCardButtons.forEach((button, key) => {
-                if (key !== currentId) {
-                    this.setBtnVisible(button, false);
-                    const st = this.overlayStates.get(key);
-                    if (st) {
-                        st.overBtn = false;
-                        st.overCallout = false;
-                        if (st.hideTimer) { clearTimeout(st.hideTimer); st.hideTimer = null; }
-                    }
-                }
-            });
-        } catch {}
-    }
-
-    private setBtnVisible(btn: HTMLButtonElement, visible: boolean) {
-        try {
-            if (!this.showQuickTagButton) {
-                visible = false;
-                try { btn.style.display = 'none'; } catch {}
-            } else {
-                try { btn.style.display = 'grid'; } catch {}
-            }
-            const cur = btn.getAttribute('data-visible') === '1';
-            if (cur === visible) return;
-            if (visible) {
-                btn.style.opacity = '1';
-                btn.style.pointerEvents = 'auto';
-                btn.setAttribute('data-visible', '1');
-            } else {
-                btn.style.opacity = '0';
-                btn.style.pointerEvents = 'none';
-                btn.setAttribute('data-visible', '0');
-            }
-        } catch {}
-    }
-
-    public setOverlayOptions(opts: { showQuickTagButton?: boolean }) {
-        try {
-            if (opts.showQuickTagButton !== undefined) this.showQuickTagButton = !!opts.showQuickTagButton;
-        } catch {}
-        try {
-            this.overlayCardButtons.forEach((btn) => {
-                if (!this.showQuickTagButton) {
-                    this.setBtnVisible(btn, false);
-                    try { btn.style.display = 'none'; } catch {}
-                } else {
-                    try { btn.style.display = 'grid'; } catch {}
-                }
-            });
-        } catch {}
-    }
-
-    private setBtnBackground(btn: HTMLButtonElement, strong: boolean) {
-        try {
-            const target = strong ? '26' : '16';
-            if (btn.getAttribute('data-bg') === target) return;
-            // fallback first for browsers without color-mix
-            btn.style.background = strong ? 'rgba(0,0,0,0.14)' : 'rgba(0,0,0,0.10)';
-            (btn.style as any).background = `color-mix(in srgb, currentColor ${target}%, transparent)`;
-            btn.setAttribute('data-bg', target);
-        } catch {}
-    }
-
-    private ensureVisibilityObserver(nodeId: string, info: HTMLElement, btn: HTMLButtonElement) {
-        try {
-            const prev = this.overlayObservers.get(nodeId);
-            if (prev) {
-                try { prev.disconnect(); } catch {}
-                this.overlayObservers.delete(nodeId);
-            }
-            const io = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.target !== info) return;
-                    if (!entry.isIntersecting) {
-                        const st = this.overlayStates.get(nodeId);
-                        const inGrace = !!(st && st.graceUntil && Date.now() < st.graceUntil);
-                        let foldedNow = false;
-                        try {
-                            const ownerNow = document.querySelector(`[data-node-id="${nodeId}"]`) as HTMLElement | null;
-                            foldedNow = !!(ownerNow && ownerNow.getAttribute('fold') === '1');
-                        } catch {}
-                        if (!st || (!st.overBtn && !st.overCallout && !inGrace && !foldedNow)) {
-                            this.setBtnVisible(btn, false);
-                            const qbtn = this.overlayCardButtons.get(nodeId);
-                            if (qbtn) this.setBtnVisible(qbtn, false);
-                        }
-                    } else {
-                        try {
-                            const st = this.overlayStates.get(nodeId);
-                            const inGrace = !!(st && st.graceUntil && Date.now() < st.graceUntil);
-                            const ownerNow = document.querySelector(`[data-node-id="${nodeId}"]`) as HTMLElement | null;
-                            const foldedNow = !!(ownerNow && ownerNow.getAttribute('fold') === '1');
-                            if (foldedNow || inGrace || (st && (st.overBtn || st.overCallout))) {
-                                const calloutNow = ownerNow?.classList?.contains('callout') ? ownerNow : ownerNow?.querySelector?.('.callout');
-                                const infoNow = (calloutNow as HTMLElement | null)?.querySelector?.('.callout-info') as HTMLElement | null;
-                                const anchorNow = (infoNow || (calloutNow as HTMLElement) || ownerNow || info) as HTMLElement;
-                                this.setBtnVisible(btn, true);
-                                this.scheduleCardPosition(nodeId, anchorNow, btn);
-                            }
-                        } catch {}
-                    }
-                });
-            }, { root: null, threshold: 0 });
-            io.observe(info);
-            this.overlayObservers.set(nodeId, io);
-        } catch {}
     }
 
     private enqueueProcess(el: HTMLElement) {
@@ -755,21 +253,6 @@ export class CalloutProcessorV2 {
      */
     initialize() {
         logger.log('[ProcessorV2] 初始化处理器');
-        
-        if (!this.scrollResizeBound) {
-            try {
-                window.addEventListener('scroll', this.onScrollResize, true);
-                window.addEventListener('resize', this.onScrollResize, true);
-                this.scrollResizeBound = true;
-            } catch {}
-        }
-
-        if (!this.selectionChangeBound) {
-            try {
-                document.addEventListener('selectionchange', this.onSelectionChange, true);
-                this.selectionChangeBound = true;
-            } catch {}
-        }
 
         // 处理现有的所有 blockquote
         this.processAllBlockquotes();
@@ -788,28 +271,6 @@ export class CalloutProcessorV2 {
             this.observer.disconnect();
             this.observer = null;
         }
-        try {
-            if (this.scrollResizeBound) {
-                window.removeEventListener('scroll', this.onScrollResize, true);
-                window.removeEventListener('resize', this.onScrollResize, true);
-                this.scrollResizeBound = false;
-            }
-        } catch {}
-
-        try {
-            if (this.selectionChangeBound) {
-                document.removeEventListener('selectionchange', this.onSelectionChange, true);
-                this.selectionChangeBound = false;
-            }
-        } catch {}
-
-        // 清理所有 overlay 按钮与状态
-        try {
-            this.overlayCardButtons.forEach((btn) => btn.remove());
-            this.overlayCardButtons.clear();
-            this.overlayStates.clear();
-            this.overlayCardPositions.clear();
-        } catch {}
 
         this.processedBlocks.clear();
     }
@@ -865,56 +326,12 @@ export class CalloutProcessorV2 {
                     }
                 });
 
-                // 处理被移除的节点：清理对应 overlay
-                if (mutation.type === 'childList' && (mutation as any).removedNodes) {
-                    (mutation as any).removedNodes.forEach((node: Node) => {
-                        if (node.nodeType === Node.ELEMENT_NODE) {
-                            const element = node as HTMLElement;
-                            const candidates: HTMLElement[] = [];
-                            if (element.matches?.('.bq[data-node-id], .callout[data-node-id]')) {
-                                candidates.push(element);
-                            }
-                            element.querySelectorAll?.('.bq[data-node-id], .callout[data-node-id]')?.forEach(el => candidates.push(el as HTMLElement));
-                            candidates.forEach(el => {
-                                const nid = el.getAttribute('data-node-id');
-                                if (nid) {
-                                    // 仅当文档中确实不存在该 nodeId 时才移除 overlay，避免折叠/缩进替换过程中的短暂移除导致按钮丢失
-                                    const stillExists = document.querySelector(`[data-node-id="${nid}"]`);
-                                    if (!stillExists) {
-                                        setTimeout(() => {
-                                            const existsLater = document.querySelector(`[data-node-id="${nid}"]`);
-                                            if (!existsLater) this.removeOverlayForNode(nid);
-                                        }, 50);
-                                    }
-                                }
-                            });
-                        }
-                    });
-                }
-
                 // 处理属性变化（用于当原生完成解析并设置结构时我们兜底图标）
                 if (mutation.type === 'attributes' && mutation.target) {
                     const element = mutation.target as HTMLElement;
                     if (element.classList?.contains('bq') || element.classList?.contains('callout')) {
                         const target = element.classList.contains('bq') ? element : element;
                         this.enqueueProcess(target);
-                        try {
-                            const owner = (target.getAttribute('data-node-id') ? target : (target.closest('.bq[data-node-id], .callout[data-node-id]') as HTMLElement | null));
-                            const nodeId = owner?.getAttribute('data-node-id') || null;
-                            if (nodeId) {
-                                const qbtn = this.overlayCardButtons.get(nodeId);
-                                if (qbtn) {
-                                    const st = this.ensureOverlayState(nodeId);
-                                    st.graceUntil = Date.now() + 900;
-                                    const calloutNow = owner.classList.contains('callout') ? owner : (owner.querySelector('.callout') as HTMLElement | null);
-                                    const infoNow = calloutNow?.querySelector('.callout-info') as HTMLElement | null;
-                                    const anchor = (infoNow || calloutNow || owner) as HTMLElement;
-                                    this.scheduleCardPosition(nodeId, anchor, qbtn);
-                                    this.ensureVisibilityObserver(nodeId, anchor, qbtn);
-                                    this.setBtnVisible(qbtn, true);
-                                }
-                            }
-                        } catch {}
                     }
                 }
 
@@ -983,7 +400,7 @@ export class CalloutProcessorV2 {
         try {
             // 仅做图标兜底，不写入任何属性，完全交由原生 data-subtype
             this.ensureNativeIcon(blockquote);
-            this.ensureQuickCardButton(blockquote);
+            this.cleanupLegacyButtons(blockquote);
         } catch {}
         this.processingNow.delete(blockquote);
     }
@@ -1103,9 +520,6 @@ export class CalloutProcessorV2 {
         const text = contentDiv.textContent?.trim() || '';
         return text === '' || text === '\n';
     }
-
-
-
     async ensureSecondParagraphWithAPI(blockquote: HTMLElement) {
         const nodeId = blockquote.getAttribute('data-node-id');
         if (!nodeId) return;
@@ -1114,44 +528,6 @@ export class CalloutProcessorV2 {
         try {
             await appendBlock('markdown', ' ', nodeId as any);
         } catch {}
-    }
-
-    public async addQuickCards(blockIDs: string[]): Promise<void> {
-        if (!blockIDs || blockIDs.length === 0) return;
-        try {
-            await request('/api/riff/addRiffCards', { deckID: this.QUICK_DECK_ID, blockIDs });
-        } catch {}
-    }
-
-    public async removeQuickCards(blockIDs: string[]): Promise<void> {
-        if (!blockIDs || blockIDs.length === 0) return;
-        try {
-            await request('/api/riff/removeRiffCards', { deckID: this.QUICK_DECK_ID, blockIDs });
-        } catch {}
-    }
-
-    public getQuickCardState(nodeId: string): boolean | null {
-        try {
-            const el = document.querySelector(`.protyle-wysiwyg [data-node-id="${nodeId}"]`) as HTMLElement | null;
-            if (!el) return null;
-            const decks = el.getAttribute(this.CUSTOM_RIFF_DECKS) || '';
-            return decks.indexOf(this.QUICK_DECK_ID) !== -1;
-        } catch { return null; }
-    }
-
-    public async toggleQuickCard(nodeId: string): Promise<boolean> {
-        const on = this.getQuickCardState(nodeId);
-        try {
-            if (on) {
-                await this.removeQuickCards([nodeId]);
-                return false;
-            } else {
-                await this.addQuickCards([nodeId]);
-                return true;
-            }
-        } catch {
-            return !!on;
-        }
     }
 }
 

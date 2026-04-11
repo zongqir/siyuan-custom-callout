@@ -57,9 +57,6 @@
     let outlineTextColor: 'auto' | 'dark' | 'light' = 'auto'; // 文字颜色
     let outlineContentMaxLines: number = 2;       // 内容最多显示行数
     let outlineHideContent: boolean = false;      // 是否隐藏内容只显示标题
-    // Overlay button visibility
-    let showQuickTagButton: boolean = false;
-    
     // 监听列数变化并保存
     $: if (config && gridColumns !== config.gridColumns) {
         handleGridColumnsChange(gridColumns);
@@ -155,8 +152,6 @@
         outlineTextColor = outlineOverrides.textColor || 'auto';
         outlineContentMaxLines = outlineOverrides.contentMaxLines || 2;
         outlineHideContent = outlineOverrides.hideContent || false;
-
-        showQuickTagButton = config.showQuickTagButton === true;
     }
     
     async function handleGridColumnsChange(newColumns: number) {
@@ -278,13 +273,6 @@
         config = { ...config, themeOverrides: overrides };
         await saveConfig();
         showMessage('样式已更新');
-    }
-
-    async function handleOverlayToggleChange() {
-        if (!config) return;
-        config = { ...config, showQuickTagButton } as any;
-        await saveConfig();
-        showMessage('按钮显示设置已更新');
     }
 
     async function saveConfig() {
@@ -943,27 +931,6 @@
             </div>
         </div>
         {/if}
-
-        <!-- 4. 按钮显示 -->
-        <div class="override-section">
-            <div class="section-header">
-                <div class="header-left">
-                    <h3><span class="section-number">4.</span> 按钮显示</h3>
-                    <p>控制文档中 Callout 标题区域右上角的浮动按钮显示</p>
-                </div>
-            </div>
-            <div class="override-content">
-                <div class="override-grid">
-                    <div class="override-item">
-                        <label>显示快速加标签按钮</label>
-                        <label class="checkbox-label">
-                            <input type="checkbox" bind:checked={showQuickTagButton} on:change={handleOverlayToggleChange} />
-                            <span>在标题区域右上角显示快速加标签（制卡）</span>
-                        </label>
-                    </div>
-                </div>
-            </div>
-        </div>
 
         <!-- 4. 大纲风格 -->
         <div class="theme-section">
