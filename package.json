@@ -1,6 +1,6 @@
 {
   "name": "siyuan-custom-callout",
-  "version": "4.0.0",
+  "version": "4.0.2",
   "type": "module",
   "description": "Native-extensible Callout enhancer for SiYuan — focused on beautification and efficient operations, with zero data modification",
   "repository": "https://github.com/zongqir/siyuan-custom-callout",
