@@ -67,7 +67,6 @@ export interface CalloutConfig {
     outlineThemeId?: string; // 大纲主题ID
     themeOverrides?: ThemeOverrides; // 主题样式覆盖
     outlineOverrides?: OutlineOverrides; // 大纲样式覆盖
-    showFoldButton: boolean;
     showQuickTagButton: boolean;
 }
 
@@ -105,7 +104,6 @@ export class ConfigManager {
                 outlineThemeId: normalizedOutlineThemeId,
                 themeOverrides: data.themeOverrides || {},
                 outlineOverrides: data.outlineOverrides || {},
-                showFoldButton: data.showFoldButton === true,
                 showQuickTagButton: data.showQuickTagButton === true
             };
         } catch (error) {
@@ -130,7 +128,6 @@ export class ConfigManager {
                 outlineThemeId: config.outlineThemeId || 'modern',
                 themeOverrides: config.themeOverrides || {},
                 outlineOverrides: config.outlineOverrides || {},  // 添加这个字段！
-                showFoldButton: config.showFoldButton,
                 showQuickTagButton: config.showQuickTagButton
             };
             
@@ -159,7 +156,6 @@ export class ConfigManager {
             outlineThemeId: 'craft',
             themeOverrides: {},
             outlineOverrides: {},
-            showFoldButton: false,
             showQuickTagButton: false
         };
     }

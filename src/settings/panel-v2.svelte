@@ -57,8 +57,7 @@
     let outlineTextColor: 'auto' | 'dark' | 'light' = 'auto'; // 文字颜色
     let outlineContentMaxLines: number = 2;       // 内容最多显示行数
     let outlineHideContent: boolean = false;      // 是否隐藏内容只显示标题
-    // Overlay buttons visibility
-    let showFoldButton: boolean = false;
+    // Overlay button visibility
     let showQuickTagButton: boolean = false;
     
     // 监听列数变化并保存
@@ -157,8 +156,6 @@
         outlineContentMaxLines = outlineOverrides.contentMaxLines || 2;
         outlineHideContent = outlineOverrides.hideContent || false;
 
-        // Overlay button flags
-        showFoldButton = config.showFoldButton === true;
         showQuickTagButton = config.showQuickTagButton === true;
     }
     
@@ -285,7 +282,7 @@
 
     async function handleOverlayToggleChange() {
         if (!config) return;
-        config = { ...config, showFoldButton, showQuickTagButton } as any;
+        config = { ...config, showQuickTagButton } as any;
         await saveConfig();
         showMessage('按钮显示设置已更新');
     }
@@ -957,13 +954,6 @@
             </div>
             <div class="override-content">
                 <div class="override-grid">
-                    <div class="override-item">
-                        <label>显示折叠/展开按钮</label>
-                        <label class="checkbox-label">
-                            <input type="checkbox" bind:checked={showFoldButton} on:change={handleOverlayToggleChange} />
-                            <span>在标题区域右上角显示折叠/展开</span>
-                        </label>
-                    </div>
                     <div class="override-item">
                         <label>显示快速加标签按钮</label>
                         <label class="checkbox-label">

@@ -353,54 +353,6 @@ export function generateCalloutStylesV2(
     position: relative;
 }
 
-/* 标题区域内透明折叠按钮 */
-.protyle-wysiwyg .callout .callout-fold-toggle {
-    all: unset;
-    position: absolute;
-    right: 34px;
-    top: 6px;
-    cursor: pointer;
-    margin: 0;
-    display: grid;
-    place-items: center;
-    width: 22px;
-    height: 22px;
-    color: var(--b3-theme-on-background);
-    border-radius: 6px;
-    z-index: 2;
-    pointer-events: auto;
-    line-height: 0;
-    box-sizing: border-box;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-}
-.protyle-wysiwyg .callout .callout-fold-toggle::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    background: rgba(0, 0, 0, 0.08);
-    background: color-mix(in srgb, currentColor 18%, transparent);
-}
-.protyle-wysiwyg .callout:hover .callout-fold-toggle::before,
-.protyle-wysiwyg .callout .callout-fold-toggle:hover::before {
-    background: rgba(0, 0, 0, 0.12);
-    background: color-mix(in srgb, currentColor 28%, transparent);
-}
-.protyle-wysiwyg .callout .callout-fold-toggle svg {
-    width: 12px; height: 12px;
-    display: block;
-    position: relative;
-    z-index: 1;
-}
-
-/* 微调：折叠态下的箭头在部分缩放/DPI 下会出现 0.5px 视觉偏移，这里做轻微补偿 */
-.protyle-wysiwyg .callout .callout-fold-toggle[data-folded="1"] svg {
-    transform: translateY(0.5px);
-}
-
 .protyle-wysiwyg .callout .callout-quickcard-toggle {
     all: unset;
     position: absolute;
@@ -498,11 +450,11 @@ export function generateCalloutStylesV2(
     width: 0 !important;
 }
 
-/* 折叠态：隐藏正文（保留标题与折叠按钮）*/
-.protyle-wysiwyg .bq[fold="1"] .callout > :not(.callout-info):not(.callout-fold-toggle):not(.callout-quickcard-toggle) {
+/* 折叠态：隐藏正文，仅保留标题区域 */
+.protyle-wysiwyg .bq[fold="1"] .callout > :not(.callout-info) {
     display: none !important;
 }
-.protyle-wysiwyg .callout[fold="1"] > :not(.callout-info):not(.callout-fold-toggle):not(.callout-quickcard-toggle) {
+.protyle-wysiwyg .callout[fold="1"] > :not(.callout-info) {
     display: none !important;
 }
 
